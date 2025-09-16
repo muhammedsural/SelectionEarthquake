@@ -8,12 +8,12 @@ import numpy as np
 import pandas as pd
 import requests
 
-from selection_service.Enums import ProviderName
-from selection_service.Mappers import ColumnMapperFactory, IColumnMapper
-from selection_service.Config import convert_mechanism_to_text
-from selection_service.Selection import SearchCriteria
-from selection_service.ErrorHandle import DataProcessingError, NetworkError, ProviderError
-from selection_service.ResultHandle import Result, async_result_decorator, result_decorator
+from selection_service.enums.Enums import ProviderName
+from ..processing.Mappers import ColumnMapperFactory, IColumnMapper
+from ..core.Config import convert_mechanism_to_text
+from ..processing.Selection import SearchCriteria
+from ..core.ErrorHandle import DataProcessingError, NetworkError, ProviderError
+from ..processing.ResultHandle import Result, async_result_decorator, result_decorator
 
 
 class IDataProvider(Protocol):
@@ -494,17 +494,3 @@ class ProviderFactory:
         else:
             raise ValueError(f"Unknown provider: {provider_type}")
 
-# Helper function to convert provider results for pipeline
-def process_provider_results(results: List[Result[pd.DataFrame, ProviderError]]) -> List[pd.DataFrame]:
-    """Process provider results, handling errors gracefully"""
-    successful_data = []
-    errors = []
-    
-    for result in results:
-        if result.success:
-            successful_data.append(result.value)
-        else:
-            errors.append(result.error)
-            print(f"⚠️  Provider {result.error.provider_name} failed: {result.error.message}")
-    
-    return successful_data

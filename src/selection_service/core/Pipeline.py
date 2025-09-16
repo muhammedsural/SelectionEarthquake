@@ -3,11 +3,10 @@ from dataclasses import dataclass, field
 import time
 from typing import Any, Callable, Dict, List, Optional
 import pandas as pd
-from selection_service.Providers import IDataProvider
-from selection_service.Selection import ISelectionStrategy, SearchCriteria, TargetParameters,ValidationError
-from selection_service.Enums import ProviderName
-from selection_service.ErrorHandle import NoDataError, PipelineError, ProviderError, StrategyError
-from selection_service.ResultHandle import Result, async_result_decorator, result_decorator
+from ..providers.Providers import IDataProvider
+from ..processing.Selection import ISelectionStrategy, SearchCriteria, TargetParameters
+from ..core.ErrorHandle import NoDataError, PipelineError, ProviderError, StrategyError
+from ..processing.ResultHandle import Result, async_result_decorator, result_decorator
 
 '''
 class EarthquakePipeline:
@@ -376,7 +375,8 @@ class EarthquakePipeline:
                 "score_range": (selected_df["SCORE"].min(), selected_df["SCORE"].max())
             }
         }
-# Updated API class with Result pattern
+
+
 class EarthquakeAPI:
     """Dışa açılan facade with Result Pattern"""
 

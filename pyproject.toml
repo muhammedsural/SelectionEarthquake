@@ -34,40 +34,45 @@ dependencies = [
     "aiohttp>=3.12.15",
     "openpyxl>=3.1.5",
     "pyyaml>=6.0",        # Config dosyaları için
-    "tqdm>=4.60.0",       # Progress bar için
+    "tqdm>=4.65.0",       # Progress bar için
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
-    "black>=22.0.0",
-    "flake8>=5.0.0",
-    "isort>=5.10.0",
-    "sphinx>=5.0.0",
-    "sphinx-rtd-theme>=1.0.0",
-    "twine>=4.0.0"
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "flake8>=7.0.0",
+    "isort>=5.12.0",
+    "sphinx>=7.0.0",
+    "sphinx-rtd-theme>=2.0.0",
+    "twine>=5.0.0"
 ]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["selection_service*"]
+exclude = ["tests*", "examples*"]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
 
 [project.urls]
-Homepage        = "https://github.com/muhammedsural/SelectionEarthquake"
-Documentation   = "https://muhammedsural.github.io/SelectionEarthquake"
-Repository      = "https://github.com/muhammedsural/SelectionEarthquake"
-Issues          = "https://github.com/muhammedsural/SelectionEarthquake/issues"
+Homepage = "https://github.com/muhammedsural/SELECTIONEARTHQUAKE"
+Documentation = "https://muhammedsural.github.io/SELECTIONEARTHQUAKE"
+Repository = "https://github.com/muhammedsural/SELECTIONEARTHQUAKE"
+Issues = "https://github.com/muhammedsural/SELECTIONEARTHQUAKE/issues"
+Changelog = "https://github.com/muhammedsural/SELECTIONEARTHQUAKE/releases"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=src --cov-report=term-missing"
+addopts = "-v"
+asyncio_mode = "auto"
 
 [tool.black]
 line-length = 88
-target-version = ['py38']
+target-version = ['py310']
 include = '\.pyi?$'
 exclude = '''
 /(\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|_build|buck-out|build|dist)/
@@ -77,3 +82,4 @@ exclude = '''
 profile = "black"
 multi_line_output = 3
 include_trailing_comma = true
+known_first_party = ["selection_service"]

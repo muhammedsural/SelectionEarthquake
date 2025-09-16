@@ -41,13 +41,13 @@ REVERSE_MECHANISM_MAP = {v: k for k, v in MECHANISM_MAP.items()}
 def convert_mechanism_to_text(df: pd.DataFrame, mechanism_col: str = 'MECHANISM') -> pd.DataFrame:
     """Mekanizma sütununu sayısal değerlerden metin karşılıklarına dönüştür"""
     df = df.copy()
-    df[mechanism_col] = df[mechanism_col].map(MECHANISM_MAP)
+    df[mechanism_col] = df[mechanism_col].map(MECHANISM_MAP).fillna("Unknown")
     return df
 
 def convert_mechanism_to_numeric(df: pd.DataFrame, mechanism_col: str = 'MECHANISM') -> pd.DataFrame:
     """Mekanizma sütununu metin değerlerinden sayısal karşılıklarına dönüştür"""
     df = df.copy()
-    df[mechanism_col] = df[mechanism_col].map(REVERSE_MECHANISM_MAP)
+    df[mechanism_col] = df[mechanism_col].map(REVERSE_MECHANISM_MAP).fillna(-999).astype(int)
     return df
 
 def get_mechanism_text(numeric_value: int) -> str:

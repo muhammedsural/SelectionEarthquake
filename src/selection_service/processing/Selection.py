@@ -3,8 +3,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Protocol, Tuple
 import pandas as pd
-from selection_service.Enums import DesignCode
-from selection_service.Config import MECHANISM_MAP,REVERSE_MECHANISM_MAP, SCORE_RANGES_AND_WEIGHTS, get_mechanism_numeric
+from ..enums.Enums import DesignCode
+from ..core.Config import MECHANISM_MAP,REVERSE_MECHANISM_MAP, SCORE_RANGES_AND_WEIGHTS, get_mechanism_numeric
 
 
 

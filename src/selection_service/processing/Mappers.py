@@ -2,8 +2,8 @@ from abc import ABC
 from math import atan2, cos, radians, sin, sqrt
 from typing import Dict, Protocol, Type
 import pandas as pd
-from selection_service.Enums import ProviderName
-from selection_service.Config import STANDARD_COLUMNS,MECHANISM_MAP
+from ..enums.Enums import ProviderName
+from ..core.Config import STANDARD_COLUMNS,MECHANISM_MAP
 
 
 class IColumnMapper(Protocol):

@@ -9,18 +9,18 @@ A Python library for earthquake ground motion selection and processing.
 __version__ = "0.1.0"
 
 # Config & Constants
-from .Config import *  # noqa
-from .Enums import ProviderName,DesignCode
+from .core import Pipeline,Config,ErrorHandle
+from .enums.Enums import ProviderName,DesignCode
 
 # Core modules
-from .Pipeline import EarthquakePipeline, EarthquakeAPI
-from .Selection import (
+from .core.Pipeline import EarthquakePipeline, EarthquakeAPI
+from .processing.Selection import (
     ISelectionStrategy,
     SearchCriteria,
     TargetParameters,
     ValidationError,
 )
-from .Providers import (
+from .providers.Providers import (
     IDataProvider,
     PeerWest2Provider,
     AFADDataProvider,
@@ -29,6 +29,6 @@ from .Providers import (
 )
 
 # Helpers & utilities
-from .Mappers import ColumnMapperFactory, IColumnMapper
-from .ErrorHandle import *
-from .ResultHandle import *
+from .processing.Mappers import ColumnMapperFactory, IColumnMapper
+from .core.ErrorHandle import *
+from .processing.ResultHandle import *
