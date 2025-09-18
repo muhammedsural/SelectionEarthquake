@@ -7,6 +7,7 @@ from ..providers.Providers import IDataProvider
 from ..processing.Selection import ISelectionStrategy, SearchCriteria, TargetParameters
 from ..core.ErrorHandle import NoDataError, PipelineError, ProviderError, StrategyError
 from ..processing.ResultHandle import Result, async_result_decorator, result_decorator
+import logging
 
 '''
 class EarthquakePipeline:
@@ -173,6 +174,7 @@ class EarthquakePipeline:
 
 '''
 
+logger = logging.getLogger(__name__) 
 @dataclass
 class PipelineResult:
     selected_df: pd.DataFrame
@@ -195,41 +197,31 @@ class PipelineContext:
     failed_providers: List[str]              = field(default_factory=list)
     logs            : List[str]              = field(default_factory=list)
     start_time      : float                  = field(default_factory=time.time)
-    
 
-# Main Pipeline with Railway Oriented Programming
 class EarthquakePipeline:
     """Ana pipeline engine (stateless) with Result Pattern"""
 
+    # ASENKRON metodlar   
     async def execute_async(self, providers: List[IDataProvider], strategy: ISelectionStrategy,
                             search_criteria: SearchCriteria, target_params: TargetParameters) -> Result[PipelineResult, PipelineError]:
         """Asenkron pipeline çalıştır"""
+        logger.info(f"Pipeline (async) running: strategy={strategy.get_name()}, providers={len(providers)}")
+        
         context = PipelineContext(
             providers=providers,
             strategy=strategy,
             search_criteria=search_criteria,
             target_params=target_params
         )
-        return await self._execute_pipeline(context)
+        return await self._execute_pipeline_async(context)
 
-    def execute_sync(self, providers: List[IDataProvider], strategy: ISelectionStrategy,
-                     search_criteria: SearchCriteria, target_params: TargetParameters) -> Result[PipelineResult, PipelineError]:
-        """Senkron pipeline çalıştır"""
-        context = PipelineContext(
-            providers=providers,
-            strategy=strategy,
-            search_criteria=search_criteria,
-            target_params=target_params
-        )
-        return asyncio.run(self._execute_pipeline(context))
-
-    async def _execute_pipeline(self, context: PipelineContext) -> Result[PipelineResult, PipelineError]:
+    async def _execute_pipeline_async(self, context: PipelineContext) -> Result[PipelineResult, PipelineError]:
         """Railway oriented pipeline execution"""
         
         # Define the processing pipeline
         result = await self._compose_async(
-            self._validate_inputs,
-            self._fetch_data,
+            self._validate_inputs_async,
+            self._fetch_data_async,
             self._combine_data,
             self._apply_strategy,
             self._generate_final_result
@@ -256,21 +248,21 @@ class EarthquakePipeline:
         return composed
 
     @async_result_decorator
-    async def _validate_inputs(self, context: PipelineContext) -> PipelineContext:
+    async def _validate_inputs_async(self, context: PipelineContext) -> PipelineContext:
         """Validate inputs"""
         context.search_criteria.validate()
         context.target_params.validate()
         return context
 
     @async_result_decorator
-    async def _fetch_data(self, context: PipelineContext) -> PipelineContext:
-        """Fetch data from all providers with proper error handling"""
+    async def _fetch_data_async(self, context: PipelineContext) -> PipelineContext:
+        """Fetch data from all providers asynchronously"""
         
         async def fetch_single_provider(provider: IDataProvider) -> Result[pd.DataFrame, ProviderError]:
             try:
                 crit = provider.map_criteria(context.search_criteria)
                 data = await provider.fetch_data_async(criteria=crit)
-                return Result.ok(data)
+                return data
             except Exception as e:
                 return Result.fail(ProviderError(provider.get_name(), e))
         
@@ -283,10 +275,10 @@ class EarthquakePipeline:
         for result in results:
             if result.success:
                 successful_data.append(result.value)
-                context.logs.append(f"✅ {context.providers[len(successful_data)-1].get_name()} success")
+                context.logs.append(f"[OK] {context.providers[len(successful_data)-1].get_name()} success")
             else:
                 context.failed_providers.append(result.error.provider_name)
-                context.logs.append(f"❌ {result.error}")
+                context.logs.append(f"[ERROR] {result.error}")
                 
         if not successful_data:
             raise NoDataError("No data received from any provider")
@@ -294,6 +286,84 @@ class EarthquakePipeline:
         context.data = successful_data
         return context
 
+
+    # SENKRON metodlar
+    def execute_sync(self, providers: List[IDataProvider], strategy: ISelectionStrategy,
+                     search_criteria: SearchCriteria, target_params: TargetParameters) -> Result[PipelineResult, PipelineError]:
+        """Senkron pipeline çalıştır"""
+        
+        logger.info(f"Pipeline (sync) running: strategy={strategy.get_name()}, providers={len(providers)}")
+        
+        context = PipelineContext(
+            providers=providers,
+            strategy=strategy,
+            search_criteria=search_criteria,
+            target_params=target_params
+        )
+        return self._execute_pipeline_sync(context=context)
+
+    def _execute_pipeline_sync(self, context: PipelineContext) -> Result[PipelineResult, PipelineError]:
+        """Senkron pipeline execution"""
+        result = self._compose_sync(
+            self._validate_inputs_sync,
+            self._fetch_data_sync,
+            self._combine_data,
+            self._apply_strategy,
+            self._generate_final_result
+        )(context)
+        
+        return result
+   
+    def _compose_sync(self, *funcs: Callable) -> Callable:
+        """Compose sync functions in railway pattern"""
+        def composed(input: PipelineContext) -> Result[PipelineResult, PipelineError]:
+            current_result = Result.ok(input)
+            
+            for func in funcs:
+                if current_result.success:
+                    current_result = func(current_result.value)
+                else:
+                    break
+            
+            return current_result
+        return composed
+
+    @result_decorator
+    def _validate_inputs_sync(self, context: PipelineContext) -> PipelineContext:
+        """Validate inputs (sync)"""
+        context.search_criteria.validate()
+        context.target_params.validate()
+        return context
+    
+    @result_decorator
+    def _fetch_data_sync(self, context: PipelineContext) -> PipelineContext:
+        """Fetch data from all providers synchronously"""
+        results = []
+        
+        for provider in context.providers:
+            try:
+                crit = provider.map_criteria(context.search_criteria)
+                result = provider.fetch_data_sync(criteria=crit)
+                
+                if result.success:
+                    results.append(result.value)
+                    context.logs.append(f"[OK] {provider.get_name()} success")
+                else:
+                    context.failed_providers.append(provider.get_name())
+                    context.logs.append(f"[ERROR] {provider.get_name()}: {result.error}")
+                    
+            except Exception as e:
+                context.failed_providers.append(provider.get_name())
+                context.logs.append(f"[ERROR] {provider.get_name()}: {e}")
+        
+        if not results:
+            raise NoDataError("No data received from any provider")
+        
+        context.data = results
+        return context
+
+
+    # ORTAK metodlar (hem sync hem async için)
     @result_decorator
     def _combine_data(self, context: PipelineContext) -> PipelineContext:
         """Combine data from multiple providers"""
@@ -301,13 +371,25 @@ class EarthquakePipeline:
             raise NoDataError("No data to combine")
 
         #context type -->selection_service.ResultHandle.Result olduğu için value değerleri providerdan gelen dataframelerdir çünkü Result nesnesine çevrilip döndürülüyor.
-        valid_dfs = [df.value for df in context.data if isinstance(df.value, pd.DataFrame) and not df.value.empty]
-        # valid_dfs = [ df.dropna(axis=1, how='all')  for df in context.data if isinstance(df, pd.DataFrame) and not df.empty and df.dropna(axis=1, how='all').shape[1] > 0]
+        # valid_dfs = [df for df in context.data if isinstance(df, pd.DataFrame) and not df.empty]
+        valid_dfs = [ df.dropna(axis=1, how='all')  
+                     for df in context.data 
+                     if isinstance(df, pd.DataFrame) and not df.empty and df.dropna(axis=1, how='all').shape[1] > 0]
         
         if not valid_dfs:
             raise NoDataError("No valid dataframes to combine")
         
         context.combined_df = pd.concat(valid_dfs, ignore_index=True)
+        
+        # Tümü NaN olan sütunları temizle
+        context.combined_df = context.combined_df.dropna(axis=1, how='all')
+
+        # Kalan NaN değerleri doldur
+        context.combined_df = context.combined_df.fillna(0)  # Sayısal sütunlar için 0
+        # Object tipindeki sütunlarda hala NaN varsa boş string ile doldur
+        object_cols = context.combined_df.select_dtypes(include=['object']).columns
+        context.combined_df[object_cols] = context.combined_df[object_cols].fillna("")
+        
         context.logs.append(f"Combined {len(valid_dfs)} datasets, total {len(context.combined_df)} records")
         return context
 
@@ -323,7 +405,7 @@ class EarthquakePipeline:
             )
             context.selected_df = selected_df
             context.scored_df = scored_df
-            context.logs.append(f"🏆 Strategy applied: {context.strategy.get_name()}")
+            context.logs.append(f"Strategy applied: {context.strategy.get_name()}")
         except Exception as e:
             raise StrategyError(f"Strategy application failed: {e}")
         
@@ -336,7 +418,7 @@ class EarthquakePipeline:
             raise ValueError("No data available for result generation")
         
         exec_time = time.time() - context.start_time
-        context.logs.append(f"⏱ Execution time: {exec_time:.2f} sec")
+        context.logs.append(f"Execution time: {exec_time:.2f} sec")
         
         report = self._generate_report(
             context.selected_df, context.scored_df,
@@ -375,7 +457,6 @@ class EarthquakePipeline:
                 "score_range": (selected_df["SCORE"].min(), selected_df["SCORE"].max())
             }
         }
-
 
 class EarthquakeAPI:
     """Dışa açılan facade with Result Pattern"""
@@ -421,3 +502,6 @@ class EarthquakeAPI:
         return Result.ok(self.strategies[name])
 
 
+def create_api(providers: List[IDataProvider], strategies: List[ISelectionStrategy]) -> EarthquakeAPI:
+    """API oluşturma yardımcı fonksiyonu"""
+    return EarthquakeAPI(providers, strategies)

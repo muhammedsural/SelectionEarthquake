@@ -1,27 +1,30 @@
 import asyncio
+import logging
 import pandas as pd
 from selection_service.enums.Enums import DesignCode, ProviderName
 from selection_service.core.Pipeline import EarthquakeAPI, EarthquakePipeline, PipelineContext
 from selection_service.providers.Providers import IDataProvider, ProviderFactory
-from selection_service.processing import Selection
-from selection_service.core.ErrorHandle import NoDataError, ProviderError, ValidationError
+from selection_service.processing.Selection import SelectionConfig,SearchCriteria,TBDYSelectionStrategy,TargetParameters
+# from selection_service.core.LoggingConfig import setup_logging
+
+# setup_logging(log_level=logging.DEBUG)
 
 async def example_usage():
     #ProviderFactory ile provider oluşturma
     prvFactory = ProviderFactory()
     afadProvider = prvFactory.create_provider(provider_type=ProviderName.AFAD)
     peerProvider = prvFactory.create_provider(provider_type=ProviderName.PEER)
-    con = Selection.SelectionConfig(design_code=DesignCode.TBDY_2018,
+    con = SelectionConfig(design_code=DesignCode.TBDY_2018,
                           num_records=22,
                           max_per_station=3,
                           max_per_event=3,
                           min_score=55)
-    strategy = Selection.TBDYSelectionStrategy(config=con)
+    strategy = TBDYSelectionStrategy(config=con)
     
     # Initialize API
     api = EarthquakeAPI(providers=[afadProvider,peerProvider], strategies=[strategy])
     
-    search_criteria = Selection.SearchCriteria(
+    search_criteria = SearchCriteria(
         start_date="2000-01-01",
         end_date="2025-09-05",
         min_magnitude=7.0,
@@ -30,21 +33,17 @@ async def example_usage():
         max_vs30=400
         # mechanisms=["StrikeSlip"]
         )
-    target_params = Selection.TargetParameters(
+    target_params = TargetParameters(
         magnitude=7.0,
         distance=30.0,
         vs30=400.0,
         pga=200,
         mechanism=["StrikeSlip"]
     )
+
+    result = await api.run_async(criteria=search_criteria, target=target_params, strategy_name=strategy.get_name())
+    # result = api.run_sync(criteria=search_criteria, target=target_params, strategy_name=strategy.get_name())
     
-    # Run pipeline with proper error handling
-    # result = api.run_sync(
-    #     criteria=search_criteria,
-    #     target=target_params,
-    #     strategy_name=strategy.get_name()
-    # )
-    result = await api.run_async(criteria=search_criteria, target=target_params, strategy_name=strategy.get_name()    )
     
     if result.success:
         print(f"Target Parameters = {result.value.report['target_params'].__repr__()}")
@@ -57,11 +56,6 @@ async def example_usage():
         return result.value
     else:
         print(f"❌ Error: {result.error}")
-        # Handle specific error types
-        if isinstance(result.error, NoDataError):
-            print("No data available")
-        elif isinstance(result.error, ValidationError):
-            print("Validation failed")
         return None
     
 if __name__ == "__main__":

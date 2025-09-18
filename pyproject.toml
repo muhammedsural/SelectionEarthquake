@@ -53,7 +53,14 @@ dev = [
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["selection_service*"]
-exclude = ["tests*", "examples*"]
+exclude = ["tests*", "examples*","data"]
+
+[tool.setuptools.package-data]
+selection_service = [
+    "data/*.csv",
+    "data/*.xlsx",
+    "data/*.json"
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}

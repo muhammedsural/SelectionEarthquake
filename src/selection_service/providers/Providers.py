@@ -35,11 +35,20 @@ class IDataProvider(Protocol):
         """Sağlayıcı adı"""
         ...
 
+    def fetch_data(self, criteria: Dict[str, Any], async_mode: bool = False) -> Result[pd.DataFrame, ProviderError]:
+        """
+        Kriterlere göre veri getir - async/sync mod parametresi ile
+        """
+        if async_mode:
+            return asyncio.run(self.fetch_data_async(criteria))
+        else:
+            return self.fetch_data_sync(criteria)
+        
 class PeerWest2Provider(IDataProvider):
     """PEER NGA-West2 veri sağlayıcı"""
     
-    def __init__(self, file_path: str, column_mapper: Type[IColumnMapper]):
-        self.file_path = file_path
+    def __init__(self,column_mapper: Type[IColumnMapper], **kwargs):
+        self.file_path = kwargs.get("file_path","data\\NGA-West2_flatfile.csv")
         self.column_mapper = column_mapper
         self.name = ProviderName.PEER.value
         self.flatfile_df = pd.read_csv(self.file_path)
@@ -49,7 +58,14 @@ class PeerWest2Provider(IDataProvider):
     def map_criteria(self, criteria: SearchCriteria) -> Dict[str, Any]:
         """Genel arama kriterlerini provider'a özel formata dönüştür"""
         return criteria.to_peer_params()
-    
+
+    def fetch_data(self, criteria: Dict[str, Any], async_mode: bool = False) -> Result[pd.DataFrame, ProviderError]:
+        """Kriterlere göre veri getir - async/sync mod parametresi ile"""
+        if async_mode:
+            return asyncio.run(self.fetch_data_async(criteria))
+        else:
+            return self.fetch_data_sync(criteria)
+
     @async_result_decorator
     async def fetch_data_async(self, criteria: Dict[str, Any]) -> pd.DataFrame:
         """NGA-West2 verilerini getir"""
@@ -74,6 +90,7 @@ class PeerWest2Provider(IDataProvider):
             df = self.flatfile_df.copy()
             self.mapped_df = self.column_mapper.map_columns(df=df)
             self.mapped_df = self._apply_filters(self.mapped_df, criteria)
+            print(f"PEER'dan {len(self.mapped_df)} kayıt alındı.")
             self.mapped_df['PROVIDER'] = str(self.name)
             
             # Mekanizma dönüşümü
@@ -165,6 +182,13 @@ class AFADDataProvider(IDataProvider):
     def map_criteria(self, criteria: SearchCriteria) -> Dict[str, Any]:
         """Genel arama kriterlerini provider'a özel formata dönüştür"""
         return criteria.to_afad_params()
+
+    def fetch_data(self, criteria: Dict[str, Any], async_mode: bool = False) -> Result[pd.DataFrame, ProviderError]:
+        """Kriterlere göre veri getir - async/sync mod parametresi ile"""
+        if async_mode:
+            return asyncio.run(self.fetch_data_async(criteria))
+        else:
+            return self.fetch_data_sync(criteria)
     
     @async_result_decorator
     async def fetch_data_async(self, criteria: Dict[str, Any]) -> pd.DataFrame:
@@ -479,16 +503,13 @@ class ProviderFactory:
     
     @staticmethod
     def create_provider(provider_type: ProviderName, **kwargs) -> IDataProvider:
-        mapper = ColumnMapperFactory.get_mapper(provider_type)
+        # mapper = ColumnMapperFactory.get_mapper(provider_type)
+        mapper = ColumnMapperFactory.create_mapper(provider_type,**kwargs)
         
         if provider_type == ProviderName.AFAD:
-            return AFADDataProvider(column_mapper=mapper, **kwargs)
+            return AFADDataProvider(column_mapper=mapper)
         elif provider_type == ProviderName.PEER:
-            return PeerWest2Provider(
-                file_path="data\\NGA-West2_flatfile.csv",
-                column_mapper=mapper, 
-                **kwargs
-            )
+            return PeerWest2Provider(column_mapper=mapper, **kwargs)#file_path = data\NGA-West2_flatfile.csv
         elif provider_type == ProviderName.FDSN:
             return FDSNProvider(**kwargs)
         else:

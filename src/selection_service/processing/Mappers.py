@@ -16,8 +16,9 @@ class IColumnMapper(Protocol):
 class BaseColumnMapper(IColumnMapper, ABC):
     """Temel kolon eşleyici sınıfı"""
     
-    def __init__(self, column_mappings: Dict[str, str]):
-        self.column_mappings = column_mappings
+    def __init__(self,column_mappings: Dict[str, str], **kwargs):
+        #
+        self.column_mappings =column_mappings
     
     def map_columns(self, df: pd.DataFrame) -> pd.DataFrame:
         """Temel eşleme işlemi"""
@@ -36,7 +37,9 @@ class BaseColumnMapper(IColumnMapper, ABC):
 class AFADColumnMapper(BaseColumnMapper):
     """AFAD kolon eşleyici"""
     
-    def __init__(self, station_file_path: str = "data\\stations.xlsx"):
+    def __init__(self, **kwargs):
+        # station_file_path: str = "data\\stations.xlsx"
+        
         mappings = {
             "waveformId"                : "RSN"           ,
             "eventId"                   : "EVENT"         ,
@@ -73,8 +76,8 @@ class AFADColumnMapper(BaseColumnMapper):
             # "stationId"                 :      "SSN"           , 
             
         super().__init__(mappings)
-        self.station_file_path = station_file_path
-        self.station_df = self._build_station_info_df(station_file_path)
+        self.station_file_path = kwargs.get('station_file_path',"data\\stations.xlsx")
+        self.station_df = self._build_station_info_df(self.station_file_path)
     
     def map_columns(self, df: pd.DataFrame) -> pd.DataFrame:
         """AFAD'a özel ek işlemler"""
@@ -174,52 +177,6 @@ class AFADColumnMapper(BaseColumnMapper):
 
         return R * c
 
-    # def _build_station_info_df(self, file_path: str, max_distance_km: float = 30.0) -> pd.DataFrame:
-    #     """İstasyon bilgilerini yükle ve Vs30'ları tamamla"""
-    #     try:
-    #         df = pd.read_excel(file_path)
-    #         df["Code"] = df["Code"].astype(str).str.strip()
-            
-    #         # Eksik kolon kontrolü
-    #         for col in ["Latitude", "Longitude", "Vs30"]:
-    #             if col not in df.columns:
-    #                 df[col] = np.nan
-            
-    #         # Vs30 tamamlama - Vektörize versiyon
-    #         missing_vs30 = df[pd.isna(df["Vs30"]) | (df["Vs30"] == 0)]
-            
-    #         if not missing_vs30.empty:
-    #             # Geçerli istasyonlar
-    #             valid_stations = df[~pd.isna(df["Vs30"]) & (df["Vs30"] != 0)]
-                
-    #             if not valid_stations.empty:
-    #                 # Haversine distance'ı vektörize hesapla
-    #                 for idx, row in missing_vs30.iterrows():
-    #                     if pd.isna(row["Latitude"]) or pd.isna(row["Longitude"]):
-    #                         continue
-                            
-    #                     # Mesafeleri hesapla
-    #                     distances = valid_stations.apply(
-    #                         lambda x: self._haversine(
-    #                             row["Latitude"], row["Longitude"],
-    #                             x["Latitude"], x["Longitude"]
-    #                         ), axis=1
-    #                     )
-                        
-    #                     # En yakın istasyonu bul
-    #                     min_idx = distances.idxmin()
-    #                     min_distance = distances[min_idx]
-                        
-    #                     if min_distance <= max_distance_km:
-    #                         df.at[idx, "Vs30"] = valid_stations.at[min_idx, "Vs30"]
-    #                     else:
-    #                         df.at[idx, "Vs30"] = 0.0
-
-    #         return df[["Code", "Vs30", "Location", "Latitude", "Longitude"]]              
-    #     except Exception as e:
-    #         print(f"İstasyon dosyası yükleme hatası: {e}")
-    #         return pd.DataFrame(columns=["Code", "Vs30", "Location", "Latitude", "Longitude"])
-
     # AFADDataProvider'da istasyon eşleme iyileştirmesi
     def _build_station_info_df(self, file_path: str, max_distance_km: float = 30.0) -> pd.DataFrame:
         """Daha hızlı istasyon bilgisi yükleme"""
@@ -301,7 +258,7 @@ class AFADColumnMapper(BaseColumnMapper):
 class PEERColumnMapper(BaseColumnMapper):
     """PEER kolon eşleyici"""
     
-    def __init__(self):
+    def __init__(self, **kwargs):
         mappings = {
             "Record Sequence Number"                    : "RSN",
             "Earthquake Name"                           : "EVENT",
@@ -371,4 +328,14 @@ class ColumnMapperFactory:
     def register_mapper(cls, provider: ProviderName, mapper_class: Type[IColumnMapper]):
         """Yeni eşleyici kaydet"""
         cls._mappers[provider] = mapper_class
+
+    @classmethod
+    def create_mapper(cls, provider_Name, **kwargs) -> IColumnMapper:
+        if provider_Name == ProviderName.AFAD:
+            return AFADColumnMapper(**kwargs)
+        if provider_Name == ProviderName.PEER:
+            return PEERColumnMapper(**kwargs)
+        else:
+            return BaseColumnMapper(**kwargs)
+        
         

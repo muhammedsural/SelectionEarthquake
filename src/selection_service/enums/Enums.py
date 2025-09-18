@@ -1,6 +1,5 @@
 from enum import Enum
 
-
 class ProviderName(str, Enum):
     AFAD = "AFAD"
     PEER = "PEER"
