@@ -1,9 +1,10 @@
 import pytest
 import pandas as pd
+import numpy as np
 import asyncio
 import os
 import zipfile
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import patch, MagicMock, AsyncMock
 from selection_service.providers import Providers as providers
 
 # ---- Ortak yardımcı mock class ----
@@ -20,54 +21,46 @@ class DummyMapper:
 # PeerWest2Provider Testleri
 # ----------------------------------------------------------
 def test_peer_sync_fetch(tmp_path):
+    # Sahte CSV dosyası hazırla
     file_path = tmp_path / "peer.csv"
-    df = pd.DataFrame({
-        "MAGNITUDE": [6.0],
-        "MECHANISM": [1],
-        "RJB(km)": [10],
-        "RRUP(km)": [15],
-        "VS30(m/s)": [760],
-        "HYPO_DEPTH(km)": [5],
-        "PGA(cm2/sec)": [100],
-        "PGV(cm/sec)": [20],
-        "PGD(cm)": [3]
-    })
+    df = pd.DataFrame({"MAGNITUDE":[6.0], "MECHANISM":[1], "RJB(km)":[10], "RRUP(km)":[15],
+                       "VS30(m/s)":[760], "HYPO_DEPTH(km)":[5], "PGA(cm2/sec)":[100],
+                       "PGV(cm/sec)":[20], "PGD(cm)":[3]})
     df.to_csv(file_path, index=False)
 
     provider = providers.PeerWest2Provider(column_mapper=DummyMapper(), file_path=str(file_path))
     result = provider.fetch_data_sync({
-        "min_magnitude": 5.0, "max_magnitude": 7.0,
-        "min_Rjb": None, "max_Rjb": None,
-        "min_Rrup": None, "max_Rrup": None,
-        "min_vs30": None, "max_vs30": None,
-        "min_depth": None, "max_depth": None,
-        "min_pga": None, "max_pga": None,
-        "min_pgv": None, "max_pgv": None,
-        "min_pgd": None, "max_pgd": None,
-        "mechanisms": [1]
+        "min_magnitude":5.0, "max_magnitude":7.0,
+        "min_Rjb":None, "max_Rjb":None,
+        "min_Rrup":None, "max_Rrup":None,
+        "min_vs30":None, "max_vs30":None,
+        "min_depth":None, "max_depth":None,
+        "min_pga":None, "max_pga":None,
+        "min_pgv":None, "max_pgv":None,
+        "min_pgd":None, "max_pgd":None,
+        "mechanisms":[1]
     })
     assert result.success
     assert "PROVIDER" in result.value.columns
 
 @pytest.mark.asyncio
-async def test_peer_async_fetch(tmp_path):
+async def test_peer_async_fetch(monkeypatch, tmp_path):
     file_path = tmp_path / "peer.csv"
-    pd.DataFrame({"MAGNITUDE": [6], "MECHANISM": [1]}).to_csv(file_path, index=False)
+    pd.DataFrame({"MAGNITUDE":[6], "MECHANISM":[1]}).to_csv(file_path, index=False)
 
     provider = providers.PeerWest2Provider(column_mapper=DummyMapper(), file_path=str(file_path))
-    result = await provider.fetch_data_async({
-        "min_magnitude": 5, "max_magnitude": 7,
-        "min_Rjb": None, "max_Rjb": None,
-        "min_Rrup": None, "max_Rrup": None,
-        "min_vs30": None, "max_vs30": None,
-        "min_depth": None, "max_depth": None,
-        "min_pga": None, "max_pga": None,
-        "min_pgv": None, "max_pgv": None,
-        "min_pgd": None, "max_pgd": None,
-        "mechanisms": [1]
-    })
-    assert result.success
-    assert "PROVIDER" in result.value.columns
+
+    result = await provider.fetch_data_async({"min_magnitude":5, "max_magnitude":7,
+                                              "min_Rjb":None,"max_Rjb":None,
+                                              "min_Rrup":None,"max_Rrup":None,
+                                              "min_vs30":None,"max_vs30":None,
+                                              "min_depth":None,"max_depth":None,
+                                              "min_pga":None,"max_pga":None,
+                                              "min_pgv":None,"max_pgv":None,
+                                              "min_pgd":None,"max_pgd":None,
+                                              "mechanisms":[1]})
+    assert isinstance(result, pd.DataFrame)
+    assert "PROVIDER" in result.columns
 
 # ----------------------------------------------------------
 # AFADDataProvider Testleri
@@ -100,8 +93,7 @@ async def test_afad_async_fetch(monkeypatch):
 
     provider = providers.AFADDataProvider(DummyMapper())
     result = await provider.fetch_data_async({"dummy": "criteria"})
-    assert result.success
-    assert isinstance(result.value, pd.DataFrame)
+    assert isinstance(result, pd.DataFrame)
 
 def test_afad_get_event_details(monkeypatch):
     mock_response = MagicMock()
@@ -110,7 +102,7 @@ def test_afad_get_event_details(monkeypatch):
     monkeypatch.setattr("requests.get", lambda *a, **k: mock_response)
 
     provider = providers.AFADDataProvider(DummyMapper())
-    df = provider.get_event_details([1, 2])
+    df = provider.get_event_details([1,2])
     assert not df.empty
 
 def test_afad_extract_and_organize_zip_batch(tmp_path):
@@ -118,6 +110,7 @@ def test_afad_extract_and_organize_zip_batch(tmp_path):
     event_dir = tmp_path / "event"
     os.makedirs(event_dir, exist_ok=True)
 
+    # Sahte zip oluştur
     with zipfile.ZipFile(zip_path, "w") as z:
         z.writestr("station1_file1.mseed", "dummydata")
 

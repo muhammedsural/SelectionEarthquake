@@ -8,6 +8,7 @@
     "python.testing.autoTestDiscoverOnSaveEnabled": true,
     "python.testing.cwd": "${workspaceFolder}",
     "python.analysis.extraPaths": [
-        "./src"
+        "./src",
+        "./src/selection_service/providers"
     ]
 }

@@ -461,10 +461,12 @@ class EarthquakePipeline:
 class EarthquakeAPI:
     """Dışa açılan facade with Result Pattern"""
 
-    def __init__(self, providers: List[IDataProvider], strategies: List[ISelectionStrategy]):
+    def __init__(self, providers: List[IDataProvider], strategies: List[ISelectionStrategy], search_criteria: SearchCriteria, target_params: TargetParameters):
         self.providers = providers
         self.strategies = {s.get_name(): s for s in strategies}
         self.pipeline = EarthquakePipeline()
+        self.search_criteria = search_criteria
+        self.target_params = target_params
 
     def run_sync(self, criteria: SearchCriteria, target: TargetParameters, strategy_name: str) -> Result[PipelineResult, PipelineError]:
         """Senkron çalıştırma with Result pattern"""
@@ -502,6 +504,14 @@ class EarthquakeAPI:
         return Result.ok(self.strategies[name])
 
 
-def create_api(providers: List[IDataProvider], strategies: List[ISelectionStrategy]) -> EarthquakeAPI:
-    """API oluşturma yardımcı fonksiyonu"""
-    return EarthquakeAPI(providers, strategies)
+async def get_selected_earthquake(criteria: SearchCriteria, target: TargetParameters, providers: List[IDataProvider], strategies: List[ISelectionStrategy],async_mode: bool=False) -> pd.DataFrame:
+    api = EarthquakeAPI(providers=providers, strategies=strategies, search_criteria=criteria, target_params=target)
+    strategy_name = strategies[0].get_name() if strategies else ""
+    if async_mode:
+        result = await api.run_async(criteria, target, strategy_name)
+    else:
+        result = api.run_sync(criteria, target, strategy_name)
+    if result.success:
+        return result.value.selected_df
+    else:
+        raise result.error
