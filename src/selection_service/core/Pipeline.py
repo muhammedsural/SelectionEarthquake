@@ -38,7 +38,7 @@ class EarthquakePipeline:
         """
         Pipeline'ı çalıştır
         """
-        print("🚀 Earthquake pipeline starting...")
+        print("[INFO] Earthquake pipeline starting...")
 
         # Validasyon
         try:
@@ -66,7 +66,7 @@ class EarthquakePipeline:
         if combined_df.empty:
             return {'status': 'error', 'message': 'No data found'}
         
-        print(f"📊 Retrieved {len(combined_df)} records from {len(self.providers)} providers")
+        print(f"[INFO] Retrieved {len(combined_df)} records from {len(self.providers)} providers")
         
         # 3. Seçim stratejisini uygula
         if not self.current_strategy:
@@ -79,25 +79,25 @@ class EarthquakePipeline:
         # 4. Sonuç raporu oluştur
         report = self._generate_report(selected_df= selected_df, scored_df= scored_df, search_criteria= search_criteria, target_params= target_params)
 
-        print("✅ Pipeline execution completed")
+        print("[OK] Pipeline execution completed")
         if report['status'] == 'success':
-            print(f"✅ Success! Selected {report['selected_count']} records")
-            print(f"🏆 Average score: {pd.DataFrame(report['records'])['SCORE'].mean():.1f}")
+            print(f"[OK] Success! Selected {report['selected_count']} records")
+            print(f"[INFO] Average score: {pd.DataFrame(report['records'])['SCORE'].mean():.1f}")
             
         return selected_df
 
     def execute_sync(self, search_criteria: SearchCriteria,
                     target_params: TargetParameters) -> pd.DataFrame:
         """Pipeline'ı senkron olarak çalıştır"""
-        print("🚀 Earthquake pipeline starting (sync)...")
+        print("[INFO] Earthquake pipeline starting (sync)...")
         
         # Validasyon
         try:
             search_criteria.validate()
             target_params.validate()
-            print("✅ Validation passed")
+            print("[OK] Validation passed")
         except ValidationError as e:
-            print(f"❌ Validation error: {e}")
+            print(f"[ERROR] Validation error: {e}")
             return pd.DataFrame()
         
         # 1. Tüm sağlayıcılardan verileri getir
@@ -114,10 +114,10 @@ class EarthquakePipeline:
         combined_df = self._combine_data(results)
         
         if combined_df.empty:
-            print("❌ No data found from any provider")
+            print("[ERROR] No data found from any provider")
             return pd.DataFrame()
         
-        print(f"📊 Retrieved {len(combined_df)} records from {len(self.providers)} providers")
+        print(f"Retrieved {len(combined_df)} records from {len(self.providers)} providers")
         
         # 3. Seçim stratejisini uygula
         if not self.current_strategy:
@@ -128,10 +128,10 @@ class EarthquakePipeline:
         )
         report = self._generate_report(selected_df= selected_df, scored_df= scored_df, search_criteria= search_criteria, target_params= target_params)
 
-        print("✅ Pipeline execution completed")
+        print("[OK] Pipeline execution completed")
         if report['status'] == 'success':
-            print(f"✅ Success! Selected {report['selected_count']} records")
-            print(f"🏆 Average score: {pd.DataFrame(report['records'])['SCORE'].mean():.1f}")
+            print(f"[OK] Success! Selected {report['selected_count']} records")
+            print(f"Average score: {pd.DataFrame(report['records'])['SCORE'].mean():.1f}")
                     
         return selected_df
     
@@ -174,7 +174,9 @@ class EarthquakePipeline:
 
 '''
 
-logger = logging.getLogger(__name__) 
+logger = logging.getLogger(__name__)
+
+
 @dataclass
 class PipelineResult:
     selected_df: pd.DataFrame
@@ -183,8 +185,9 @@ class PipelineResult:
     execution_time: float
     failed_providers: List[str] = field(default_factory=list)
     logs: List[str] = field(default_factory=list)
-    
-@dataclass  
+
+
+@dataclass
 class PipelineContext:
     providers       : List[IDataProvider]
     strategy        : ISelectionStrategy

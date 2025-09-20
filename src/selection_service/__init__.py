@@ -8,17 +8,18 @@ A Python library for earthquake ground motion selection and processing.
 __version__ = "0.1.0"
 
 # --- Core API ---
-from .core.Pipeline import EarthquakePipeline, EarthquakeAPI
 from .core.LoggingConfig import setup_logging
-
-# --- Config ---
-from .core.Config import SCORE_RANGES_AND_WEIGHTS
 
 # --- Enums ---
 from .enums.Enums import ProviderName, DesignCode
 
+# --- Config ---
+from .core.Config import SCORE_RANGES_AND_WEIGHTS
+
+from .core.Pipeline import EarthquakePipeline, EarthquakeAPI
+
 # --- Providers ---
-from .providers.Providers import ProviderFactory
+from .providers.Providers import ProviderFactory, IDataProvider
 
 # --- Processing ---
 from .processing.Selection import (
@@ -37,7 +38,7 @@ __all__ = [
     "setup_logging",
     "SCORE_RANGES_AND_WEIGHTS",
     "ProviderName", "DesignCode",
-    "ProviderFactory",
+    "ProviderFactory", "IDataProvider"
     "SelectionConfig", "SearchCriteria",
     "TargetParameters", "BaseSelectionStrategy",
     "TBDYSelectionStrategy", "EurocodeSelectionStrategy",

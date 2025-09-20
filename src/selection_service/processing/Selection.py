@@ -127,6 +127,7 @@ class SearchCriteria:
     def to_peer_params(self) -> Dict[str, Any]:
         """PEER veritabanına özel parametre dönüşümü"""
         params = {
+            #BUG : Farklı formatta tarih gönderilebilir hata verecek.
             "year_start": int(self.start_date[:4]),
             "year_end": int(self.end_date[:4]),
             "min_magnitude": self.min_magnitude,
