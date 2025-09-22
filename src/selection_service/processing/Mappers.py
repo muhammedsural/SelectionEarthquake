@@ -336,6 +336,6 @@ class ColumnMapperFactory:
         if provider_Name == ProviderName.PEER:
             return PEERColumnMapper(**kwargs)
         else:
-            return BaseColumnMapper(**kwargs)
+            return BaseColumnMapper(column_mappings={}, **kwargs)
         
         

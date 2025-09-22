@@ -20,10 +20,7 @@ async def example_usage():
                           max_per_event=3,
                           min_score=55)
     strategy = TBDYSelectionStrategy(config=con)
-    
-    # Initialize API
-    api = EarthquakeAPI(providers=[afadProvider,peerProvider], strategies=[strategy])
-    
+
     search_criteria = SearchCriteria(
         start_date="2000-01-01",
         end_date="2025-09-05",
@@ -40,9 +37,19 @@ async def example_usage():
         pga=200,
         mechanism=["StrikeSlip"]
     )
+    
+    # Initialize API
+    api = EarthquakeAPI(providers=[afadProvider, peerProvider],
+                        strategies=[strategy],
+                        search_criteria=search_criteria,
+                        target_params=target_params)
 
-    result = await api.run_async(criteria=search_criteria, target=target_params, strategy_name=strategy.get_name())
-    # result = api.run_sync(criteria=search_criteria, target=target_params, strategy_name=strategy.get_name())
+    result = await api.run_async(criteria=search_criteria,
+                                 target=target_params,
+                                 strategy_name=strategy.get_name())
+    # result = api.run_sync(criteria=search_criteria,
+    # target=target_params,
+    # strategy_name=strategy.get_name())
     
     
     if result.success:

@@ -8,6 +8,8 @@ import aiohttp
 import numpy as np
 import pandas as pd
 import requests
+from obspy.clients.fdsn import Client
+from obspy import UTCDateTime
 from selection_service.enums.Enums import ProviderName
 from ..processing.Mappers import ColumnMapperFactory, IColumnMapper
 from ..core.Config import convert_mechanism_to_text
@@ -164,17 +166,7 @@ class AFADDataProvider(IDataProvider):
         self.base_download_dir = "Afad_events"
         self.mapped_df = None
         self.response_df = None
-
-
-    def map_criteria(self, criteria: SearchCriteria) -> Dict[str, Any]:
-        """Genel arama kriterlerini provider'a özel formata dönüştür"""
-        return criteria.to_afad_params()
-
-
-    @async_result_decorator
-    async def fetch_data_async(self, criteria: Dict[str, Any]) -> pd.DataFrame:
-        """AFAD verilerini getir"""
-        headers = {
+        self.headers= {
             'Accept': 'application/json, text/plain, */*',
             'Content-Type': 'application/json',
             'Origin': 'https://tadas.afad.gov.tr',
@@ -183,12 +175,20 @@ class AFADDataProvider(IDataProvider):
             'Username': 'GuestUser',
             'IsGuest': 'true'
         }
+
+    def map_criteria(self, criteria: SearchCriteria) -> Dict[str, Any]:
+        """Genel arama kriterlerini provider'a özel formata dönüştür"""
+        return criteria.to_afad_params()
+
+    @async_result_decorator
+    async def fetch_data_async(self, criteria: Dict[str, Any]) -> pd.DataFrame:
+        """AFAD verilerini getir"""
             
         try:
-            payload = criteria 
+            payload = criteria
             print(f"AFAD arama kriterleri: {payload}")
-            
-            async with aiohttp.ClientSession(headers=headers) as session:
+
+            async with aiohttp.ClientSession(headers=self.headers) as session:
                 async with session.post(
                     self.base_url,
                     json=payload,
@@ -217,7 +217,8 @@ class AFADDataProvider(IDataProvider):
     def fetch_data_sync(self, criteria: Dict[str, Any]) -> pd.DataFrame:
         """AFAD verilerini getir (senkron)"""
         try:
-            response = self._search_afad(criteria=criteria)
+            response = self._search_afad(criteria=criteria,
+                                         headers=self.headers)
             if response.status_code == 200:
                 data = response.json()
                 self.response_df = pd.DataFrame(data)
@@ -236,23 +237,13 @@ class AFADDataProvider(IDataProvider):
         except Exception as e:
             raise ProviderError(self.name, e, f"AFAD data processing failed: {e}")
 
-    def _search_afad(self, criteria: Dict[str, Any]) -> requests.Response:
-        """AFAD API'sini kullanarak arama yap"""
-        headers = {
-            'Accept': 'application/json, text/plain, */*',
-            'Content-Type': 'application/json',
-            'Origin': 'https://tadas.afad.gov.tr',
-            'Referer': 'https://tadas.afad.gov.tr/',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Username': 'GuestUser',
-            'IsGuest': 'true'
-        }
-        
+    def _search_afad(self, criteria: Dict[str, Any], headers: dict) -> requests.Response:
+        """AFAD API'sini kullanarak arama yap"""        
         payload = criteria
         print(f"AFAD arama kriterleri: {payload}")
                 
         response = requests.post(
-            self.base_url, 
+            self.base_url,
             json=payload,
             headers=headers,
             timeout=self.timeout
@@ -318,18 +309,18 @@ class AFADDataProvider(IDataProvider):
         Raises:
             ProviderError: If any error occurs during the download or extraction process.
         """
-        
+
         file_type   = kwargs.get('file_type', 'ap')
         file_status = kwargs.get('file_status', 'Acc')
         export_type = kwargs.get('export_type', 'mseed')
         user_name   = kwargs.get('user_name', 'GuestUser')
         event_id    = kwargs.get('event_id')
         batch_size  = kwargs.get('batch_size', 10)
-        
+
         batch_size = min(batch_size, 10) # Batch size'ı maximum 10 ile sınırla
-        
+
         url = "https://ivmeprocessguest.afad.gov.tr/ExportData"
-        
+
         headers = {
             'Accept': 'application/json, text/plain, */*',
             'Content-Type': 'application/json',
@@ -597,74 +588,59 @@ class AFADDataProvider(IDataProvider):
 
 
 class FDSNProvider(IDataProvider):
-    """FDSN veri sağlayıcı"""
-    
-    def __init__(self, base_url: str = "https://service.iris.edu/fdsnws/event/1/query"):
-        self.base_url = base_url
-        self.name = ProviderName.FDSN.value
-    
-    def map_criteria(self, criteria: SearchCriteria) -> Dict[str, Any]:
-        return criteria.__dict__
-    
-    @async_result_decorator
-    async def fetch_data_async(self, criteria: Dict[str, Any]) -> pd.DataFrame:
-        """FDSN verilerini getir"""
-        try:
-            async with aiohttp.ClientSession() as session:
-                params = self._build_params(criteria)
-                async with session.get(self.base_url, params=params) as response:
-                    if response.status == 200:
-                        data = await response.text()
-                        df = self._parse_data(data)
-                        df['PROVIDER'] = str(self.name)
-                        return df
-                    else:
-                        raise NetworkError(
-                            self.name,
-                            Exception(f"HTTP {response.status}"),
-                            "FDSN API request failed"
-                        )
-        except aiohttp.ClientError as e:
-            raise NetworkError(self.name, e, "FDSN network error")
-        except Exception as e:
-            raise ProviderError(self.name, e, f"FDSN data processing failed: {e}")
-    
-    @result_decorator
-    def fetch_data_sync(self, criteria: Dict[str, Any]) -> pd.DataFrame:
-        """FDSN verilerini getir (senkron)"""
-        try:
-            params = self._build_params(criteria)
-            response = requests.get(self.base_url, params=params, timeout=30)
-            
-            if response.status_code == 200:
-                df = self._parse_data(response.text)
-                df['PROVIDER'] = str(self.name)
-                return df
-            else:
-                raise NetworkError(
-                    self.name,
-                    Exception(f"HTTP {response.status_code}"),
-                    "FDSN API request failed"
-                )
-        except requests.RequestException as e:
-            raise NetworkError(self.name, e, "FDSN network error")
-        except Exception as e:
-            raise ProviderError(self.name, e, f"FDSN data processing failed: {e}")
-    
-    def _build_params(self, criteria: Dict[str, Any]) -> Dict[str, Any]:
+    def __init__(self, name="IRIS", base_url=None, timeout=15):
+        self._name = name
+        self._client = Client(base_url or name, timeout=timeout)
+
+    def get_name(self):
+        return self._name
+
+    def map_criteria(self, criteria):
+        # örnek: senin SearchCriteria {start_time, end_time, lat, lon, mag_min, mag_max} gibi
         return {
-            'format': 'text', 'minmag': criteria.get('min_magnitude', 4.0),
-            'maxmag': criteria.get('max_magnitude', 9.0), 'orderby': 'time'
+            "starttime": UTCDateTime(criteria.start_date),
+            "endtime": UTCDateTime(criteria.end_date),
+            "minmagnitude": criteria.min_magnitude,
+            "maxmagnitude": criteria.max_magnitude,
+            "latitude": criteria.min_latitude,
+            "longitude": criteria.min_longitude,
+            # "maxradius": criteria.max_radius_deg,
         }
-    
-    def _parse_data(self, data: str) -> pd.DataFrame:
-        # Parse logic here
-        return pd.DataFrame()
-    
-    def get_name(self) -> str:
-        return str(self.name)
+
+    async def fetch_data_async(self, criteria):
+        try:
+            mapped = self.map_criteria(criteria)
+            loop = asyncio.get_running_loop()
+            # ObsPy bloklama yaptığı için thread pool'a atıyoruz
+            catalog = await loop.run_in_executor(None, lambda: self._client.get_events(**mapped))
+            
+            # Catalog → DataFrame dönüştür
+            records = []
+            for event in catalog:
+                origin = event.origins[0]
+                mag = event.magnitudes[0]
+                records.append({
+                    "EQID": event.resource_id.id,
+                    "TIME": origin.time.datetime,
+                    "LAT": origin.latitude,
+                    "LON": origin.longitude,
+                    "DEPTH(km)": origin.depth / 1000.0 if origin.depth else None,
+                    "MAGNITUDE": mag.mag,
+                    "RJB(km)": None,   # burada station data gerekirse eklenebilir
+                    "SCORE": None      # strateji hesaplayacak
+                })
+
+            df = pd.DataFrame(records)
+            return Result.ok(df)
+        except Exception as e:
+            return Result.fail(e)
 
 
+class USGSProvider(FDSNProvider):
+    def __init__(self, timeout=15):
+        super().__init__(name="USGS", base_url="USGS", timeout=timeout)
+
+        
 class ProviderFactory:
     """Provider factory sınıfı"""
     
@@ -679,5 +655,9 @@ class ProviderFactory:
             return PeerWest2Provider(column_mapper=mapper, **kwargs)#file_path = data\NGA-West2_flatfile.csv
         elif provider_type == ProviderName.FDSN:
             return FDSNProvider(**kwargs)
+        elif provider_type == ProviderName.USGS:
+            return USGSProvider(**kwargs)
         else:
             raise ValueError(f"Unknown provider: {provider_type}")
+
+
