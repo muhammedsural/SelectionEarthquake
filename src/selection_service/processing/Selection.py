@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Protocol, Tuple
+from obspy import UTCDateTime
 import pandas as pd
 from ..enums.Enums import DesignCode
 from ..core.Config import MECHANISM_MAP,REVERSE_MECHANISM_MAP, SCORE_RANGES_AND_WEIGHTS, get_mechanism_numeric
@@ -127,7 +128,6 @@ class SearchCriteria:
     def to_peer_params(self) -> Dict[str, Any]:
         """PEER veritabanına özel parametre dönüşümü"""
         params = {
-            #BUG : Farklı formatta tarih gönderilebilir hata verecek.
             "year_start": int(self.start_date[:4]),
             "year_end": int(self.end_date[:4]),
             "min_magnitude": self.min_magnitude,
@@ -155,15 +155,44 @@ class SearchCriteria:
         return params
     
     def to_fdsn_params(self) -> Dict[str, Any]:
-        """FDSN standardına özel parametre dönüşümü"""
+        """FDSN standardına özel parametre dönüşümü
+            starttime: Any | None = None,
+            endtime: Any | None = None,
+            minlatitude: Any | None = None,
+            maxlatitude: Any | None = None,
+            minlongitude: Any | None = None,
+            maxlongitude: Any | None = None,
+            latitude: Any | None = None,
+            longitude: Any | None = None,
+            minradius: Any | None = None,
+            maxradius: Any | None = None,
+            mindepth: Any | None = None,
+            maxdepth: Any | None = None,
+            minmagnitude: Any | None = None,
+            maxmagnitude: Any | None = None,
+            magnitudetype: Any | None = None,
+            eventtype: Any | None = None,
+            includeallorigins: Any | None = None,
+            includeallmagnitudes: Any | None = None,
+            includearrivals: Any | None = None,
+            eventid: Any | None = None,
+            limit: Any | None = None,
+            offset: Any | None = None,
+            orderby: Any | None = None,
+            catalog: Any | None = None,
+            contributor: Any | None = None,
+            updatedafter: Any | None = None,
+            filename: Any | None = None,
+            **kwargs
+        """
         params = {
-            "starttime": self.start_date,
-            "endtime": self.end_date,
+            "starttime": UTCDateTime(self.start_date),
+            "endtime": UTCDateTime(self.end_date),
             "minmagnitude": self.min_magnitude,
             "maxmagnitude": self.max_magnitude,
-            "minradius": self.min_distance,
-            "maxradius": self.max_distance,
-            "format": "text"
+            "latitude": self.min_latitude,
+            "longitude": self.min_longitude,
+            # "maxradius": criteria.max_radius_deg,
         }
         
         if self.bbox:

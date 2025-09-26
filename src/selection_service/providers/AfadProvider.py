@@ -1,158 +1,16 @@
-import asyncio
-from functools import partial
 import os
 import time
-from typing import Any, Dict, List, Protocol, Type
+from typing import Any, Dict, List, Type
 import zipfile
 import aiohttp
-import numpy as np
 import pandas as pd
 import requests
-from obspy.clients.fdsn import Client
-from obspy import UTCDateTime
-from selection_service.enums.Enums import ProviderName
-from ..processing.Mappers import ColumnMapperFactory, IColumnMapper
-from ..core.Config import convert_mechanism_to_text
+from ..providers.IProvider import IDataProvider
+from ..enums.Enums import ProviderName
+from ..processing.Mappers import IColumnMapper
 from ..processing.Selection import SearchCriteria
-from ..core.ErrorHandle import DataProcessingError, NetworkError, ProviderError
-from ..processing.ResultHandle import Result, async_result_decorator, result_decorator
-
-
-class IDataProvider(Protocol):
-    """Veri sağlayıcı interface'i"""
-    
-    def map_criteria(self, criteria: Any) -> Dict[str, Any]:
-        """Genel arama kriterlerini provider'a özel formata dönüştür"""
-        ...
-    
-    async def fetch_data_async(self, criteria: Dict[str, Any]) -> Result[pd.DataFrame, ProviderError]:
-        """Kriterlere göre veri getir"""
-        ...
-
-    def fetch_data_sync(self, criteria: Dict[str, Any]) -> Result[pd.DataFrame, ProviderError]:
-        """Kriterlere göre veri getir (senkron)"""
-        ...
-    
-    def get_name(self) -> str:
-        """Sağlayıcı adı"""
-        ...
-
-        
-class PeerWest2Provider(IDataProvider):
-    """PEER NGA-West2 veri sağlayıcı"""
-    
-    def __init__(self,column_mapper: Type[IColumnMapper], **kwargs):
-        self.file_path = kwargs.get("file_path","data\\NGA-West2_flatfile.csv")
-        self.column_mapper = column_mapper
-        self.name = ProviderName.PEER.value
-        self.flatfile_df = pd.read_csv(self.file_path)
-        self.mapped_df = None
-        self.response_df = None
-
-    def map_criteria(self, criteria: SearchCriteria) -> Dict[str, Any]:
-        """Genel arama kriterlerini provider'a özel formata dönüştür"""
-        return criteria.to_peer_params()
-
-
-    @async_result_decorator
-    async def fetch_data_async(self, criteria: Dict[str, Any]) -> pd.DataFrame:
-        """NGA-West2 verilerini getir"""
-        try:
-            loop = asyncio.get_event_loop()
-            self.response_df = await loop.run_in_executor(None, pd.read_csv, self.file_path)
-            self.mapped_df = await loop.run_in_executor(None, partial(self.column_mapper.map_columns, self.response_df))
-            filtered_df = await loop.run_in_executor(None, partial(self._apply_filters, self.mapped_df, criteria))
-            filtered_df['PROVIDER'] = str(self.name)
-            
-            # Mekanizma dönüşümü
-            if filtered_df['MECHANISM'].dtype in [np.int64, np.float64, int, float]:
-                filtered_df = convert_mechanism_to_text(filtered_df)
-            return filtered_df
-        except Exception as e:
-            raise ProviderError(self.name, e, f"PEER async data fetch failed: {e}")
-        
-    @result_decorator
-    def fetch_data_sync(self, criteria: Dict[str, Any]) -> pd.DataFrame:
-        """NGA-West2 verilerini getir (senkron)"""
-        try:
-            df = self.flatfile_df.copy()
-            self.mapped_df = self.column_mapper.map_columns(df=df)
-            self.mapped_df = self._apply_filters(self.mapped_df, criteria)
-            print(f"PEER'dan {len(self.mapped_df)} kayıt alındı.")
-            self.mapped_df['PROVIDER'] = str(self.name)
-            
-            # Mekanizma dönüşümü
-            if self.mapped_df['MECHANISM'].dtype in [np.int64, np.float64, int, float]:
-                self.mapped_df = convert_mechanism_to_text(self.mapped_df)
-            return self.mapped_df
-        except Exception as e:
-            raise ProviderError(self.name, e, f"PEER sync data fetch failed: {e}")
-        
-    def _apply_filters(self, df: pd.DataFrame, criteria: Dict[str, Any]) -> pd.DataFrame:
-        """Filtreleme uygula"""
-        try:
-            if df.empty:
-                return df
-            filtered_df = df.copy()
-            
-            # Büyüklük filtreleme
-            if criteria['min_magnitude'] is not None:
-                filtered_df = filtered_df[filtered_df['MAGNITUDE'] >= criteria['min_magnitude']]
-            if criteria['max_magnitude'] is not None:
-                filtered_df = filtered_df[filtered_df['MAGNITUDE'] <= criteria['max_magnitude']]
-            
-            # Mesafe filtreleme (RJB)
-            if criteria['min_Rjb'] is not None:
-                filtered_df = filtered_df[filtered_df['RJB(km)'] >= criteria['min_Rjb']]
-            if criteria['max_Rjb'] is not None:
-                filtered_df = filtered_df[filtered_df['RJB(km)'] <= criteria['max_Rjb']]
-            
-            # Mesafe filtreleme (RRUP)
-            if criteria['min_Rrup'] is not None:
-                filtered_df = filtered_df[filtered_df['RRUP(km)'] >= criteria['min_Rrup']]
-            if criteria['max_Rrup'] is not None:
-                filtered_df = filtered_df[filtered_df['RRUP(km)'] <= criteria['max_Rrup']]
-            
-            # VS30 filtreleme
-            if criteria['min_vs30'] is not None:
-                filtered_df = filtered_df[filtered_df['VS30(m/s)'] >= criteria['min_vs30']]
-            if criteria['max_vs30'] is not None:
-                filtered_df = filtered_df[filtered_df['VS30(m/s)'] <= criteria['max_vs30']]
-            
-            # Derinlik filtreleme
-            if criteria['min_depth'] is not None:
-                filtered_df = filtered_df[filtered_df['HYPO_DEPTH(km)'] >= criteria['min_depth']]
-            if criteria['max_depth'] is not None:
-                filtered_df = filtered_df[filtered_df['HYPO_DEPTH(km)'] <= criteria['max_depth']]
-            
-            # PGA filtreleme
-            if criteria['min_pga'] is not None:
-                filtered_df = filtered_df[filtered_df['PGA(cm2/sec)'] >= criteria['min_pga']]
-            if criteria['max_pga'] is not None:
-                filtered_df = filtered_df[filtered_df['PGA(cm2/sec)'] <= criteria['max_pga']]
-            
-            # PGV filtreleme
-            if criteria['min_pgv'] is not None:
-                filtered_df = filtered_df[filtered_df['PGV(cm/sec)'] >= criteria['min_pgv']]
-            if criteria['max_pgv'] is not None:
-                filtered_df = filtered_df[filtered_df['PGV(cm/sec)'] <= criteria['max_pgv']]
-            
-            # PGD filtreleme
-            if criteria['min_pgd'] is not None:
-                filtered_df = filtered_df[filtered_df['PGD(cm)'] >= criteria['min_pgd']]
-            if criteria['max_pgd'] is not None:
-                filtered_df = filtered_df[filtered_df['PGD(cm)'] <= criteria['max_pgd']]
-            
-            # Mekanizma filtreleme
-            if criteria['mechanisms']:
-                filtered_df = filtered_df[filtered_df['MECHANISM'].isin(criteria['mechanisms'])]
-                
-            return filtered_df
-        except Exception as e:
-            raise DataProcessingError(self.name, e, "Filter application failed")
-
-    def get_name(self) -> str:
-        return str(self.name)
+from ..core.ErrorHandle import NetworkError, ProviderError
+from ..processing.ResultHandle import async_result_decorator, result_decorator
 
 
 class AFADDataProvider(IDataProvider):
@@ -166,7 +24,7 @@ class AFADDataProvider(IDataProvider):
         self.base_download_dir = "Afad_events"
         self.mapped_df = None
         self.response_df = None
-        self.headers= {
+        self.headers = {
             'Accept': 'application/json, text/plain, */*',
             'Content-Type': 'application/json',
             'Origin': 'https://tadas.afad.gov.tr',
@@ -183,7 +41,6 @@ class AFADDataProvider(IDataProvider):
     @async_result_decorator
     async def fetch_data_async(self, criteria: Dict[str, Any]) -> pd.DataFrame:
         """AFAD verilerini getir"""
-            
         try:
             payload = criteria
             print(f"AFAD arama kriterleri: {payload}")
@@ -237,8 +94,10 @@ class AFADDataProvider(IDataProvider):
         except Exception as e:
             raise ProviderError(self.name, e, f"AFAD data processing failed: {e}")
 
-    def _search_afad(self, criteria: Dict[str, Any], headers: dict) -> requests.Response:
-        """AFAD API'sini kullanarak arama yap"""        
+    def _search_afad(self,
+                     criteria: Dict[str, Any],
+                     headers: dict) -> requests.Response:
+        """AFAD API'sini kullanarak arama yap"""
         payload = criteria
         print(f"AFAD arama kriterleri: {payload}")
                 
@@ -288,7 +147,8 @@ class AFADDataProvider(IDataProvider):
         return pd.DataFrame(all_details) if all_details else pd.DataFrame()
 
     @result_decorator
-    def download_afad_waveforms_batch(self, filenames: List[str], **kwargs) -> Dict:
+    def download_afad_waveforms_batch(self,
+                                      filenames: List[str], **kwargs) -> Dict:
         """
         Downloads AFAD waveform files in batches, saves them as zip files, and extracts the contents.
         Args:
@@ -510,8 +370,11 @@ class AFADDataProvider(IDataProvider):
         
         return extracted_files
 
-    def retry_failed_downloads(self, event_id: int, failed_filenames: List[str], 
-                            export_type: str, file_status: str, max_retries: int = 3) -> List[str]:
+    def retry_failed_downloads(self, event_id: int,
+                               failed_filenames: List[str],
+                               export_type: str,
+                               file_status: str,
+                               max_retries: int = 3) -> List[str]:
         """
         Başarısız indirmeleri yeniden dene
         """
@@ -562,102 +425,27 @@ class AFADDataProvider(IDataProvider):
         İç içe zip dosyalarını çıkar
         """
         extracted_files = []
-        
+
         try:
             with zipfile.ZipFile(zip_path, 'r') as nested_zip:
                 nested_files = nested_zip.namelist()
-                
+
                 for nested_file in nested_files:
                     try:
-                        nested_target_path = os.path.join(target_dir, nested_file)
-                        
+                        nested_target_path = os.path.join(target_dir,
+                                                          nested_file)
+
                         # İç zip'teki dosyayı çıkar
                         with open(nested_target_path, 'wb') as f:
                             f.write(nested_zip.read(nested_file))
-                        
+
                         extracted_files.append(nested_target_path)
-                        
+
                     except Exception as e:
                         print(f"❌ İç zip dosyası {nested_file} işlenirken hata: {e}")
                         continue
-                        
+
         except Exception as e:
             print(f"❌ İç zip açma hatası: {e}")
-        
+
         return extracted_files
-
-
-class FDSNProvider(IDataProvider):
-    def __init__(self, name="IRIS", base_url=None, timeout=15):
-        self._name = name
-        self._client = Client(base_url or name, timeout=timeout)
-
-    def get_name(self):
-        return self._name
-
-    def map_criteria(self, criteria):
-        # örnek: senin SearchCriteria {start_time, end_time, lat, lon, mag_min, mag_max} gibi
-        return {
-            "starttime": UTCDateTime(criteria.start_date),
-            "endtime": UTCDateTime(criteria.end_date),
-            "minmagnitude": criteria.min_magnitude,
-            "maxmagnitude": criteria.max_magnitude,
-            "latitude": criteria.min_latitude,
-            "longitude": criteria.min_longitude,
-            # "maxradius": criteria.max_radius_deg,
-        }
-
-    async def fetch_data_async(self, criteria):
-        try:
-            mapped = self.map_criteria(criteria)
-            loop = asyncio.get_running_loop()
-            # ObsPy bloklama yaptığı için thread pool'a atıyoruz
-            catalog = await loop.run_in_executor(None, lambda: self._client.get_events(**mapped))
-            
-            # Catalog → DataFrame dönüştür
-            records = []
-            for event in catalog:
-                origin = event.origins[0]
-                mag = event.magnitudes[0]
-                records.append({
-                    "EQID": event.resource_id.id,
-                    "TIME": origin.time.datetime,
-                    "LAT": origin.latitude,
-                    "LON": origin.longitude,
-                    "DEPTH(km)": origin.depth / 1000.0 if origin.depth else None,
-                    "MAGNITUDE": mag.mag,
-                    "RJB(km)": None,   # burada station data gerekirse eklenebilir
-                    "SCORE": None      # strateji hesaplayacak
-                })
-
-            df = pd.DataFrame(records)
-            return Result.ok(df)
-        except Exception as e:
-            return Result.fail(e)
-
-
-class USGSProvider(FDSNProvider):
-    def __init__(self, timeout=15):
-        super().__init__(name="USGS", base_url="USGS", timeout=timeout)
-
-        
-class ProviderFactory:
-    """Provider factory sınıfı"""
-    
-    @staticmethod
-    def create_provider(provider_type: ProviderName, **kwargs) -> IDataProvider:
-        # mapper = ColumnMapperFactory.get_mapper(provider_type)
-        mapper = ColumnMapperFactory.create_mapper(provider_type,**kwargs)
-        
-        if provider_type == ProviderName.AFAD:
-            return AFADDataProvider(column_mapper=mapper)
-        elif provider_type == ProviderName.PEER:
-            return PeerWest2Provider(column_mapper=mapper, **kwargs)#file_path = data\NGA-West2_flatfile.csv
-        elif provider_type == ProviderName.FDSN:
-            return FDSNProvider(**kwargs)
-        elif provider_type == ProviderName.USGS:
-            return USGSProvider(**kwargs)
-        else:
-            raise ValueError(f"Unknown provider: {provider_type}")
-
-

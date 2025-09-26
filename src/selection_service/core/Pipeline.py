@@ -3,176 +3,20 @@ from dataclasses import dataclass, field
 import time
 from typing import Any, Callable, Dict, List, Optional
 import pandas as pd
-from ..providers.Providers import IDataProvider
-from ..processing.Selection import ISelectionStrategy, SearchCriteria, TargetParameters
-from ..core.ErrorHandle import NoDataError, PipelineError, ProviderError, StrategyError
-from ..processing.ResultHandle import Result, async_result_decorator, result_decorator
+
+from ..enums.Enums import ProviderName
+from ..providers.IProvider import IDataProvider
+from ..processing.Selection import (ISelectionStrategy,
+                                    SearchCriteria,
+                                    TargetParameters)
+from ..core.ErrorHandle import (NoDataError,
+                                PipelineError,
+                                ProviderError,
+                                StrategyError)
+from ..processing.ResultHandle import (Result,
+                                       async_result_decorator,
+                                       result_decorator)
 import logging
-
-'''
-class EarthquakePipeline:
-    """Ana deprem pipeline motoru(stateless)"""
-    
-    def __init__(self):
-        self.providers: Dict[str, IDataProvider] = {}
-        self.strategies: Dict[str, ISelectionStrategy] = {}
-        self.current_strategy: Optional[ISelectionStrategy] = None
-    
-    def add_provider(self, provider: IDataProvider) -> None:
-        """Veri sağlayıcı ekle"""
-        self.providers[provider.get_name()] = provider
-    
-    def add_strategy(self, strategy: ISelectionStrategy) -> None:
-        """Seçim stratejisi ekle"""
-        self.strategies[strategy.get_name()] = strategy
-    
-    def set_strategy(self, strategy_name: str) -> None:
-        """Aktif stratejiyi ayarla"""
-        if strategy_name in self.strategies:
-            self.current_strategy = self.strategies[strategy_name]
-        else:
-            raise ValueError(f"Strategy {strategy_name} not found")
-    
-    async def execute_async(self, search_criteria: SearchCriteria, 
-                     target_params: TargetParameters) -> Dict[str, Any]:
-        """
-        Pipeline'ı çalıştır
-        """
-        print("[INFO] Earthquake pipeline starting...")
-
-        # Validasyon
-        try:
-            search_criteria.validate()
-            target_params.validate()
-            print("✅ Validation passed")
-        except ValidationError as e:
-            return {'status': 'error', 'message': str(e)}
-        
-        # 1. Tüm sağlayıcılardan verileri paralel getir
-        tasks = []
-        for provider in self.providers.values():
-            crit = search_criteria.__dict__
-            if provider.get_name() == ProviderName.AFAD:
-                crit = search_criteria.to_afad_params()
-            if provider.get_name() == ProviderName.PEER:
-                crit = search_criteria.to_peer_params()
-            tasks.append(provider.fetch_data_async(criteria=crit))
-        
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        # 2. Verileri birleştir ve temizle
-        combined_df = self._combine_data(results)
-        
-        if combined_df.empty:
-            return {'status': 'error', 'message': 'No data found'}
-        
-        print(f"[INFO] Retrieved {len(combined_df)} records from {len(self.providers)} providers")
-        
-        # 3. Seçim stratejisini uygula
-        if not self.current_strategy:
-            raise ValueError("No selection strategy set")
-        
-        selected_df, scored_df = self.current_strategy.select_and_score(
-            combined_df, target_params.__dict__
-        )
-        
-        # 4. Sonuç raporu oluştur
-        report = self._generate_report(selected_df= selected_df, scored_df= scored_df, search_criteria= search_criteria, target_params= target_params)
-
-        print("[OK] Pipeline execution completed")
-        if report['status'] == 'success':
-            print(f"[OK] Success! Selected {report['selected_count']} records")
-            print(f"[INFO] Average score: {pd.DataFrame(report['records'])['SCORE'].mean():.1f}")
-            
-        return selected_df
-
-    def execute_sync(self, search_criteria: SearchCriteria,
-                    target_params: TargetParameters) -> pd.DataFrame:
-        """Pipeline'ı senkron olarak çalıştır"""
-        print("[INFO] Earthquake pipeline starting (sync)...")
-        
-        # Validasyon
-        try:
-            search_criteria.validate()
-            target_params.validate()
-            print("[OK] Validation passed")
-        except ValidationError as e:
-            print(f"[ERROR] Validation error: {e}")
-            return pd.DataFrame()
-        
-        # 1. Tüm sağlayıcılardan verileri getir
-        results = []
-        for provider in self.providers.values():
-            crit = search_criteria.__dict__
-            if provider.get_name() == ProviderName.AFAD:
-                crit = search_criteria.to_afad_params()
-            if provider.get_name() == ProviderName.PEER:
-                crit = search_criteria.to_peer_params()
-            results.append(provider.fetch_data_sync(criteria=crit))
-        
-        # 2. Verileri birleştir
-        combined_df = self._combine_data(results)
-        
-        if combined_df.empty:
-            print("[ERROR] No data found from any provider")
-            return pd.DataFrame()
-        
-        print(f"Retrieved {len(combined_df)} records from {len(self.providers)} providers")
-        
-        # 3. Seçim stratejisini uygula
-        if not self.current_strategy:
-            raise ValueError("No selection strategy set")
-        
-        selected_df, scored_df = self.current_strategy.select_and_score(
-            combined_df, target_params.__dict__
-        )
-        report = self._generate_report(selected_df= selected_df, scored_df= scored_df, search_criteria= search_criteria, target_params= target_params)
-
-        print("[OK] Pipeline execution completed")
-        if report['status'] == 'success':
-            print(f"[OK] Success! Selected {report['selected_count']} records")
-            print(f"Average score: {pd.DataFrame(report['records'])['SCORE'].mean():.1f}")
-                    
-        return selected_df
-    
-    def _combine_data(self, dataframes: List[pd.DataFrame]) -> pd.DataFrame:
-        """Verileri birleştir ve eksik verileri doldur"""
-        valid_dfs = [df.fillna(0).infer_objects(copy=False)
-                        for df in dataframes 
-                            if isinstance(df, pd.DataFrame) and not df.empty]
-        
-        if not valid_dfs:
-            return pd.DataFrame()
-        
-        combined_df = pd.concat(valid_dfs, ignore_index=True)
-        # combined_df = combined_df.drop_duplicates(subset=['EVENT', 'STATION'], keep='first')
-        # combined_df = combined_df.dropna(subset=['MAGNITUDE', 'RJB'])
-        
-        return combined_df
-    
-    def _generate_report(self, selected_df: pd.DataFrame, scored_df: pd.DataFrame,
-                        search_criteria: SearchCriteria, target_params: TargetParameters) -> Dict[str, Any]:
-        """Detaylı rapor oluştur"""
-        if selected_df.empty:
-            return {'status': 'warning', 'message': 'No records selected'}
-        
-        return {
-            'status': 'success',
-            'search_criteria': search_criteria.__dict__,
-            'target_parameters': target_params.__dict__,
-            'selected_count': len(selected_df),
-            'total_considered': len(scored_df),
-            'strategy': self.current_strategy.get_name(),
-            'providers': list(self.providers.keys()),
-            'records': selected_df.to_dict('records'),
-            'statistics': {
-                'magnitude_range': (selected_df['MAGNITUDE'].min(), selected_df['MAGNITUDE'].max()),
-                'distance_range': (selected_df['RJB(km)'].min(), selected_df['RJB(km)'].max()),
-                'score_range': (selected_df['SCORE'].min(), selected_df['SCORE'].max())
-            }
-        }
-
-'''
 
 logger = logging.getLogger(__name__)
 
@@ -189,7 +33,7 @@ class PipelineResult:
 
 @dataclass
 class PipelineContext:
-    providers       : List[IDataProvider]
+    providers       : List[ProviderName]
     strategy        : ISelectionStrategy
     search_criteria : SearchCriteria
     target_params   : TargetParameters
@@ -201,15 +45,21 @@ class PipelineContext:
     logs            : List[str]              = field(default_factory=list)
     start_time      : float                  = field(default_factory=time.time)
 
+
 class EarthquakePipeline:
     """Ana pipeline engine (stateless) with Result Pattern"""
 
-    # ASENKRON metodlar   
-    async def execute_async(self, providers: List[IDataProvider], strategy: ISelectionStrategy,
-                            search_criteria: SearchCriteria, target_params: TargetParameters) -> Result[PipelineResult, PipelineError]:
+    # ASENKRON metodlar
+    async def execute_async(self,
+                            providerNames: List[ProviderName],
+                            strategy: ISelectionStrategy,
+                            search_criteria: SearchCriteria,
+                            target_params: TargetParameters) -> Result[PipelineResult, PipelineError]:
         """Asenkron pipeline çalıştır"""
-        logger.info(f"Pipeline (async) running: strategy={strategy.get_name()}, providers={len(providers)}")
+        # TODO IDataProvider listesi yerine ProviderName listesi alınıp providerfactory ile oluşturulmalı.
         
+        # logger.info(f"Pipeline (async) running: strategy={strategy.get_name()}, providers={len(providers)}")
+        providers = []
         context = PipelineContext(
             providers=providers,
             strategy=strategy,
@@ -220,7 +70,7 @@ class EarthquakePipeline:
 
     async def _execute_pipeline_async(self, context: PipelineContext) -> Result[PipelineResult, PipelineError]:
         """Railway oriented pipeline execution"""
-        
+
         # Define the processing pipeline
         result = await self._compose_async(
             self._validate_inputs_async,
@@ -229,7 +79,7 @@ class EarthquakePipeline:
             self._apply_strategy,
             self._generate_final_result
         )(context)
-        
+
         return result
 
     def _compose_async(self, *funcs: Callable) -> Callable:
@@ -251,16 +101,18 @@ class EarthquakePipeline:
         return composed
 
     @async_result_decorator
-    async def _validate_inputs_async(self, context: PipelineContext) -> PipelineContext:
+    async def _validate_inputs_async(self,
+                                     context: PipelineContext) -> PipelineContext:
         """Validate inputs"""
         context.search_criteria.validate()
         context.target_params.validate()
         return context
 
     @async_result_decorator
-    async def _fetch_data_async(self, context: PipelineContext) -> PipelineContext:
+    async def _fetch_data_async(self,
+                                context: PipelineContext) -> PipelineContext:
         """Fetch data from all providers asynchronously"""
-        
+
         async def fetch_single_provider(provider: IDataProvider) -> Result[pd.DataFrame, ProviderError]:
             try:
                 crit = provider.map_criteria(context.search_criteria)
@@ -268,11 +120,11 @@ class EarthquakePipeline:
                 return data
             except Exception as e:
                 return Result.fail(ProviderError(provider.get_name(), e))
-        
+
         # Fetch data from all providers concurrently
         tasks = [fetch_single_provider(provider) for provider in context.providers]
         results = await asyncio.gather(*tasks)
-        
+
         # Process results
         successful_data = []        
         for result in results:
@@ -282,21 +134,22 @@ class EarthquakePipeline:
             else:
                 context.failed_providers.append(result.error.provider_name)
                 context.logs.append(f"[ERROR] {result.error}")
-                
+
         if not successful_data:
             raise NoDataError("No data received from any provider")
-        
+
         context.data = successful_data
         return context
 
-
     # SENKRON metodlar
-    def execute_sync(self, providers: List[IDataProvider], strategy: ISelectionStrategy,
-                     search_criteria: SearchCriteria, target_params: TargetParameters) -> Result[PipelineResult, PipelineError]:
+    def execute_sync(self, providers: List[IDataProvider],
+                     strategy: ISelectionStrategy,
+                     search_criteria: SearchCriteria,
+                     target_params: TargetParameters) -> Result[PipelineResult, PipelineError]:
         """Senkron pipeline çalıştır"""
-        
+    
         logger.info(f"Pipeline (sync) running: strategy={strategy.get_name()}, providers={len(providers)}")
-        
+    
         context = PipelineContext(
             providers=providers,
             strategy=strategy,
@@ -314,20 +167,20 @@ class EarthquakePipeline:
             self._apply_strategy,
             self._generate_final_result
         )(context)
-        
+
         return result
-   
+
     def _compose_sync(self, *funcs: Callable) -> Callable:
         """Compose sync functions in railway pattern"""
         def composed(input: PipelineContext) -> Result[PipelineResult, PipelineError]:
             current_result = Result.ok(input)
-            
+
             for func in funcs:
                 if current_result.success:
                     current_result = func(current_result.value)
                 else:
                     break
-            
+
             return current_result
         return composed
 
@@ -337,36 +190,36 @@ class EarthquakePipeline:
         context.search_criteria.validate()
         context.target_params.validate()
         return context
-    
+
     @result_decorator
     def _fetch_data_sync(self, context: PipelineContext) -> PipelineContext:
         """Fetch data from all providers synchronously"""
         results = []
-        
+
         for provider in context.providers:
             try:
                 crit = provider.map_criteria(context.search_criteria)
                 result = provider.fetch_data_sync(criteria=crit)
-                
+
                 if result.success:
                     results.append(result.value)
                     context.logs.append(f"[OK] {provider.get_name()} success")
                 else:
                     context.failed_providers.append(provider.get_name())
                     context.logs.append(f"[ERROR] {provider.get_name()}: {result.error}")
-                    
+
             except Exception as e:
                 context.failed_providers.append(provider.get_name())
                 context.logs.append(f"[ERROR] {provider.get_name()}: {e}")
-        
+
         if not results:
             raise NoDataError("No data received from any provider")
-        
+
         context.data = results
         return context
 
-
     # ORTAK metodlar (hem sync hem async için)
+
     @result_decorator
     def _combine_data(self, context: PipelineContext) -> PipelineContext:
         """Combine data from multiple providers"""
@@ -461,17 +314,24 @@ class EarthquakePipeline:
             }
         }
 
+
 class EarthquakeAPI:
     """Dışa açılan facade with Result Pattern"""
 
-    def __init__(self, providers: List[IDataProvider], strategies: List[ISelectionStrategy], search_criteria: SearchCriteria, target_params: TargetParameters):
+    def __init__(self, providers: List[IDataProvider],
+                 strategies: List[ISelectionStrategy],
+                 search_criteria: SearchCriteria,
+                 target_params: TargetParameters):
         self.providers = providers
         self.strategies = {s.get_name(): s for s in strategies}
         self.pipeline = EarthquakePipeline()
         self.search_criteria = search_criteria
         self.target_params = target_params
 
-    def run_sync(self, criteria: SearchCriteria, target: TargetParameters, strategy_name: str) -> Result[PipelineResult, PipelineError]:
+    def run_sync(self,
+                 criteria: SearchCriteria,
+                 target: TargetParameters,
+                 strategy_name: str) -> Result[PipelineResult, PipelineError]:
         """Senkron çalıştırma with Result pattern"""
         strategy_result = self._get_strategy(strategy_name)
         if not strategy_result.success:
@@ -479,7 +339,10 @@ class EarthquakeAPI:
         
         return self.pipeline.execute_sync(self.providers, strategy_result.value, criteria, target)
 
-    async def run_async(self, criteria: SearchCriteria, target: TargetParameters, strategy_name: str) -> Result[PipelineResult, PipelineError]:
+    async def run_async(self,
+                        criteria: SearchCriteria,
+                        target: TargetParameters,
+                        strategy_name: str) -> Result[PipelineResult, PipelineError]:
         """
         Asynchronously executes the pipeline using the specified strategy, search criteria, and target parameters.
         Args:
@@ -497,17 +360,25 @@ class EarthquakeAPI:
         strategy_result = self._get_strategy(strategy_name)
         if not strategy_result.success:
             return strategy_result
-        
-        return await self.pipeline.execute_async(self.providers, strategy_result.value, criteria, target)
 
-    def _get_strategy(self, name: str) -> Result[ISelectionStrategy, ValueError]:
+        return await self.pipeline.execute_async(self.providers,
+                                                 strategy_result.value,
+                                                 criteria,
+                                                 target)
+
+    def _get_strategy(self,
+                      name: str) -> Result[ISelectionStrategy, ValueError]:
         """Get strategy with Result pattern"""
         if name not in self.strategies:
             return Result.fail(ValueError(f"Strategy {name} not found"))
         return Result.ok(self.strategies[name])
 
 
-async def get_selected_earthquake(criteria: SearchCriteria, target: TargetParameters, providers: List[IDataProvider], strategies: List[ISelectionStrategy],async_mode: bool=False) -> pd.DataFrame:
+async def get_selected_earthquake(criteria: SearchCriteria,
+                                  target: TargetParameters,
+                                  providers: List[IDataProvider],
+                                  strategies: List[ISelectionStrategy],
+                                  async_mode: bool = False) -> pd.DataFrame:
     api = EarthquakeAPI(providers=providers, strategies=strategies, search_criteria=criteria, target_params=target)
     strategy_name = strategies[0].get_name() if strategies else ""
     if async_mode:

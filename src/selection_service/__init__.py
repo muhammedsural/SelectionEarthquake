@@ -19,7 +19,8 @@ from .core.Config import SCORE_RANGES_AND_WEIGHTS
 from .core.Pipeline import EarthquakePipeline, EarthquakeAPI
 
 # --- Providers ---
-from .providers.Providers import ProviderFactory, IDataProvider
+from .providers.IProvider import IDataProvider
+from .providers.ProvidersFactory import ProviderFactory
 
 # --- Processing ---
 from .processing.Selection import (

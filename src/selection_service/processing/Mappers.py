@@ -3,29 +3,38 @@ from math import atan2, cos, radians, sin, sqrt
 from typing import Dict, Protocol, Type
 import pandas as pd
 from ..enums.Enums import ProviderName
-from ..core.Config import STANDARD_COLUMNS,MECHANISM_MAP
+from ..core.Config import STANDARD_COLUMNS, MECHANISM_MAP
 
 
 class IColumnMapper(Protocol):
     """Kolon eşleme interface'i"""
     
     def map_columns(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Kolonları standart formata eşle"""
+        """
+        Maps the columns of the given DataFrame to a standardized format.
+
+        Args:
+            df (pd.DataFrame): The input DataFrame whose columns need to be mapped.
+
+        Returns:
+            pd.DataFrame: A DataFrame with columns mapped to the standard format.
+        """
         pass
+
 
 class BaseColumnMapper(IColumnMapper, ABC):
     """Temel kolon eşleyici sınıfı"""
-    
-    def __init__(self,column_mappings: Dict[str, str], **kwargs):
+
+    def __init__(self, column_mappings: Dict[str, str], **kwargs):
         #
-        self.column_mappings =column_mappings
-    
+        self.column_mappings = column_mappings
+
     def map_columns(self, df: pd.DataFrame) -> pd.DataFrame:
         """Temel eşleme işlemi"""
         df = df.copy()
         df = df.rename(columns=self.column_mappings)
         return self._ensure_standard_columns(df)
-    
+
     def _ensure_standard_columns(self, df: pd.DataFrame) -> pd.DataFrame:
         """Eksik standart kolonları ekle"""
         for col in STANDARD_COLUMNS:
@@ -34,6 +43,8 @@ class BaseColumnMapper(IColumnMapper, ABC):
         return df[STANDARD_COLUMNS]
 
 # ==================== PROVIDER-SPECIFIC MAPPERS ====================
+
+
 class AFADColumnMapper(BaseColumnMapper):
     """AFAD kolon eşleyici"""
     
@@ -160,9 +171,9 @@ class AFADColumnMapper(BaseColumnMapper):
             # df = df.drop(columns=t90_cols, errors='ignore')
         
         return df
-    
+
     # ------- STATION UTILITY FUNCTIONS ------------
-    def _haversine(self,lat1, lon1, lat2, lon2):
+    def _haversine(self, lat1, lon1, lat2, lon2):
         """
         İki nokta arasındaki mesafeyi km cinsinden döndürür (Haversine formülü).
         """
@@ -178,7 +189,8 @@ class AFADColumnMapper(BaseColumnMapper):
         return R * c
 
     # AFADDataProvider'da istasyon eşleme iyileştirmesi
-    def _build_station_info_df(self, file_path: str, max_distance_km: float = 30.0) -> pd.DataFrame:
+    def _build_station_info_df(self, file_path: str,
+                               max_distance_km: float = 30.0) -> pd.DataFrame:
         """Daha hızlı istasyon bilgisi yükleme"""
         try:
             df = pd.read_excel(file_path)
@@ -210,8 +222,8 @@ class AFADColumnMapper(BaseColumnMapper):
             return pd.DataFrame()    
 
     # ------- FAULT UTILITY FUNCTIONS ------------
-    
-    def _classify_fault_type(self,dip: float, rake: float) -> str:
+
+    def _classify_fault_type(self, dip: float, rake: float) -> str:
         """
         Strike, dip ve rake değerlerine göre fay türünü sınıflandırır.
         Basit kurallar: 
@@ -245,7 +257,7 @@ class AFADColumnMapper(BaseColumnMapper):
         else:
             return MECHANISM_MAP[5]
 
-    def _classify_fault_planes(self,dip1, rake1, dip2, rake2) -> str:
+    def _classify_fault_planes(self, dip1, rake1, dip2, rake2) -> str:
         """
         İki fay düzlemi için sınıflandırma yapar.
         Eğer aynı türse tek değer, farklı türse birleştirilmiş değer döner.
@@ -254,6 +266,7 @@ class AFADColumnMapper(BaseColumnMapper):
         f2 = self._classify_fault_type(dip2, rake2)
 
         return f1 if f1 == f2 else f"{f1}-{f2}"
+
 
 class PEERColumnMapper(BaseColumnMapper):
     """PEER kolon eşleyici"""
@@ -307,6 +320,48 @@ class PEERColumnMapper(BaseColumnMapper):
 
  # ==================== MAPPER FACTORY ====================
 
+
+class FDSNColumnMapper(BaseColumnMapper):
+    """FDSN kolon eşleyici"""
+
+    def __init__(self, **kwargs):
+        mappings = {
+            # FDSN spesifik kolon eşlemeleri buraya eklenebilir
+            "Record Sequence Number"                    : "RSN",
+            "Earthquake Name"                           : "EVENT",
+            "YEAR"                                      : "YEAR", 
+            "Earthquake Magnitude"                      : "MAGNITUDE",
+            "Magnitude Type"                            : "MAGNITUDE_TYPE",
+            "Station Name"                              : "STATION",
+            "Station Sequence Number"                   : "SSN",
+            "Station ID  No."                           : "STATION_ID",
+            "Station Latitude"                          : "STATIN_LAT",
+            "Station Longitude"                         : "STATIN_LON",
+            "Vs30 (m/s) selected for analysis"          : "VS30(m/s)",
+            "Strike (deg)"                              : "STRIKE1",
+            "Dip (deg)"                                 : "DIP1",
+            "Rake Angle (deg)"                          : "RAKE1",
+            "Mechanism Based on Rake Angle"             : "MECHANISM",
+            "EpiD (km)"                                 : "EPICENTER_DEPTH(km)",
+            "HypD (km)"                                 : "HYPOCENTER_DEPTH(km)",
+            "Joyner-Boore Dist. (km)"                   : "RJB(km)",
+            "ClstD (km)"                                : "RRUP(km)",
+            "Hypocenter Latitude (deg)"                 : "HYPO_LAT",
+            "Hypocenter Longitude (deg)"                : "HYPO_LON",
+            "Hypocenter Depth (km)"                     : "HYPO_DEPTH(km)",
+            "Lowest Usable Freq - Ave. Component (Hz)"  : "LOWFREQ(Hz)",
+            "File Name (Horizontal 1)"                  : "FILE_NAME_H1",
+            "File Name (Horizontal 2)"                  : "FILE_NAME_H2",
+            "File Name (Vertical)"                      : "FILE_NAME_V",
+            "PGA(g)"                                    : "PGA(cm2/sec)",
+            "PGV (cm/sec)"                              : "PGV(cm/sec)",
+            "PGD (cm)"                                  : "PGD(cm)",
+            "5-95%Duration(sec)"                        : "T90(sec)", 
+            "AriasIntensity(m/sec)"                     : "ARIAS_INTENSITY(m/sec)"
+        }
+        super().__init__(mappings)
+
+
 class ColumnMapperFactory:
     """Kolon eşleyici factory sınıfı"""
     
@@ -337,5 +392,3 @@ class ColumnMapperFactory:
             return PEERColumnMapper(**kwargs)
         else:
             return BaseColumnMapper(column_mappings={}, **kwargs)
-        
-        
