@@ -1,9 +1,11 @@
 import pandas as pd
 
+# TODO Ranges and weights should be configurable from outside (e.g., a config file) maybe enums or something else
+# Ranges are defined as (min, max) tuples for each quality level
 SCORE_RANGES_AND_WEIGHTS = {
                             'ranges': {
                                 'magnitude' : {'very_good': (0.95, 1.05), 'good': (0.9, 1.1), 'acceptable': (0.85, 1.15)},
-                                'distance'  : {'very_good': (0.85, 1.15)  , 'good': (0.8, 1.2), 'acceptable': (0.75, 1.25)},
+                                'distance'  : {'very_good': (0.85, 1.15), 'good': (0.8, 1.2), 'acceptable': (0.75, 1.25)},
                                 'vs30'      : {'very_good': (0.9, 1.1)  , 'good': (0.8, 1.2), 'acceptable': (0.7, 1.3)},
                                 'pga'       : {'very_good': (0.9, 1.1)  , 'good': (0.8, 1.2), 'acceptable': (0.7, 1.3)},
                                 'pgv'       : {'very_good': (0.9, 1.1)  , 'good': (0.8, 1.2), 'acceptable': (0.7, 1.3)},

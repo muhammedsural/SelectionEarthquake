@@ -4,6 +4,8 @@ import time
 from typing import Any, Callable, Dict, List, Optional
 import pandas as pd
 
+from ..providers.ProvidersFactory import ProviderFactory
+
 from ..enums.Enums import ProviderName
 from ..providers.IProvider import IDataProvider
 from ..processing.Selection import (ISelectionStrategy,
@@ -33,7 +35,7 @@ class PipelineResult:
 
 @dataclass
 class PipelineContext:
-    providers       : List[ProviderName]
+    providers       : List[IDataProvider]
     strategy        : ISelectionStrategy
     search_criteria : SearchCriteria
     target_params   : TargetParameters
@@ -47,19 +49,17 @@ class PipelineContext:
 
 
 class EarthquakePipeline:
-    """Ana pipeline engine (stateless) with Result Pattern"""
+    """Main pipeline engine (stateless) with Result Pattern"""
 
-    # ASENKRON metodlar
+    # ASENKRON methods
     async def execute_async(self,
-                            providerNames: List[ProviderName],
+                            providers: List[IDataProvider],
                             strategy: ISelectionStrategy,
                             search_criteria: SearchCriteria,
                             target_params: TargetParameters) -> Result[PipelineResult, PipelineError]:
         """Asenkron pipeline çalıştır"""
-        # TODO IDataProvider listesi yerine ProviderName listesi alınıp providerfactory ile oluşturulmalı.
-        
+       
         # logger.info(f"Pipeline (async) running: strategy={strategy.get_name()}, providers={len(providers)}")
-        providers = []
         context = PipelineContext(
             providers=providers,
             strategy=strategy,
@@ -318,11 +318,13 @@ class EarthquakePipeline:
 class EarthquakeAPI:
     """Dışa açılan facade with Result Pattern"""
 
-    def __init__(self, providers: List[IDataProvider],
+    def __init__(self, 
+                 providerNames: List[ProviderName],
                  strategies: List[ISelectionStrategy],
                  search_criteria: SearchCriteria,
                  target_params: TargetParameters):
-        self.providers = providers
+        self.providerFactory = ProviderFactory()
+        self.providers = [self.providerFactory.create_provider(provider_type=name) for name in providerNames]
         self.strategies = {s.get_name(): s for s in strategies}
         self.pipeline = EarthquakePipeline()
         self.search_criteria = search_criteria

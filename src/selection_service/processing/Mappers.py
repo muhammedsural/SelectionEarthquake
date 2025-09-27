@@ -87,7 +87,7 @@ class AFADColumnMapper(BaseColumnMapper):
             # "stationId"                 :      "SSN"           , 
             
         super().__init__(mappings)
-        self.station_file_path = kwargs.get('station_file_path',"data\\stations.xlsx")
+        self.station_file_path = kwargs.get('station_file_path',"..\\data\\stations.xlsx")
         self.station_df = self._build_station_info_df(self.station_file_path)
     
     def map_columns(self, df: pd.DataFrame) -> pd.DataFrame:
