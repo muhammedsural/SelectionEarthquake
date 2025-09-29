@@ -59,7 +59,7 @@ class EarthquakePipeline:
                             target_params: TargetParameters) -> Result[PipelineResult, PipelineError]:
         """Asenkron pipeline çalıştır"""
        
-        # logger.info(f"Pipeline (async) running: strategy={strategy.get_name()}, providers={len(providers)}")
+        logger.info(f"Pipeline (async) running: strategy={strategy.get_name()}, providers={len(providers)}")
         context = PipelineContext(
             providers=providers,
             strategy=strategy,
@@ -320,15 +320,11 @@ class EarthquakeAPI:
 
     def __init__(self, 
                  providerNames: List[ProviderName],
-                 strategies: List[ISelectionStrategy],
-                 search_criteria: SearchCriteria,
-                 target_params: TargetParameters):
+                 strategies: List[ISelectionStrategy]):
         self.providerFactory = ProviderFactory()
         self.providers = [self.providerFactory.create_provider(provider_type=name) for name in providerNames]
         self.strategies = {s.get_name(): s for s in strategies}
         self.pipeline = EarthquakePipeline()
-        self.search_criteria = search_criteria
-        self.target_params = target_params
 
     def run_sync(self,
                  criteria: SearchCriteria,
@@ -375,19 +371,3 @@ class EarthquakeAPI:
             return Result.fail(ValueError(f"Strategy {name} not found"))
         return Result.ok(self.strategies[name])
 
-
-async def get_selected_earthquake(criteria: SearchCriteria,
-                                  target: TargetParameters,
-                                  providers: List[IDataProvider],
-                                  strategies: List[ISelectionStrategy],
-                                  async_mode: bool = False) -> pd.DataFrame:
-    api = EarthquakeAPI(providers=providers, strategies=strategies, search_criteria=criteria, target_params=target)
-    strategy_name = strategies[0].get_name() if strategies else ""
-    if async_mode:
-        result = await api.run_async(criteria, target, strategy_name)
-    else:
-        result = api.run_sync(criteria, target, strategy_name)
-    if result.success:
-        return result.value.selected_df
-    else:
-        raise result.error

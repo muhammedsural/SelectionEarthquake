@@ -16,7 +16,7 @@ class PeerWest2Provider(IDataProvider):
     """PEER NGA-West2 veri sağlayıcı"""
 
     def __init__(self, column_mapper: Type[IColumnMapper], **kwargs):
-        self.file_path = kwargs.get("file_path", "..\\data\\NGA-West2_flatfile.csv")
+        self.file_path = kwargs.get("file_path", "data\\NGA-West2_flatfile.csv")
         self.column_mapper = column_mapper
         self.name = ProviderName.PEER.value
         self.flatfile_df = pd.read_csv(self.file_path)
