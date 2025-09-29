@@ -73,5 +73,5 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
-          flags=auto-targeted
+          flags: auto-targeted
           name: codecov-auto
