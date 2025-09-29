@@ -25,8 +25,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-asyncio pytest-cov
+          pip install .[dev]
 
       - name: Get changed Python files
         id: changed
@@ -67,11 +66,11 @@ jobs:
         if: steps.map-tests.outputs.test_files == ''
         run: echo "No relevant tests found. Skipping."
 
-      - name: Upload coverage to Codecov (optional)
-        if: steps.map-tests.outputs.test_files != ''
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.xml
-          flags: auto-targeted
-          name: codecov-auto
+      # - name: Upload coverage to Codecov (optional)
+      #   if: steps.map-tests.outputs.test_files != ''
+      #   uses: codecov/codecov-action@v4
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+      #     files: ./coverage.xml
+      #     flags: auto-targeted
+      #     name: codecov-auto
