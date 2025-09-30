@@ -1,4 +1,4 @@
-name: Python Auto Tests on Changed Files
+name: Python Tests
 
 on:
   pull_request:
@@ -7,11 +7,11 @@ on:
     branches: [ main, master ]
 
 jobs:
-  test-auto:
+  tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.11]
+        python-version: [3.10, 3.11, 3.12, 3.13]
 
     steps:
       - name: Checkout repository
@@ -27,50 +27,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install .[dev]
 
-      - name: Get changed Python files
-        id: changed
+      - name: Run tests with coverage
         run: |
-          echo "::group::Detecting changed Python files"
-          CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.py$' || true)
-          echo "Changed Python files: $CHANGED"
-          echo "changed_files=$CHANGED" >> $GITHUB_OUTPUT
-          echo "::endgroup::"
-
-      - name: Map changed source files to tests
-        id: map-tests
-        run: |
-          echo "::group::Mapping changed files to test files"
-          TEST_FILES=""
-          for f in ${{ steps.changed.outputs.changed_files }}; do
-            # src/selection_service/... -> tests/... olarak map
-            TEST_FILE=${f/src\/selection_service/tests/test}
-            TEST_FILE=${TEST_FILE/.py/.py}
-            if [ -f "$TEST_FILE" ]; then
-              TEST_FILES="$TEST_FILES $TEST_FILE"
-            fi
-          done
-          echo "Mapped test files: $TEST_FILES"
-          echo "test_files=$TEST_FILES" >> $GITHUB_OUTPUT
-          echo "::endgroup::"
-
-      - name: Run targeted tests with automatic async detection
-        if: steps.map-tests.outputs.test_files != ''
-        run: |
-          echo "::group::Running targeted tests"
-          # pytest-asyncio sayesinde async testler otomatik çalışır
-          pytest ${{ steps.map-tests.outputs.test_files }} \
-                 --cov=src/selection_service --cov-report=xml --cov-report=term-missing --disable-warnings
-          echo "::endgroup::"
-
-      - name: Skip tests if no relevant files
-        if: steps.map-tests.outputs.test_files == ''
-        run: echo "No relevant tests found. Skipping."
-
-      # - name: Upload coverage to Codecov (optional)
-      #   if: steps.map-tests.outputs.test_files != ''
-      #   uses: codecov/codecov-action@v4
-      #   with:
-      #     token: ${{ secrets.CODECOV_TOKEN }}
-      #     files: ./coverage.xml
-      #     flags: auto-targeted
-      #     name: codecov-auto
+          pytest --cov=src/selection_service \
+                 --cov-report=xml \
+                 --cov-report=term-missing \
+                 --disable-warnings
