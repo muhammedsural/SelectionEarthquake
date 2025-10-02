@@ -32,7 +32,7 @@ def test_map_criteria(provider):
     assert isinstance(mapped, dict)
 
 
-@patch("src.selection_service.providers.AfadProvider.requests.post")
+@patch("selection_service.providers.AfadProvider.requests.post")
 def test_fetch_data_sync_success(mock_post, provider):
     mock_resp = MagicMock()
     mock_resp.status_code = 200
@@ -46,7 +46,7 @@ def test_fetch_data_sync_success(mock_post, provider):
     assert "PROVIDER" in df.columns
 
 
-@patch("src.selection_service.providers.AfadProvider.requests.post")
+@patch("selection_service.providers.AfadProvider.requests.post")
 def test_fetch_data_sync_failure(mock_post, provider):
     mock_resp = MagicMock()
     mock_resp.status_code = 500
@@ -75,7 +75,7 @@ def test_fetch_data_sync_failure(mock_post, provider):
 #         async def __aexit__(self, exc_type, exc, tb):
 #             return False
 
-#     with patch("src.selection_service.providers.AfadProvider.aiohttp.ClientSession", return_value=DummySession()):
+#     with patch("selection_service.providers.AfadProvider.aiohttp.ClientSession", return_value=DummySession()):
 #         result = await provider.fetch_data_async({"y": 1})
 #         assert isinstance(result, Result)
 #         assert result.success
@@ -92,13 +92,13 @@ async def test_fetch_data_async_failure(provider):
     mock_session = AsyncMock()
     mock_session.post.return_value.__aenter__.return_value = mock_response
 
-    with patch("src.selection_service.providers.AfadProvider.aiohttp.ClientSession", return_value=mock_session):
+    with patch("selection_service.providers.AfadProvider.aiohttp.ClientSession", return_value=mock_session):
         result = await provider.fetch_data_async({"y": 1})
         assert result.success is False
         assert isinstance(result.error, Exception)
 
 
-@patch("src.selection_service.providers.AfadProvider.requests.get")
+@patch("selection_service.providers.AfadProvider.requests.get")
 def test_get_event_details_success(mock_get, provider):
     mock_resp = MagicMock()
     mock_resp.status_code = 200
