@@ -6,9 +6,9 @@ import pandas as pd
 import asyncio
 from unittest.mock import patch, MagicMock, AsyncMock
 from selection_service.processing.ResultHandle import Result
-from src.selection_service.providers.AfadProvider import AFADDataProvider
-from src.selection_service.processing.Selection import SearchCriteria
-from src.selection_service.core.ErrorHandle import NetworkError, ProviderError
+from selection_service.providers.AfadProvider import AFADDataProvider
+from selection_service.processing.Selection import SearchCriteria
+from selection_service.core.ErrorHandle import NetworkError, ProviderError
 
 
 class DummyMapper:
