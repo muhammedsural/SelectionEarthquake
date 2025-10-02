@@ -2,6 +2,8 @@ from abc import ABC
 from math import atan2, cos, radians, sin, sqrt
 from typing import Dict, Protocol, Type
 import pandas as pd
+
+from ..utility.path_utils import load_excel
 from ..enums.Enums import ProviderName
 from ..core.Config import STANDARD_COLUMNS, MECHANISM_MAP
 
@@ -46,11 +48,9 @@ class BaseColumnMapper(IColumnMapper, ABC):
 
 
 class AFADColumnMapper(BaseColumnMapper):
-    """AFAD kolon eşleyici"""
+    """AFAD mapper"""
     
     def __init__(self, **kwargs):
-        # station_file_path: str = "data\\stations.xlsx"
-        
         mappings = {
             "waveformId"                : "RSN"           ,
             "eventId"                   : "EVENT"         ,
@@ -87,8 +87,7 @@ class AFADColumnMapper(BaseColumnMapper):
             # "stationId"                 :      "SSN"           , 
             
         super().__init__(mappings)
-        self.station_file_path = kwargs.get('station_file_path',"..\\data\\stations.xlsx")
-        self.station_df = self._build_station_info_df(self.station_file_path)
+        self.station_df = self._build_station_info_df()
     
     def map_columns(self, df: pd.DataFrame) -> pd.DataFrame:
         """AFAD'a özel ek işlemler"""
@@ -189,11 +188,10 @@ class AFADColumnMapper(BaseColumnMapper):
         return R * c
 
     # AFADDataProvider'da istasyon eşleme iyileştirmesi
-    def _build_station_info_df(self, file_path: str,
-                               max_distance_km: float = 30.0) -> pd.DataFrame:
+    def _build_station_info_df(self, max_distance_km: float = 30.0) -> pd.DataFrame:
         """Daha hızlı istasyon bilgisi yükleme"""
         try:
-            df = pd.read_excel(file_path)
+            df = load_excel("stations.xlsx")
             df["Code"] = df["Code"].astype(str).str.strip()
             
             # Eksik Vs30'ları doldurma - vektörize versiyon
@@ -369,8 +367,6 @@ class ColumnMapperFactory:
         ProviderName.AFAD: AFADColumnMapper,
         ProviderName.PEER: PEERColumnMapper,
         ProviderName.FDSN: BaseColumnMapper,
-        ProviderName.USGS: BaseColumnMapper,
-        ProviderName.ESM: BaseColumnMapper
     }
     
     @classmethod

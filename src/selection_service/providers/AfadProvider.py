@@ -253,17 +253,17 @@ class AFADDataProvider(IDataProvider):
                     }
 
                     # Başarısız dosyaları kontrol et ve yeniden dene
-                    # if len(extracted_files) < len(batch_filenames):
-                    #     failed_files = [f for f in batch_filenames if f not in [os.path.basename(x) for x in extracted_files]]
-                    #     if failed_files:
-                    #         print(f"[ERROR]  {len(failed_files)} dosya çıkarılamadı, yeniden deneniyor...")
-                    #         successful_retries = self.retry_failed_downloads(
-                    #             event_id=event_id,
-                    #             failed_filenames=failed_files,
-                    #             export_type='mseed',
-                    #             file_status=file_status
-                    #         )
-                    #         extracted_files.extend(successful_retries)
+                    if len(extracted_files) < len(batch_filenames):
+                        failed_files = [f for f in batch_filenames if f not in [os.path.basename(x) for x in extracted_files]]
+                        if failed_files:
+                            print(f"[ERROR]  {len(failed_files)} dosya çıkarılamadı, yeniden deneniyor...")
+                            successful_retries = self.retry_failed_downloads(
+                                event_id=event_id,
+                                failed_filenames=failed_files,
+                                export_type='mseed',
+                                file_status=file_status
+                            )
+                            extracted_files.extend(successful_retries)
                     
                     all_results['batches'].append(batch_result)
                     all_results['successful_batches'] += 1
@@ -301,7 +301,7 @@ class AFADDataProvider(IDataProvider):
                 with zipfile.ZipFile(zip_path, 'r') as test_zip:
                     test_zip.testzip()  # Hasarlı dosyaları kontrol et
             except zipfile.BadZipFile:
-                print(f"❌ Hasarlı zip dosyası: {zip_path}")
+                print(f"[ERROR] Hasarlı zip dosyası: {zip_path}")
                 # Hasarlı dosyayı sil ve None döndür (yeniden deneme için)
                 try:
                     os.remove(zip_path)
@@ -349,7 +349,7 @@ class AFADDataProvider(IDataProvider):
                                     extracted_files.append(target_path)
                                     
                     except Exception as e:
-                        print(f"❌ {filename} işlenirken hata: {e}")
+                        print(f"[ERROR] {filename} işlenirken hata: {e}")
                         continue
             
             # Başarılı çıkarma sonrası zip'i temizle
@@ -359,14 +359,14 @@ class AFADDataProvider(IDataProvider):
                 pass
                 
         except zipfile.BadZipFile:
-            print(f"❌ Hasarlı zip dosyası: {zip_path}")
+            print(f"[ERROR] Hasarlı zip dosyası: {zip_path}")
             try:
                 os.remove(zip_path)
             except:
                 pass
             return []
         except Exception as e:
-            print(f"❌ Zip açma hatası: {e}")
+            print(f"[ERROR] Zip açma hatası: {e}")
         
         return extracted_files
 
@@ -410,7 +410,7 @@ class AFADDataProvider(IDataProvider):
                     time.sleep(1)
                     
                 except Exception as e:
-                    print(f"❌ Yeniden deneme hatası: {e}")
+                    print(f"[ERROR] Yeniden deneme hatası: {e}")
             
             if not failed_filenames:
                 break
@@ -442,10 +442,10 @@ class AFADDataProvider(IDataProvider):
                         extracted_files.append(nested_target_path)
 
                     except Exception as e:
-                        print(f"❌ İç zip dosyası {nested_file} işlenirken hata: {e}")
+                        print(f"[ERROR] İç zip dosyası {nested_file} işlenirken hata: {e}")
                         continue
 
         except Exception as e:
-            print(f"❌ İç zip açma hatası: {e}")
+            print(f"[ERROR] İç zip açma hatası: {e}")
 
         return extracted_files

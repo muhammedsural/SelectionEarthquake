@@ -3,6 +3,8 @@ from functools import partial
 from typing import Any, Dict, Type
 import numpy as np
 import pandas as pd
+
+from ..utility.path_utils import load_csv
 from ..enums.Enums import ProviderName
 from ..processing.Mappers import IColumnMapper
 from ..core.Config import convert_mechanism_to_text
@@ -16,10 +18,9 @@ class PeerWest2Provider(IDataProvider):
     """PEER NGA-West2 veri sağlayıcı"""
 
     def __init__(self, column_mapper: Type[IColumnMapper], **kwargs):
-        self.file_path = kwargs.get("file_path", "data\\NGA-West2_flatfile.csv")
         self.column_mapper = column_mapper
         self.name = ProviderName.PEER.value
-        self.flatfile_df = pd.read_csv(self.file_path)
+        self.flatfile_df = load_csv("NGA-West2_flatfile.csv")
         self.mapped_df = None
         self.response_df = None
 
@@ -32,8 +33,7 @@ class PeerWest2Provider(IDataProvider):
         """NGA-West2 verilerini getir"""
         try:
             loop = asyncio.get_event_loop()
-            self.response_df = await loop.run_in_executor(None, pd.read_csv, self.file_path)
-            self.mapped_df = await loop.run_in_executor(None, partial(self.column_mapper.map_columns, self.response_df))
+            self.mapped_df = await loop.run_in_executor(None, partial(self.column_mapper.map_columns, self.flatfile_df.copy()))
             filtered_df = await loop.run_in_executor(None, partial(self._apply_filters, self.mapped_df, criteria))
             filtered_df['PROVIDER'] = str(self.name)
 

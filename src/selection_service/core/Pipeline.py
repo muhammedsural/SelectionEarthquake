@@ -316,7 +316,7 @@ class EarthquakePipeline:
 
 
 class EarthquakeAPI:
-    """Dışa açılan facade with Result Pattern"""
+    """Earthquake API with Result Pattern"""
 
     def __init__(self, 
                  providerNames: List[ProviderName],

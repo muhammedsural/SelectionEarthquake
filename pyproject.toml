@@ -65,6 +65,7 @@ selection_service = [
 
 [tool.setuptools]
 package-dir = {"" = "src"}
+include-package-data = true
 
 [project.urls]
 Homepage = "https://github.com/muhammedsural/SELECTIONEARTHQUAKE"
