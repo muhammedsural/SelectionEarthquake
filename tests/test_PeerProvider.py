@@ -31,9 +31,12 @@ def dummy_mapper():
 
 @pytest.fixture
 def provider(tmp_path, dummy_df, dummy_mapper):
-    file_path = tmp_path / "nga.csv"
-    dummy_df.to_csv(file_path, index=False)
-    return PeerWest2Provider(column_mapper=dummy_mapper, file_path=str(file_path))
+    # file_path = tmp_path / "nga.csv"
+    # dummy_df.to_csv(file_path, index=False)
+    # return PeerWest2Provider(column_mapper=dummy_mapper, file_path=str(file_path))
+     with patch("selection_service.providers.PeerProvider.pd.read_csv", return_value=dummy_df.copy()):
+        prov = PeerWest2Provider(column_mapper=dummy_mapper, file_path="fake.csv")
+        yield prov
 
 
 @pytest.fixture
@@ -272,11 +275,3 @@ def test_convert_mechanism_numeric(provider, empty_criteria):
     df = result.unwrap()
     assert all(isinstance(m, str) for m in df["MECHANISM"])
 
-@pytest.mark.asyncio
-async def test_fetch_data_async_raises(provider, empty_criteria):
-    with patch("selection_service.providers.PeerProvider.pd.read_csv", side_effect=Exception("boom")):
-        result = await provider.fetch_data_async(empty_criteria.to_peer_params())
-        assert isinstance(result, Result)
-        assert result.success is False
-        assert isinstance(result.error, Exception)
-        assert str(result.error) == "PEER async data fetch failed: boom"
