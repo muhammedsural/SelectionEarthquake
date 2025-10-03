@@ -57,9 +57,9 @@ jobs:
   
   publish-to-testpypi:
       name: Publish Python 🐍 distribution 📦 to TestPyPI
-      needs:
-      - build
       runs-on: ubuntu-latest
+      needs: 
+        - test
 
       permissions:
         id-token: write  # IMPORTANT: mandatory for trusted publishing
