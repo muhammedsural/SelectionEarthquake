@@ -1,13 +1,10 @@
 import asyncio
-import logging
-import pandas as pd
 from selection_service.enums.Enums import DesignCode, ProviderName
 from selection_service.core.Pipeline import EarthquakeAPI
-from selection_service.providers.ProvidersFactory import ProviderFactory
 from selection_service.processing.Selection import SelectionConfig,SearchCriteria,TBDYSelectionStrategy,TargetParameters
-# from selection_service.core.LoggingConfig import setup_logging
+from selection_service.core.LoggingConfig import setup_logging
 
-# setup_logging(log_level=logging.DEBUG)
+setup_logging()
 
 async def example_usage():
     #ProviderFactory ile provider oluşturma
