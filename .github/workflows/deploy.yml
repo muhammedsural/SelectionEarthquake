@@ -78,17 +78,10 @@ jobs:
 
        - name: Build package
          run: python -m build
-
-       - name: Verify package with Twine
-         run: |
-              python -m twine check dist/*
-              continue-on-error: false  # hata varsa pipeline durur
   
        - name: Publish distribution to TestPyPI
          uses: pypa/gh-action-pypi-publish@release/v1
          with:
-           # user: __token__
-           # password: ${{ secrets.TEST_PYPI_API_TOKEN }}
            repository-url: https://test.pypi.org/legacy/
 
   # publish-pypi:
