@@ -63,28 +63,28 @@ jobs:
     #   id-token: write  # Trusted publishing için şart
   
     steps:
-      # - name: Checkout repository
-      #   uses: actions/checkout@v4
+       - name: Checkout repository
+         uses: actions/checkout@v4
       
-      # - name: Set up Python
-      #   uses: actions/setup-python@v5
-      #   with:
-      #     python-version: "3.12"
+       - name: Set up Python
+         uses: actions/setup-python@v5
+         with:
+           python-version: "3.12"
   
-      # - name: Install build tools
-      #   run: |
-      #     pip install --upgrade pip
-      #     pip install build
+       - name: Install build tools
+         run: |
+           pip install --upgrade pip
+           pip install build
 
-      # - name: Build package
-      #   run: python -m build
+       - name: Build package
+         run: python -m build
   
-      - name: Publish distribution to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          repository-url: https://test.pypi.org/legacy/
+       - name: Publish distribution to TestPyPI
+         uses: pypa/gh-action-pypi-publish@release/v1
+         with:
+           user: __token__
+           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+           repository-url: https://test.pypi.org/legacy/
 
   publish-pypi:
     name: Publish to PyPI
