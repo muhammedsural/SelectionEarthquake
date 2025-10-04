@@ -20,7 +20,14 @@ Böylece araştırmacılar ve mühendisler, bina özelinde uygun deprem kayıtla
 ## 📦 Kurulum
 
 ```bash
-pip install selection-service
+# PyPI'den yükleme
+pip install selection_earthquake
+
+# Yerel geliştirme için
+git clone https://github.com/kullanici/SelectionEarthquake.git
+cd SelectionEarthquake
+pip install -e .
+
 ```
 
 ## ⚡ Hızlı Başlangıç
@@ -83,25 +90,18 @@ async def example_usage():
     
     
     if result.success:
-        print(f"Target Parameters = {result.value.report['target_params'].__repr__()}")
-        print(f"Search Criteria = {result.value.report['search_criteria'].__repr__()}")
-        print(f"Strategy = {result.value.report['strategy']} ")
-        print(f"Total find event = {result.value.report['total_considered']} ")
-        print(f"{result.value.report['selected_count']} records selected")
-        print(f"Statistic = {result.value.report['statistics']} ")
-        print(result.value.selected_df[['PROVIDER','RSN','EVENT','YEAR','MAGNITUDE','STATION','VS30(m/s)','RRUP(km)','MECHANISM','PGA(cm2/sec)','PGV(cm/sec)','SCORE']])
+        print(result.value.selected_df[['PROVIDER','RSN','EVENT','YEAR','MAGNITUDE','STATION','VS30(m/s)','RRUP(km)','MECHANISM','PGA(cm2/sec)','PGV(cm/sec)','SCORE']].head(7))
         return result.value
     else:
         print(f"[ERROR]: {result.error}")
         return None
     
 if __name__ == "__main__":
-    test = asyncio.run(example_usage())
+    df = asyncio.run(example_usage())
 ```
 
-
 PROVIDER | RSN      | EVENT         | YEAR  | MAGNITUDE |           STATION            | VS30(m/s) | RRUP(km)   |  MECHANISM  | PGA(cm2/sec) | PGV(cm/sec) | SCORE  
----------|-----     |---------      |------ |---------- |---------                     |-----------|----------  | ----------- |-----------   |-----------  |------
+---------|----------|---------------|------ |---------- |------------------------------|-----------|----------  | ----------- |-----------   |-----------  |-------------
 PEER     |  900     |  Landers      |  1992 |    7.28   |  Yermo Fire Station          |    353.63 |  23.620000 |  StrikeSlip |  217.776277  |  40.263000  |  100.000000
 PEER     |  3753    |  Landers      |  1992 |    7.28   |  Fun Valley                  |    388.63 |  25.020000 |  StrikeSlip |  206.125976  |  19.963000  |  100.000000
 PEER     |  1615    |  Duzce, Turkey|  1999 |    7.14   |  Lamont 1062                 |    338.00 |  9.140000  |  StrikeSlip |  202.664229  |  14.630000  |  100.000000
