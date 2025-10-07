@@ -85,21 +85,36 @@ jobs:
            repository-url: https://test.pypi.org/legacy/
            verbose: true
            skip-existing: false
+  
+  publish-pypi:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: build
+  
+    permissions:
+      id-token: write  # Trusted publishing için şart
+  
+    steps:
+       - name: Checkout repository
+         uses: actions/checkout@v4
+      
+       - name: Set up Python
+         uses: actions/setup-python@v5
+         with:
+           python-version: "3.12"
+  
+       - name: Install build tools
+         run: |
+           pip install --upgrade pip
+           pip install build
 
-  # publish-pypi:
-  #   name: Publish to PyPI
-  #   runs-on: ubuntu-latest
-  #   needs: publish-testpypi
+       - name: Build package
+         run: python -m build
+  
+       - name: Publish distribution to PyPI
+         uses: pypa/gh-action-pypi-publish@release/v1
+         with:
+           repository-url: https://pypi.org/legacy/
+           verbose: true
+           skip-existing: false
 
-  #   steps:
-  #     - name: Download distributions
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: python-package-distributions
-  #         path: dist/
-
-  #     - name: Publish distribution to PyPI
-  #       uses: pypa/gh-action-pypi-publish@release/v1
-  #       with:
-  #         user: __token__
-  #         password: ${{ secrets.PYPI_API_TOKEN }}
