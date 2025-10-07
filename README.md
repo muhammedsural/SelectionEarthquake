@@ -21,7 +21,7 @@ Böylece araştırmacılar ve mühendisler, bina özelinde uygun deprem kayıtla
 
 ```bash
 # PyPI'den yükleme
-pip install selection_earthquake
+pip install earthquake-selection
 
 # Yerel geliştirme için
 git clone https://github.com/kullanici/SelectionEarthquake.git
