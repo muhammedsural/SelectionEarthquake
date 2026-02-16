@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import math
 from typing import Any, Dict, List, Optional, Protocol, Tuple
-from obspy import UTCDateTime
+# from obspy import UTCDateTime
 import pandas as pd
 from pydantic import BaseModel, Field, model_validator
 from ..enums.Enums import DesignCode
@@ -258,8 +258,8 @@ class SearchCriteria(BaseModel):
             **kwargs
         """
         params = {
-            "starttime": UTCDateTime(self.start_date),
-            "endtime": UTCDateTime(self.end_date),
+            "starttime": f"{self.start_date}T00:00:00.000Z" if self.start_date else None,
+            "endtime": f"{self.end_date}T23:59:59.999Z" if self.end_date else None,
             "minmagnitude": self.min_magnitude,
             "maxmagnitude": self.max_magnitude,
             "latitude": self.min_latitude,
