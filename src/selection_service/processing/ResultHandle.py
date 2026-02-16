@@ -19,18 +19,22 @@ class Result(Generic[T, E]):
     
     @classmethod
     def ok(cls, value: T) -> 'Result[T, E]':
+        """Creates a successful result with the given value."""
         return cls(success=True, value=value)
     
     @classmethod
     def fail(cls, error: E) -> 'Result[T, E]':
+        """Creates a failure result with the given error."""
         return cls(success=False, error=error)
-    
+
     def unwrap(self) -> T:
+        """Returns the value if success, otherwise raises the error."""
         if self.success:
             return self.value
         raise self.error
 
     def __repr__(self):
+        """Custom string representation for debugging"""
         if self.success:
             return f"<Result OK value={type(self.value)}>"
         return f"<Result FAIL error={self.error}>"

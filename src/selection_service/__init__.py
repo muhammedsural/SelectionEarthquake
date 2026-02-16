@@ -13,7 +13,8 @@ from .core.LoggingConfig import setup_logging
 # --- Enums ---
 from .enums.Enums import ProviderName, DesignCode
 
-from .core.Pipeline import EarthquakePipeline, EarthquakeAPI
+from .core.Pipeline import EarthquakePipeline
+from .core.EarthquakeApi import EarthquakeAPI
 
 # --- Providers ---
 from .providers.IProvider import IDataProvider

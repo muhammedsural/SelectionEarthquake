@@ -1,6 +1,6 @@
 import asyncio
 from selection_service.enums.Enums import DesignCode, ProviderName
-from selection_service.core.Pipeline import EarthquakeAPI
+from selection_service.core.EarthquakeApi import EarthquakeAPI
 from selection_service.processing.Selection import SelectionConfig,SearchCriteria,TBDYSelectionStrategy
 from selection_service.core.LoggingConfig import setup_logging
 
@@ -16,14 +16,14 @@ async def example_usage():
     strategy = TBDYSelectionStrategy(config=con)
 
     search_criteria = SearchCriteria(
-        start_date="1970-01-01",
+        start_date="2000-01-01",
         end_date="2025-12-05",
-        min_magnitude=6.0,
+        min_magnitude=5.0,
         max_magnitude=8.0,
         min_vs30=300,
         max_vs30=400,
-        min_pga=0.6,
-        max_pga=1.5,
+        # min_pga=0.6,
+        # max_pga=1.5,
         # min_pgv=10,
         # max_pgv=100,
         # min_pgD=1,
@@ -43,8 +43,9 @@ async def example_usage():
         )
     
     # Initialize API
-    api = EarthquakeAPI(providerNames= [ProviderName.AFAD, ProviderName.PEER],
-                        strategies= [strategy], use_cache=True)
+    api = EarthquakeAPI(provider_names= [ProviderName.AFAD, ProviderName.PEER],
+                        strategies= [strategy], 
+                        use_cache=True)
 
     result = await api.run_async(criteria=search_criteria,
                                  strategy_name=strategy.get_name())
@@ -57,23 +58,24 @@ async def example_usage():
         # Tüm kayıtlar için dalga formu indirme
         # api.download_waveforms(result.value.selected_df)
         # Tekil bir dalga formu dosyasını indirme örneği
-        # if not result.value.selected_df.empty:
-        #     first_file = result.value.selected_df.iloc[5]['FILE_NAME_H1']
-        #     download_result = api.download_single_waveforms(provider_name=result.value.selected_df.iloc[5]['PROVIDER'], filename=first_file)
-        #     if download_result.success:
-        #         print(f"Downloaded waveform for {first_file}")
-        #     else:
-        #         print(f"Failed to download waveform for {first_file}: {download_result.error}")
+        
+        if not result.value.selected_df.empty:
+            first_file = result.value.selected_df.iloc[0]['FILE_NAME_H1']
+            download_result = api.download_waveforms(result_df= result.value.selected_df)
+            if download_result.success:
+                print(f"Downloaded waveform for {first_file}")
+            else:
+                print(f"Failed to download waveform for {first_file}: {download_result.error}")
         
         # print(f"Target Parameters = {result.value.report['target_params'].__repr__()}")
         # print(f"Search Criteria = {result.value.report['search_criteria'].__repr__()}")
         # print(f"Strategy = {result.value.report['strategy']} ")
         # print(f"Total find event = {result.value.report['total_considered']} ")
         # print(f"{result.value.report['selected_count']} records selected")
-        # print(f"Statistic = {result.value.report['statistics']} ")
-        print(f"Columns: {list(result.value.selected_df.columns)}")
+        print(f"Statistic = {result.value.report['statistics']} ")
+        # print(f"Columns: {list(result.value.selected_df.columns)}")
         print(result.value.selected_df[['PROVIDER','RSN','EVENT','YEAR','MAGNITUDE','SSN','STATION','VS30(m/s)','RRUP(km)',"RJB(km)",'MECHANISM','PGA(cm2/sec)','PGV(cm/sec)','T90_avg(sec)','SCORE','ENDPOINTSOURCE','FILE_NAME_H1']])
-        result.value.scored_df.to_excel("events.xlsx")
+        # result.value.scored_df.to_excel("events.xlsx")
         return result.value
     else:
         print(f"[ERROR]: {result.error}")
