@@ -39,6 +39,7 @@ dependencies = [
     "tqdm>=4.65.0",       # Progress bar için
     "pyarrow>=23.0.0",     # Parquet desteği için
     "python-dateutil>=2.8.2", # Tarih işlemleri için
+    "pydantic>=2.11.9"      # Veri doğrulama için
 ]
 
 [project.optional-dependencies]
