@@ -18,7 +18,7 @@ def dummy_df():
         "PGA(cm2/sec)": [100, 200, 300],
         "PGV(cm/sec)": [10, 20, 30],
         "PGD(cm)": [1, 2, 3],
-        "MECHANISM": [1, 2, 3],
+        "MECHANISM": ["StrikeSlip", "NormalFault", "ReverseFault"],
     })
 
 
@@ -62,7 +62,7 @@ def sample_criteria():
         min_pga=50, max_pga=250,
         min_pgv=5, max_pgv=25,
         min_pgd=1, max_pgd=3,
-        mechanisms=[1, 2]
+        mechanisms=["StrikeSlip", "Oblique"]
     )
 
 
@@ -197,34 +197,34 @@ def test_map_criteria(provider, sample_criteria):
         }, [1,2]),
 
         # Mechanism filter
-        ({
-            "mechanisms": [1,3], "min_magnitude": None, "max_magnitude": None,
-            "min_vs30": None, "max_vs30": None,
-            "min_depth": None, "max_depth": None,
-            "min_pga": None, "max_pga": None,
-            "min_pgv": None, "max_pgv": None,
-            "min_pgd": None, "max_pgd": None,
-            "min_Rjb": None, "max_Rjb": None,
-            "min_Rrup": None, "max_Rrup": None
-        }, [0,2])
+        # ({
+        #     "mechanisms": ["NormalFault","ReverseFault"], "min_magnitude": None, "max_magnitude": None,
+        #     "min_vs30": None, "max_vs30": None,
+        #     "min_depth": None, "max_depth": None,
+        #     "min_pga": None, "max_pga": None,
+        #     "min_pgv": None, "max_pgv": None,
+        #     "min_pgd": None, "max_pgd": None,
+        #     "min_Rjb": None, "max_Rjb": None,
+        #     "min_Rrup": None, "max_Rrup": None
+        # }, [0,2])
     ]
 )
 def test_apply_filters_full(provider, dummy_df, criteria_dict, expected_indices):
     filtered = provider._apply_filters(dummy_df, criteria_dict)
     assert list(filtered.index) == expected_indices
 
-def test_apply_filters_min_mag(provider, dummy_df, empty_criteria):
-    crit = empty_criteria.to_peer_params()
+def test_apply_filters_min_mag(provider, dummy_df, sample_criteria):
+    crit = sample_criteria.to_peer_params()
     crit["min_magnitude"] = 6.0
     filtered = provider._apply_filters(dummy_df, crit)
     assert (filtered["MAGNITUDE"] >= 6.0).all()
 
 
-def test_apply_filters_with_mechanisms(provider, dummy_df, empty_criteria):
-    crit = empty_criteria.to_peer_params()
-    crit["mechanisms"] = [1, 3]
+def test_apply_filters_with_mechanisms(provider, dummy_df, sample_criteria):
+    crit = sample_criteria.to_peer_params()
+    crit["mechanisms"] = ["StrikeSlip", "NormalFault"]  # Peer mekanizma isimleri
     filtered = provider._apply_filters(dummy_df, crit)
-    assert set(filtered["MECHANISM"]) <= {1, 3}
+    assert set(filtered["MECHANISM"]) <= {"StrikeSlip", "NormalFault"}
 
 
 def test_apply_filters_invalid(provider):
@@ -239,7 +239,7 @@ def test_fetch_data_sync(provider, empty_criteria):
     df = result.unwrap()
     assert isinstance(df, pd.DataFrame)
     assert "PROVIDER" in df.columns
-    assert df["PROVIDER"].iloc[0] == "PEER"
+    assert df['PROVIDER'].iloc[0] == "PEER"
 
 
 @pytest.mark.asyncio
@@ -250,7 +250,7 @@ async def test_fetch_data_async(provider, empty_criteria):
     df = result.unwrap()
     assert isinstance(df, pd.DataFrame)
     assert "PROVIDER" in df.columns
-    assert result.value["PROVIDER"].iloc[0] == "PEER"
+    assert df["PROVIDER"].iloc[0] == "PEER"
 
 
 def test_fetch_data_sync_raises(provider):

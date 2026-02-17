@@ -45,6 +45,14 @@ class AfadApiClient:
             raise NetworkError("AFAD", e, "Sync search failed")
 
     def download_waveform(self, payload: Dict[str, Any]) -> bytes:
+        """Dalga formu indirme isteği
+            payload örneği:
+            {
+                "EventId": 12345,
+                "StationId": 67890,
+                "ExportType": "asc2"
+            }
+        """
         url = f"{self.PROCESS_URL}/ExportData"
         try:
             response = requests.post(url, headers=self.headers, json=payload, timeout=50)

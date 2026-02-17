@@ -59,7 +59,7 @@ class EarthquakeAPI:
 
     # --- DOWNLOAD YÖNETİMİ ---
     
-    def download_waveforms(self, result_df: pd.DataFrame) -> Result[bool, ProviderError]:
+    def download_waveforms(self, result_df: pd.DataFrame, **kwargs) -> Result[bool, ProviderError]:
         """
         Sonuç DataFrame'indeki dosyaları ilgili provider'a indirir.
         Group-by kullanarak her provider'a toplu istek atar (Batch işlemi için daha uygun).
@@ -71,26 +71,35 @@ class EarthquakeAPI:
                 if not provider:
                     print(f"Warning: Provider {provider_name} not found active.")
                     continue
+                if provider_name == ProviderName.PEER.value:
+                    print(f"PEER provider does not support batch download, skipping batch for {provider_name}.")
+                    continue
                 
                 # Eğer provider batch indirmeyi destekliyorsa onu kullan, yoksa tek tek
+                provider.download_waveforms_batch(
+                    filenames= group['FILE_NAME_H1'].tolist(),
+                    event_ids= group['EVENT'].tolist() if 'EVENT' in group.columns else None,
+                    **kwargs
+                )
+                
                 # Burada IProvider interface'indeki mevcut metoda sadık kalıyoruz
-                for _, row in group.iterrows():
-                    provider.download_single_waveforms(
-                        filename=row.get('FILE_NAME_H1'),
-                        event_id=row.get('EVENT'),
-                        station_code=row.get('SSN') # veya STATION_ID
-                    )
+                # for _, row in group.iterrows():
+                #     provider.download_single_waveforms(
+                #         filename=row.get('FILE_NAME_H1'),
+                #         event_ids=row.get('EVENT'),
+                #         station_code=row.get('SSN') # veya STATION_ID
+                #     )
             return Result.ok(True)
         except Exception as e:
             return Result.fail(ProviderError("API", e, "Bulk download failed"))
 
-    def download_single_waveform(self, filename: str, event_id: str, station_code: str) -> Result[bool, ProviderError]:
+    def download_single_waveform(self, filename: str, event_id: str, station_code: str, **kwargs) -> Result[bool, ProviderError]:
         """Tek bir waveform indirme metodu"""
         try:
             provider = self._get_provider(station_code.split('.')[0]) # Station code'dan provider ismini çıkar
             if not provider:
                 return Result.fail(ProviderError("API", ValueError(f"Provider not found for station {station_code}"), "Download failed"))
-            provider.download_single_waveforms(filename=filename, event_id=event_id, station_code=station_code)
+            provider.download_single_waveforms(filename=filename, event_id=event_id, station_code=station_code, **kwargs)
             return Result.ok(True)
         except Exception as e:
             return Result.fail(ProviderError("API", e, "Single waveform download failed"))
@@ -98,8 +107,7 @@ class EarthquakeAPI:
     def _get_provider(self, name: str) -> IDataProvider:
         return next((p for p in self.providers if p.get_name() == name), None)
 
-    # --- HELPER (Opsiyonel) ---
-    # Eski getter metodları yerine kullanıcıya Result objesini kullanması öğretilmelidir.
+    # --- HELPER ---
     # Ancak Re-selection mantığı API seviyesinde tutulabilir.
     
     def re_selection(self, df: pd.DataFrame, strategy_name: str, new_criteria: SearchCriteria) -> Result[PipelineResult, PipelineError]:

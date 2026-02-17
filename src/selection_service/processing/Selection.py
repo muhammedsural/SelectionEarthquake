@@ -274,10 +274,11 @@ class SearchCriteria(BaseModel):
 
     @model_validator(mode='after')
     def check_magnitudes(self):
-        if self.min_magnitude > self.max_magnitude:
-            raise ValueError("Min büyüklük Max büyüklükten büyük olamaz.")
-        if self.min_magnitude < 0 or self.max_magnitude > 10:
-            raise ValueError("Büyüklük değerleri 0-10 aralığında olmalıdır")
+        if self.min_magnitude is not None and self.max_magnitude is not None:
+            if self.min_magnitude > self.max_magnitude:
+                raise ValueError("Minimum büyüklük maksimum büyüklükten büyük olamaz.")
+            if self.min_magnitude < 0 or self.max_magnitude > 10:
+                raise ValueError("Büyüklük değerleri 0-10 aralığında olmalıdır.")
         return self
 
     @model_validator(mode='after')
