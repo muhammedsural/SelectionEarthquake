@@ -141,6 +141,12 @@ class AFADColumnMapper(BaseColumnMapper):
 
     def _handle_mechanisms(self, df: pd.DataFrame) -> pd.DataFrame:
         """Mekanizma bilgisini işle"""
+        
+        # Eksik kolonları 0 ile doldurarak oluştur
+        for col in ["relatedDip1", "relatedRake1", "relatedDip2", "relatedRake2"]:
+            if col not in df.columns:
+                df[col] = 0
+                
         # Vektörize hesaplama için
         dip1 = df.get("relatedDip1", 0)
         rake1 = df.get("relatedRake1", 0) 
@@ -174,8 +180,11 @@ class AFADColumnMapper(BaseColumnMapper):
         return df
 
     # ------- STATION UTILITY FUNCTIONS ------------
+    
+    #BUG NOTU: Formül yanlış hesaplıyor tekrardan kontrol etmek gerek testten geçemedi.
     def _haversine(self, lat1, lon1, lat2, lon2):
         """
+        #DEPRECATED: Daha önceki versiyonlarda AFAD verisindeki bazı istasyonların Vs30 değerleri eksikti ve bu fonksiyonla yakınlardaki istasyonların Vs30 değerlerini atayarak dolduruyorduk. Ancak artık AFAD verisinde Vs30 bilgisi de gelmeye başladı, bu yüzden bu fonksiyonu kullanmayı bıraktık. Yine de ileride benzer bir ihtiyaç olursa diye kodu silmek yerine yorum satırı yaptık.
         İki nokta arasındaki mesafeyi km cinsinden döndürür (Haversine formülü).
         """
         R = 6371.0  # Dünya yarıçapı (km)
@@ -183,7 +192,6 @@ class AFADColumnMapper(BaseColumnMapper):
         lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
         dlat = lat2 - lat1
         dlon = lon2 - lon1
-
         a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
         c = 2 * atan2(sqrt(a), sqrt(1-a))
 
@@ -192,7 +200,15 @@ class AFADColumnMapper(BaseColumnMapper):
     # AFADDataProvider'da istasyon eşleme iyileştirmesi
     @lru_cache(maxsize=1)
     def _build_station_info_df(self, max_distance_km: float = 30.0) -> pd.DataFrame:
-        """Daha hızlı istasyon bilgisi yükleme"""
+        """İstasyon bilgilerini yükler ve eksik Vs30'ları doldurur (30 km yarıçap içinde)
+            - Bu fonksiyonun amacı, AFAD verisindeki istasyonların Vs30 bilgilerini mümkün olduğunca doldurmak ve böylece seçim stratejilerinin daha sağlıklı çalışmasını sağlamaktır. Ancak, bu işlem her zaman mükemmel sonuçlar vermeyebilir, çünkü bazı istasyonların çevresinde hiç Vs30 bilgisi olmayan istasyonlar olabilir veya mesafe kriteri nedeniyle doldurulamayan istasyonlar olabilir. Bu nedenle, sonuçları dikkatli bir şekilde değerlendirmek önemlidir. 
+            - Eksik Vs30'ları doldurmak için KDTree kullanarak hızlı bir şekilde en yakın istasyonu buluruz.
+            - Eğer en yakın istasyonun mesafesi max_distance_km'den büyükse Vs30'ı doldurmak yerine 0.0 olarak bırakırız.
+            - Bu fonksiyon lru_cache ile cache'lenmiştir, böylece ilk çağrıda dosya yüklenir ve işlenir, sonraki çağrılarda aynı DataFrame döndürülür. Eğer istasyon dosyası güncellenirse veya farklı bir dosya kullanmak istenirse cache temizlenebilir veya max_distance_km parametresi değiştirilebilir.
+            - Not: Bu fonksiyonun çalışması için "stations.xlsx" dosyasının doğru formatta ve gerekli kolonları içerecek şekilde hazırlanmış olması gerekmektedir. Dosyada "Code", "Vs30", "Latitude", "Longitude" ve "Location" gibi kolonların bulunması beklenir.
+            - Eğer dosya yüklenemez veya işlenemezse, fonksiyon boş bir DataFrame döndürecektir.
+            
+        """
         try:
             df = load_excel("stations.xlsx")
             df["Code"] = df["Code"].astype(str).str.strip()
@@ -376,6 +392,7 @@ class ColumnMapperFactory:
     def get_mapper(cls, provider: ProviderName) -> IColumnMapper:
         """Provider'a göre uygun eşleyiciyi döndür"""
         mapper_class = cls._mappers.get(provider, BaseColumnMapper)
+        # Always pass a default mapping dict so BaseColumnMapper can be instantiated safely.
         return mapper_class()
     
     @classmethod

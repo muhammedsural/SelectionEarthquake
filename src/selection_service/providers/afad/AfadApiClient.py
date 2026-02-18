@@ -31,6 +31,8 @@ class AfadApiClient:
                         return await response.json()
                     error_text = await response.text()
                     raise NetworkError("AFAD", Exception(f"HTTP {response.status}: {error_text}"))
+        except NetworkError:
+            raise
         except Exception as e:
             raise NetworkError("AFAD", e, "Async search failed")
 

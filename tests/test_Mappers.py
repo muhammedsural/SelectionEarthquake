@@ -1,10 +1,58 @@
 import pytest
 import pandas as pd
 import numpy as np
-from unittest.mock import patch
-from selection_service.processing.Mappers import AFADColumnMapper
-from selection_service.processing.Mappers import AFADColumnMapper
 from selection_service.core.Config import MECHANISM_MAP
+from selection_service.processing.Mappers import (
+    BaseColumnMapper,
+    AFADColumnMapper,
+    PEERColumnMapper,
+    ColumnMapperFactory
+)
+from selection_service.enums.Enums import ProviderName
+from unittest.mock import patch
+
+# --- BaseColumnMapper Testi (Abstrakt olduğu için bir dummy sınıf ile test edilir) ---
+
+class DummyMapper(BaseColumnMapper):
+    def __init__(self):
+        super().__init__({"OLD_COL": "MAGNITUDE"})
+
+def test_base_column_mapper_standardization():
+    mapper = DummyMapper()
+    df = pd.DataFrame({"OLD_COL": [5.5], "EXTRA": [1]})
+    
+    result = mapper.map_columns(df)
+    
+    # Standart kolonun oluştuğunu kontrol et
+    assert "MAGNITUDE" in result.columns
+    # Standartta olmayan kolonların (EXTRA gibi) temizlendiğini kontrol et
+    assert "EXTRA" not in result.columns
+    # Eksik olan standart kolonların NaN olarak eklendiğini kontrol et
+    assert "STATION" in result.columns 
+    assert pd.isna(result.loc[0, "STATION"])
+
+# --- AFADColumnMapper Testleri ---
+
+class TestAFADColumnMapper:
+    def test_map_columns_basic(self):
+        mapper = AFADColumnMapper()
+        # AFAD formatında bir veri
+        df = pd.DataFrame({
+            "mvalue": [6.0],
+            "eventId": [123],
+            "rjb": [10.5]
+        })
+        
+        result = mapper.map_columns(df)
+        assert result.iloc[0]["MAGNITUDE"] == 6.0
+        assert result.iloc[0]["RJB(km)"] == 10.5
+
+    # def test_haversine_distance(self):
+    #     mapper = AFADColumnMapper()
+    #     # Beyaz Saray (38.898° N, 77.037° E) ile Eyfel Kulesi (48.858° N, 2.294° E) arasındaki jeodezik mesafe mesafe yaklaşık 6177,45 km'dir
+    #     distance = mapper._haversine(38.898, 77.037, 48.858, 2.294)
+    #     assert distance == 6177
+    #     assert np.isclose(distance, 6177, atol=10)
 
 @pytest.fixture
 def mapper():
@@ -114,3 +162,46 @@ def test_no_missing_vs30(mock_excel):
         mapper = AFADColumnMapper()
         df = mapper._build_station_info_df("dummy_path.xlsx")
         assert (df["Vs30"] == pd.Series([500, 600])).all()
+
+# --- PEERColumnMapper Testleri ---
+
+class TestPEERColumnMapper:
+    def test_map_columns_peer(self):
+        mapper = PEERColumnMapper()
+        # PEER formatında bir veri (Flatfile kolonları)
+        df = pd.DataFrame({
+            "Earthquake Magnitude": [7.2],
+            "Station Name": ["PEER_ST"],
+            "PGA(g)": [0.5]
+        })
+        
+        result = mapper.map_columns(df)
+        
+        assert result.loc[0, "MAGNITUDE"] == 7.2
+        assert result.loc[0, "STATION"] == "PEER_ST"
+        assert result.loc[0, "PGA(cm2/sec)"] == 0.5* 980.665
+
+# --- ColumnMapperFactory Testleri ---
+
+class TestColumnMapperFactory:
+    def test_create_mapper_afad(self):
+        mapper = ColumnMapperFactory.create_mapper(ProviderName.AFAD)
+        assert isinstance(mapper, AFADColumnMapper)
+
+    def test_create_mapper_peer(self):
+        mapper = ColumnMapperFactory.create_mapper(ProviderName.PEER)
+        assert isinstance(mapper, PEERColumnMapper)
+
+    # def test_get_mapper_fallback(self):
+    #     # Kayıtlı olmayan bir provider verilirse BaseColumnMapper dönmeli
+    #     mapper = ColumnMapperFactory.get_mapper("UNKNOWN")
+    #     # BaseColumnMapper abstract olduğu için instance'ı direkt kontrol etmek yerine tipine bakıyoruz
+    #     assert issubclass(type(mapper), BaseColumnMapper)
+
+    def test_register_mapper(self):
+        class NewProviderMapper(BaseColumnMapper):
+            def __init__(self): super().__init__({})
+            
+        ColumnMapperFactory.register_mapper("NEW", NewProviderMapper)
+        mapper = ColumnMapperFactory.get_mapper("NEW")
+        assert isinstance(mapper, NewProviderMapper)

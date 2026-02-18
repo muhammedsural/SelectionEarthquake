@@ -11,12 +11,12 @@ from ..core.ErrorHandle import (PipelineError, ProviderError, StrategyError)
 from ..processing.ResultHandle import Result
 import logging
 
-# logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
     
 class EarthquakeAPI:
     """
-    Main Entry Point (Facade).
-    Kullanıcı sadece bu sınıfı ve SearchCriteria'yı bilmelidir.
+        EarthquakeAPI, depolama, seçim stratejileri ve raporlama gibi tüm işlemleri tek bir sınıf altında toplayarak kullanıcı dostu bir arayüz sağlar.
+        Kullanıcılar, sadece arama kriterlerini ve stratejiyi belirleyerek senkron veya asenkron olarak çalıştırabilirler. Ayrıca, sonuçlara göre dalga formu indirme işlemlerini de kolayca yönetebilirler.
     """
 
     def __init__(self, 
@@ -24,6 +24,13 @@ class EarthquakeAPI:
                  strategies: List[ISelectionStrategy],
                  use_cache: bool = True,
                  **kwargs: Any):
+        """ 
+
+        Args:
+            provider_names (List[ProviderName]): Kullanılacak provider isimleri listesi (örn: [ProviderName.AFAD, ProviderName.PEER])
+            strategies (List[ISelectionStrategy]): Kullanılacak seçim stratejileri listesi
+            use_cache (bool, optional): Caching özelliğini etkinleştirir. Defaults to True.
+        """
         
         self.factory = ProviderFactory()
         self.providers = [
@@ -69,9 +76,13 @@ class EarthquakeAPI:
             for provider_name, group in result_df.groupby("PROVIDER"):
                 provider = self._get_provider(provider_name)
                 if not provider:
-                    print(f"Warning: Provider {provider_name} not found active.")
+                    # Result.fail(ProviderError("API", ValueError(f"Provider '{provider_name}' not found"), "Download failed"))
+                    logger.warning(f"Provider '{provider_name}' not found in the system. Skipping download for this provider.")
+                    print(f"Provider '{provider_name}' not found in the system. Skipping download for this provider.")
                     continue
+                
                 if provider_name == ProviderName.PEER.value:
+                    logger.info(f"PEER provider does not support batch download, skipping batch for {provider_name}.")
                     print(f"PEER provider does not support batch download, skipping batch for {provider_name}.")
                     continue
                 
