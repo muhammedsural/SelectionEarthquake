@@ -38,8 +38,7 @@ from selection_service.enums.Enums import DesignCode, ProviderName
 from selection_service.core.Pipeline import EarthquakeAPI
 from selection_service.processing.Selection import (SelectionConfig,
                                                     SearchCriteria,
-                                                    TBDYSelectionStrategy,
-                                                    TargetParameters)
+                                                    TBDYSelectionStrategy)
 from selection_service.core.LoggingConfig import setup_logging
 
 setup_logging()
@@ -64,15 +63,6 @@ async def example_usage():
         # mechanisms=["StrikeSlip"]
         )
     
-    # Hedef parametreler
-    target_params = TargetParameters(
-        magnitude=7.0,
-        distance=30.0,
-        vs30=400.0,
-        pga=200,
-        mechanism=["StrikeSlip"]
-    )
-    
     # API
     api = EarthquakeAPI(providerNames= [ProviderName.AFAD, 
                                    ProviderName.PEER],
@@ -80,12 +70,10 @@ async def example_usage():
 
     # Asenkron arama
     result = await api.run_async(criteria=search_criteria,
-                                 target=target_params,
                                  strategy_name=strategy.get_name())
     
     # Senkron arama
     # result = api.run_sync(criteria=search_criteria,
-    # target=target_params,
     # strategy_name=strategy.get_name())
     
     
