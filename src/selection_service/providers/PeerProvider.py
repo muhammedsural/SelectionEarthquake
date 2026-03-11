@@ -1,139 +1,173 @@
+"""
+providers/PeerProvider.py  (refactored)
+
+Değişiklikler (Adım 1 — ISP + LSP):
+  - IDataProvider  → IDataFetcher  (yalnızca veri çekme sözleşmesi)
+  - download_single_waveforms()   → KALDIRILDI
+      PEER NGA-West2 düz dosya tabanlı bir veri seti; download protokolü
+      bu provider için anlamsız. LSP ihlalini ortadan kaldırmak için
+      metod tamamen silindi.
+      İhtiyaç varsa: supports_download(peer_provider) → False döner,
+      çağıran kod güvenle bu durumu yönetebilir.
+  - asyncio.get_event_loop()  →  asyncio.get_running_loop()
+      Python 3.10+ DeprecationWarning düzeltmesi.
+"""
+
 import asyncio
+import logging
 from functools import partial
 from typing import Any, Dict, Type
+
 import numpy as np
 import pandas as pd
 
-from ..utility.path_utils import load_csv
+from ..core.Config import convert_mechanism_to_text
+from ..core.ErrorHandle import DataProcessingError, ProviderError
 from ..enums.Enums import ProviderName
 from ..processing.Mappers import IColumnMapper
-from ..core.Config import convert_mechanism_to_text
-from ..processing.Selection import SearchCriteria
-from ..core.ErrorHandle import DataProcessingError, ProviderError
 from ..processing.ResultHandle import async_result_decorator, result_decorator
-from ..providers.IProvider import IDataProvider
+from ..processing.Selection import SearchCriteria
+from ..providers.interfaces import IDataFetcher          # ← yeni interface
+from ..utility.path_utils import load_csv
 
 
-class PeerWest2Provider(IDataProvider):
-    """PEER NGA-West2 veri sağlayıcı"""
+logger = logging.getLogger(__name__)
 
-    def __init__(self, column_mapper: Type[IColumnMapper], **kwargs):
+
+class PeerWest2Provider(IDataFetcher):
+    """PEER NGA-West2 veri sağlayıcı.
+
+    Yalnızca IDataFetcher uygular; dalga formu indirme desteği yoktur.
+    Download gereken senaryolarda supports_download(provider) → False döner
+    ve çağıran kod bu durumu yönetir (bkz. EarthquakeApi.download_waveforms).
+    """
+
+    def __init__(self, column_mapper: Type[IColumnMapper], **kwargs: Any) -> None:
         self.column_mapper = column_mapper
         self.name = ProviderName.PEER.value
         self.flatfile_df = load_csv("NGA-West2_flatfile.csv")
-        self.mapped_df = None
-        self.response_df = None
+        self.mapped_df: pd.DataFrame | None = None
+        self.response_df: pd.DataFrame | None = None
+
+    # ──────────────────────────────────────────────────────────────
+    # IDataFetcher sözleşmesi
+    # ──────────────────────────────────────────────────────────────
+
+    def get_name(self) -> str:
+        return str(self.name)
 
     def map_criteria(self, criteria: SearchCriteria) -> Dict[str, Any]:
-        """Genel arama kriterlerini provider'a özel formata dönüştür"""
+        """SearchCriteria → PEER filtre parametrelerine dönüştür."""
         return criteria.to_peer_params()
 
     @async_result_decorator
     async def fetch_data_async(self, criteria: Dict[str, Any]) -> pd.DataFrame:
-        """NGA-West2 verilerini getir"""
-        try:
-            loop = asyncio.get_event_loop()
-            self.mapped_df = await loop.run_in_executor(None, partial(self.column_mapper.map_columns, self.flatfile_df.copy()))
-            filtered_df = await loop.run_in_executor(None, partial(self._apply_filters, self.mapped_df, criteria))
-            filtered_df['PROVIDER'] = str(self.name)
+        """NGA-West2 verilerini asenkron olarak çek.
 
-            # Mekanizma dönüşümü
-            if filtered_df['MECHANISM'].dtype in [np.int64, np.float64, int, float]:
-                filtered_df = convert_mechanism_to_text(filtered_df)
-            return filtered_df
+        CSV okuma CPU-bound olduğundan thread pool'a atılır;
+        event loop bloke edilmez.
+        """
+        try:
+            # get_running_loop: Python 3.10+ uyumlu (get_event_loop deprecated)
+            loop = asyncio.get_running_loop()
+            self.mapped_df = await loop.run_in_executor(
+                None,
+                partial(self.column_mapper.map_columns, self.flatfile_df.copy()),
+            )
+            filtered_df = await loop.run_in_executor(
+                None,
+                partial(self._apply_filters, self.mapped_df, criteria),
+            )
+            filtered_df["PROVIDER"] = str(self.name)
+            return self._normalize_mechanism(filtered_df)
         except Exception as e:
-            raise ProviderError(self.name,
-                                e,
-                                f"PEER async data fetch failed: {e}")
+            raise ProviderError(
+                self.name, e, f"PEER async data fetch failed: {e}"
+            )
 
     @result_decorator
     def fetch_data_sync(self, criteria: Dict[str, Any]) -> pd.DataFrame:
-        """NGA-West2 verilerini getir (senkron)"""
+        """NGA-West2 verilerini senkron olarak çek."""
         try:
             df = self.flatfile_df.copy()
             self.mapped_df = self.column_mapper.map_columns(df=df)
             self.mapped_df = self._apply_filters(self.mapped_df, criteria)
-            print(f"PEER'dan {len(self.mapped_df)} kayıt alındı.")
-            self.mapped_df['PROVIDER'] = str(self.name)
-
-            # Mekanizma dönüşümü
-            if self.mapped_df['MECHANISM'].dtype in [np.int64, np.float64, int, float]:
-                self.mapped_df = convert_mechanism_to_text(self.mapped_df)
+            self.mapped_df["PROVIDER"] = str(self.name)
+            self.mapped_df = self._normalize_mechanism(self.mapped_df)
+            logger.info("PEER'dan %d kayıt alındı.", len(self.mapped_df))
             return self.mapped_df
         except Exception as e:
-            raise ProviderError(self.name, 
-                                e,
-                                f"PEER sync data fetch failed: {e}")
+            raise ProviderError(
+                self.name, e, f"PEER sync data fetch failed: {e}"
+            )
 
-    def _apply_filters(self,
-                       df: pd.DataFrame,
-                       criteria: Dict[str, Any]) -> pd.DataFrame:
-        """Filtreleme uygula"""
+    # ──────────────────────────────────────────────────────────────
+    # Private yardımcılar
+    # ──────────────────────────────────────────────────────────────
+
+    def _normalize_mechanism(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Sayısal mekanizma sütununu metin karşılığına çevir."""
+        if df["MECHANISM"].dtype in (np.int64, np.float64, int, float):
+            return convert_mechanism_to_text(df)
+        return df
+
+    def _apply_filters(
+        self,
+        df: pd.DataFrame,
+        criteria: Dict[str, Any],
+    ) -> pd.DataFrame:
+        """Arama kriterlerine göre DataFrame'i filtrele.
+
+        Her kriter None ise o filtre uygulanmaz; bu sayede kısmi
+        kriterlerle çalışmak mümkündür.
+        """
+        if df.empty:
+            return df
+
         try:
-            if df.empty:
-                return df
-            filtered_df = df.copy()
-            
-            # Büyüklük filtreleme
-            if criteria['min_magnitude'] is not None:
-                filtered_df = filtered_df[filtered_df['MAGNITUDE'] >= criteria['min_magnitude']]
-            if criteria['max_magnitude'] is not None:
-                filtered_df = filtered_df[filtered_df['MAGNITUDE'] <= criteria['max_magnitude']]
+            filtered = df.copy()
 
-            # Mesafe filtreleme (RJB)
-            if criteria['min_Rjb'] is not None:
-                filtered_df = filtered_df[filtered_df['RJB(km)'] >= criteria['min_Rjb']]
-            if criteria['max_Rjb'] is not None:
-                filtered_df = filtered_df[filtered_df['RJB(km)'] <= criteria['max_Rjb']]
+            # --- Numeric range filters (DRY: helper ile) ---
+            numeric_filters: list[tuple[str, str, str]] = [
+                # (criteria_min_key, criteria_max_key, df_column)
+                ("min_magnitude",  "max_magnitude",  "MAGNITUDE"),
+                ("min_Rjb",        "max_Rjb",        "RJB(km)"),
+                ("min_Rrup",       "max_Rrup",        "RRUP(km)"),
+                ("min_vs30",       "max_vs30",        "VS30(m/s)"),
+                ("min_depth",      "max_depth",       "HYPO_DEPTH(km)"),
+                ("min_pga",        "max_pga",         "PGA(cm2/sec)"),
+                ("min_pgv",        "max_pgv",         "PGV(cm/sec)"),
+                ("min_pgd",        "max_pgd",         "PGD(cm)"),
+            ]
+            for min_key, max_key, col in numeric_filters:
+                filtered = self._apply_range(filtered, criteria, min_key, max_key, col)
 
-            # Mesafe filtreleme (RRUP)
-            if criteria['min_Rrup'] is not None:
-                filtered_df = filtered_df[filtered_df['RRUP(km)'] >= criteria['min_Rrup']]
-            if criteria['max_Rrup'] is not None:
-                filtered_df = filtered_df[filtered_df['RRUP(km)'] <= criteria['max_Rrup']]
+            # --- Kategorik filtre ---
+            if criteria.get("mechanisms"):
+                filtered = filtered[
+                    filtered["MECHANISM"].isin(criteria["mechanisms"])
+                ]
 
-            # VS30 filtreleme
-            if criteria['min_vs30'] is not None:
-                filtered_df = filtered_df[filtered_df['VS30(m/s)'] >= criteria['min_vs30']]
-            if criteria['max_vs30'] is not None:
-                filtered_df = filtered_df[filtered_df['VS30(m/s)'] <= criteria['max_vs30']]
+            return filtered
 
-            # Derinlik filtreleme
-            if criteria['min_depth'] is not None:
-                filtered_df = filtered_df[filtered_df['HYPO_DEPTH(km)'] >= criteria['min_depth']]
-            if criteria['max_depth'] is not None:
-                filtered_df = filtered_df[filtered_df['HYPO_DEPTH(km)'] <= criteria['max_depth']]
-
-            # PGA filtreleme
-            if criteria['min_pga'] is not None:
-                filtered_df = filtered_df[filtered_df['PGA(cm2/sec)'] >= criteria['min_pga']]
-            if criteria['max_pga'] is not None:
-                filtered_df = filtered_df[filtered_df['PGA(cm2/sec)'] <= criteria['max_pga']]
-
-            # PGV filtreleme
-            if criteria['min_pgv'] is not None:
-                filtered_df = filtered_df[filtered_df['PGV(cm/sec)'] >= criteria['min_pgv']]
-            if criteria['max_pgv'] is not None:
-                filtered_df = filtered_df[filtered_df['PGV(cm/sec)'] <= criteria['max_pgv']]
-
-            # PGD filtreleme
-            if criteria['min_pgd'] is not None:
-                filtered_df = filtered_df[filtered_df['PGD(cm)'] >= criteria['min_pgd']]
-            if criteria['max_pgd'] is not None:
-                filtered_df = filtered_df[filtered_df['PGD(cm)'] <= criteria['max_pgd']]
-
-            # Mekanizma filtreleme
-            if criteria['mechanisms']:
-                filtered_df = filtered_df[filtered_df['MECHANISM'].isin(criteria['mechanisms'])]
-
-            return filtered_df
         except Exception as e:
             raise DataProcessingError(self.name, e, "Filter application failed")
 
-    def get_name(self) -> str:
-        return str(self.name)
-    
-    @result_decorator
-    def download_single_waveforms(self, filename: str, **kwargs) -> bool|ProviderError:
-        """PEER veri setinde dalga formu dosyaları mevcut değil, bu fonksiyon sadece şablon amaçlı bırakılmıştır."""
-        raise ProviderError(self.name, Exception("PEER veri setinde dalga formu dosyaları mevcut değil."))
+    @staticmethod
+    def _apply_range(
+        df: pd.DataFrame,
+        criteria: Dict[str, Any],
+        min_key: str,
+        max_key: str,
+        col: str,
+    ) -> pd.DataFrame:
+        """Tek bir sayısal aralık filtresi uygula (None-safe)."""
+        if col not in df.columns:
+            return df
+        min_val = criteria.get(min_key)
+        max_val = criteria.get(max_key)
+        if min_val is not None:
+            df = df[df[col] >= min_val]
+        if max_val is not None:
+            df = df[df[col] <= max_val]
+        return df

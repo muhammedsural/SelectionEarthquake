@@ -81,6 +81,8 @@ SCORING_MAP = {
         'type': 'categorical' # Kategorik eşleşme
     }
 }
+
+#BUG Peer provider için ['T90_avg(sec)', 'ENDPOINTSOURCE'] başlıkları tanımlı değil hata veriyor.
 STANDARD_COLUMNS = ["PROVIDER","RSN","EVENT", "YEAR", "MAGNITUDE", "MAGNITUDE_TYPE", 
                     "STATION","SSN","STATION_ID","STATION_LAT","STATION_LON","VS30(m/s)",
                     "STRIKE1","DIP1","RAKE1","MECHANISM",

@@ -17,11 +17,12 @@ async def example_usage():
 
     search_criteria = SearchCriteria(
         start_date="2000-01-01",
-        end_date="2025-12-05",
-        min_magnitude=6.0,
-        max_magnitude=8.0,
+        end_date="2025-09-05",
+        min_magnitude=7.0,
+        max_magnitude=10.0,
         min_vs30=300,
-        max_vs30=500,
+        max_vs30=400,
+        mechanisms=["StrikeSlip"]
         # min_pga=0.6,
         # max_pga=1.5,
         # min_pgv=10,
@@ -43,14 +44,13 @@ async def example_usage():
         )
     
     # Initialize API
-    api = EarthquakeAPI(provider_names= [ProviderName.AFAD],
+    api = EarthquakeAPI(provider_names= [ProviderName.AFAD,ProviderName.PEER],
                         strategies= [strategy], 
                         use_cache=True)
 
     result = await api.run_async(criteria=search_criteria,
                                  strategy_name=strategy.get_name())
     # result = api.run_sync(criteria=search_criteria,
-    # target=target_params,
     # strategy_name=strategy.get_name())
     
     
@@ -59,9 +59,9 @@ async def example_usage():
         # api.download_waveforms(result.value.selected_df)
         # Tekil bir dalga formu dosyasını indirme örneği
         
-        if not result.value.selected_df.empty:
-            download_result = api.download_waveforms(result_df= result.value.selected_df, 
-                                                     batch_size=3, file_type = "ap", file_status = "RawAcc", export_type = "asc2", user_name = "GuestUser")
+        # if not result.value.selected_df.empty:
+        #     download_result = api.download_waveforms(result_df= result.value.selected_df, 
+        #                                              batch_size=3, file_type = "ap", file_status = "RawAcc", export_type = "asc2", user_name = "GuestUser")
         
         # print(f"Target Parameters = {result.value.report['target_params'].__repr__()}")
         # print(f"Search Criteria = {result.value.report['search_criteria'].__repr__()}")

@@ -168,15 +168,15 @@ class AFADColumnMapper(BaseColumnMapper):
         return df
 
     def _handle_t90_duration(self, df: pd.DataFrame) -> pd.DataFrame:
-        """T90 sürelerini işle"""
-        # t90_cols = ["T90_E", "T90_N", "T90_U"]
+        """T90 sürelerini işle ve PEER ile ortak kolona (T90_avg(sec)) yaz."""
         t90_cols = ["t90e", "t90n", "t90u"]
         if all(col in df.columns for col in t90_cols):
-            # Ortalama hesapla
             df["T90_avg(sec)"] = df[t90_cols].mean(axis=1)
-            # Opsiyonel: Individual kolonları temizle
-            # df = df.drop(columns=t90_cols, errors='ignore')
-        
+        elif any(col in df.columns for col in t90_cols):
+            present = [c for c in t90_cols if c in df.columns]
+            df["T90_avg(sec)"] = df[present].mean(axis=1)
+        else:
+            df["T90_avg(sec)"] = None
         return df
 
     # ------- STATION UTILITY FUNCTIONS ------------
@@ -286,54 +286,50 @@ class AFADColumnMapper(BaseColumnMapper):
 
 
 class PEERColumnMapper(BaseColumnMapper):
-    """PEER kolon eşleyici"""
-    
+    """PEER NGA-West2 kolon eşleyici.
+
+    NGA-West2_flatfile.csv dosyası zaten ortak (STANDARD_COLUMNS) formatında
+    geliyor — eski flatfile kolon isimlerine dayalı rename gereksiz.
+
+    Yapılan işlemler:
+      1. CSV kolonları identity mapping ile alınır (rename yok).
+      2. PGA birimi g → cm/s² dönüştürülür.
+      3. 5-95%Duration(sec) → T90_avg(sec) olarak adlandırılır
+         (AFAD ile ortak kolon adı).
+      4. ENDPOINTSOURCE sütunu None olarak eklenir
+         (AFAD'a özgü; PEER için indirme linki yok).
+    """
+
     def __init__(self, **kwargs):
-        mappings = {
-            "Record Sequence Number"                    : "RSN",
-            "Earthquake Name"                           : "EVENT",
-            "YEAR"                                      : "YEAR", 
-            "Earthquake Magnitude"                      : "MAGNITUDE",
-            "Magnitude Type"                            : "MAGNITUDE_TYPE",
-            "Station Name"                              : "STATION",
-            "Station Sequence Number"                   : "SSN",
-            "Station ID  No."                           : "STATION_ID",
-            "Station Latitude"                          : "STATIN_LAT",
-            "Station Longitude"                         : "STATIN_LON",
-            "Vs30 (m/s) selected for analysis"          : "VS30(m/s)",
-            "Strike (deg)"                              : "STRIKE1",
-            "Dip (deg)"                                 : "DIP1",
-            "Rake Angle (deg)"                          : "RAKE1",
-            "Mechanism Based on Rake Angle"             : "MECHANISM",
-            "EpiD (km)"                                 : "EPICENTER_DEPTH(km)",
-            "HypD (km)"                                 : "HYPOCENTER_DEPTH(km)",
-            "Joyner-Boore Dist. (km)"                   : "RJB(km)",
-            "ClstD (km)"                                : "RRUP(km)",
-            "Hypocenter Latitude (deg)"                 : "HYPO_LAT",
-            "Hypocenter Longitude (deg)"                : "HYPO_LON",
-            "Hypocenter Depth (km)"                     : "HYPO_DEPTH(km)",
-            "Lowest Usable Freq - Ave. Component (Hz)"  : "LOWFREQ(Hz)",
-            "File Name (Horizontal 1)"                  : "FILE_NAME_H1",
-            "File Name (Horizontal 2)"                  : "FILE_NAME_H2",
-            "File Name (Vertical)"                      : "FILE_NAME_V",
-            "PGA(g)"                                    : "PGA(cm2/sec)",
-            "PGV (cm/sec)"                              : "PGV(cm/sec)",
-            "PGD (cm)"                                  : "PGD(cm)",
-            "5-95%Duration(sec)"                        : "T90(sec)", 
-            "AriasIntensity(m/sec)"                     : "ARIAS_INTENSITY(m/sec)"
-        }
-        super().__init__(mappings)
-    
+        # CSV zaten standart formatta — rename mapping boş
+        super().__init__(column_mappings={})
+
     def map_columns(self, df: pd.DataFrame) -> pd.DataFrame:
-        """PEER'a özel ek işlemler"""
         df = df.copy()
-        df = super().map_columns(df)
-        
-        # PGA birim dönüşümü (g → cm/s²)
-        if "PGA(cm2/sec)" in df.columns:
-            df["PGA(cm2/sec)"] = df["PGA(cm2/sec)"] * 980.665
-        
-        return df
+
+        # 1. PGA birimi: g → cm/s²
+        if "PGA(g)" in df.columns:
+            df["PGA(cm2/sec)"] = df["PGA(g)"] * 980.665
+            df = df.drop(columns=["PGA(g)"], errors="ignore")
+
+        # 2. T90: "5-95%Duration(sec)" → "T90_avg(sec)" (AFAD ile ortak ad)
+        if "5-95%Duration(sec)" in df.columns:
+            df["T90_avg(sec)"] = df["5-95%Duration(sec)"]
+            df = df.drop(columns=["5-95%Duration(sec)"], errors="ignore")
+
+        # 3. AriasIntensity rename (STANDARD_COLUMNS adına uygun)
+        if "AriasIntensity(m/sec)" in df.columns:
+            df["ARIAS_INTENSITY(m/sec)"] = df["AriasIntensity(m/sec)"]
+            df = df.drop(columns=["AriasIntensity(m/sec)"], errors="ignore")
+
+        # 4. STATION_LAT / STATION_LON: CSV'de "STATION_LAT", "STATION_LON" var
+        #    STANDARD_COLUMNS ile örtüşüyor, dokunma.
+
+        # 5. ENDPOINTSOURCE: PEER için indirme linki yok
+        df["ENDPOINTSOURCE"] = None
+
+        # 6. Standart kolonlara hizala (eksikleri None ile doldur, fazlaları at)
+        return self._ensure_standard_columns(df)
 
  # ==================== MAPPER FACTORY ====================
 

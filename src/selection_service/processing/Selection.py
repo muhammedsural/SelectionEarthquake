@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from datetime import datetime
 import math
 from typing import Any, Dict, List, Optional, Protocol, Tuple
@@ -31,15 +30,27 @@ class ScoringWeights(BaseModel):
 
     def get_weight(self, key: str) -> float:
         return getattr(self, key, 0.0)
-@dataclass
-class SelectionConfig:
-    """Seçim konfigürasyonu"""
-    design_code: DesignCode
-    num_records: int = 22
-    max_per_station: int = 3
-    max_per_event: int = 3
-    min_score: float = 50.0
-    required_components: List[str] = Field(default_factory=list)
+class SelectionConfig(BaseModel):
+    """Seçim konfigürasyonu.
+
+    Adım 4 — Pydantic BaseModel'e dönüştürme:
+      Önceki kod @dataclass + Pydantic Field() karışımı kullanıyordu.
+      Field(default_factory=...) yalnızca Pydantic modelleri için geçerlidir;
+      @dataclass ile birlikte kullanıldığında runtime'da sessizce yanlış
+      davranış üretir (Field nesnesi liste yerine field descriptor olarak kalır).
+
+    Pydantic BaseModel kullanmanın ek faydaları:
+      - Alan doğrulaması kolayca eklenebilir.
+      - .model_dump() / .model_copy() hazır gelir.
+      - ScoringWeights ve SearchCriteria ile tutarlı tip sistemi.
+    """
+
+    design_code         : DesignCode
+    num_records         : int       = 22
+    max_per_station     : int       = 3
+    max_per_event       : int       = 3
+    min_score           : float     = 50.0
+    required_components : List[str] = Field(default_factory=list)
 
 class SearchCriteria(BaseModel):
     """Arama kriterleri - Tüm sağlayıcılar için ortak kriterler"""

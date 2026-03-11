@@ -1,148 +1,123 @@
+"""
+core/EarthquakeApi.py  (Adım 2 — SRP refactor)
+
+EarthquakeAPI artık bir Facade'dır.
+Tüm iş mantığı üç ayrı servise taşındı:
+
+  ProviderRegistry         → provider yönetimi
+  EarthquakeQueryService   → sorgulama + strateji
+  WaveformDownloadService  → dalga formu indirme
+
+Bu sınıf yalnızca bu üç servisi bir araya getirir ve
+kullanıcıya tek bir giriş noktası sunar.
+Yeni iş kuralı eklenecekse ilgili servis dosyasına gidilir,
+bu dosyaya dokunulmaz.
+
+Geriye dönük uyumluluk:
+  Mevcut kullanım kalıbı (EarthquakeAPI(...).run_sync / run_async /
+  download_waveforms / re_selection) korunmuştur.
+"""
+
+from __future__ import annotations
+
+import logging
 from typing import Any, List
+
 import pandas as pd
 
-from selection_service.core.Pipeline import EarthquakePipeline, PipelineContext, PipelineResult, PipelineResult
-from selection_service.core.Pipeline import EarthquakePipeline
-from ..providers.ProvidersFactory import ProviderFactory
+from ..core.ErrorHandle import PipelineError, ProviderError
+from ..core.Pipeline import PipelineResult
 from ..enums.Enums import ProviderName
-from ..providers.IProvider import IDataProvider
-from ..processing.Selection import (ISelectionStrategy, SearchCriteria)
-from ..core.ErrorHandle import (PipelineError, ProviderError, StrategyError)
 from ..processing.ResultHandle import Result
-import logging
+from ..processing.Selection import ISelectionStrategy, SearchCriteria
+from ..services.EarthquakeQueryService import EarthquakeQueryService
+from ..services.ProviderRegistry import ProviderRegistry
+from ..services.WaveformDownloadService import WaveformDownloadService
 
 logger = logging.getLogger(__name__)
-    
+
+
 class EarthquakeAPI:
+    """Kullanıcıya yönelik üst düzey Facade.
+
+    Doğrudan kullanım:
+        api = EarthquakeAPI(
+            provider_names=[ProviderName.AFAD, ProviderName.PEER],
+            strategies=[TBDYSelectionStrategy(config)],
+        )
+        result = api.run_sync(criteria, "TBDY_2018_Gaussian")
+        api.download_waveforms(result.value.selected_df)
+
+    Servislerle doğrudan çalışmak isteyenler için:
+        api.query      → EarthquakeQueryService
+        api.downloader → WaveformDownloadService
+        api.registry   → ProviderRegistry
     """
-        EarthquakeAPI, depolama, seçim stratejileri ve raporlama gibi tüm işlemleri tek bir sınıf altında toplayarak kullanıcı dostu bir arayüz sağlar.
-        Kullanıcılar, sadece arama kriterlerini ve stratejiyi belirleyerek senkron veya asenkron olarak çalıştırabilirler. Ayrıca, sonuçlara göre dalga formu indirme işlemlerini de kolayca yönetebilirler.
-    """
 
-    def __init__(self, 
-                 provider_names: List[ProviderName],
-                 strategies: List[ISelectionStrategy],
-                 use_cache: bool = True,
-                 **kwargs: Any):
-        """ 
-
-        Args:
-            provider_names (List[ProviderName]): Kullanılacak provider isimleri listesi (örn: [ProviderName.AFAD, ProviderName.PEER])
-            strategies (List[ISelectionStrategy]): Kullanılacak seçim stratejileri listesi
-            use_cache (bool, optional): Caching özelliğini etkinleştirir. Defaults to True.
-        """
-        
-        self.factory = ProviderFactory()
-        self.providers = [
-            self.factory.create_provider(name, use_cache=use_cache, **kwargs) 
-            for name in provider_names
-        ]
-        self.strategies = {s.get_name(): s for s in strategies}
-        self.pipeline = EarthquakePipeline()
-
-    async def run_async(self, criteria: SearchCriteria, strategy_name: str) -> Result[PipelineResult, PipelineError]:
-        """Asenkron çalıştırma"""
-        return await self._run_pipeline(criteria, strategy_name, is_async=True)
-
-    def run_sync(self, criteria: SearchCriteria, strategy_name: str) -> Result[PipelineResult, PipelineError]:
-        """Senkron çalıştırma"""
-        return self._run_pipeline(criteria, strategy_name, is_async=False)
-
-    def _run_pipeline(self, criteria: SearchCriteria, strategy_name: str, is_async: bool) -> Result:
-        """Ortak çalıştırma mantığı"""
-        if strategy_name not in self.strategies:
-            return Result.fail(ValueError(f"Strategy '{strategy_name}' not found. Available: {list(self.strategies.keys())}"))
-        
-        strategy = self.strategies[strategy_name]
-        context = PipelineContext(
-            providers=self.providers,
-            strategy=strategy,
-            search_criteria=criteria
+    def __init__(
+        self,
+        provider_names: List[ProviderName],
+        strategies: List[ISelectionStrategy],
+        use_cache: bool = True,
+        **kwargs: Any,
+    ) -> None:
+        # 1. Provider'ları oluştur ve kaydet
+        self.registry = ProviderRegistry.build(
+            provider_names, use_cache=use_cache, **kwargs
         )
 
-        if is_async:
-            return self.pipeline.execute_async(context) # Await çağıran yerde yapılacak
-        return self.pipeline.execute_sync(context)
+        # 2. Sorgulama servisi
+        self.query = EarthquakeQueryService(
+            registry=self.registry,
+            strategies=strategies,
+        )
 
-    # --- DOWNLOAD YÖNETİMİ ---
-    
-    def download_waveforms(self, result_df: pd.DataFrame, **kwargs) -> Result[bool, ProviderError]:
-        """
-        Sonuç DataFrame'indeki dosyaları ilgili provider'a indirir.
-        Group-by kullanarak her provider'a toplu istek atar (Batch işlemi için daha uygun).
-        """
-        try:
-            # Her provider için grupla
-            for provider_name, group in result_df.groupby("PROVIDER"):
-                provider = self._get_provider(provider_name)
-                if not provider:
-                    # Result.fail(ProviderError("API", ValueError(f"Provider '{provider_name}' not found"), "Download failed"))
-                    logger.warning(f"Provider '{provider_name}' not found in the system. Skipping download for this provider.")
-                    print(f"Provider '{provider_name}' not found in the system. Skipping download for this provider.")
-                    continue
-                
-                if provider_name == ProviderName.PEER.value:
-                    logger.info(f"PEER provider does not support batch download, skipping batch for {provider_name}.")
-                    print(f"PEER provider does not support batch download, skipping batch for {provider_name}.")
-                    continue
-                
-                # Eğer provider batch indirmeyi destekliyorsa onu kullan, yoksa tek tek
-                provider.download_waveforms_batch(
-                    filenames= group['FILE_NAME_H1'].tolist(),
-                    event_ids= group['EVENT'].tolist() if 'EVENT' in group.columns else None,
-                    **kwargs
-                )
-                
-                # Burada IProvider interface'indeki mevcut metoda sadık kalıyoruz
-                # for _, row in group.iterrows():
-                #     provider.download_single_waveforms(
-                #         filename=row.get('FILE_NAME_H1'),
-                #         event_ids=row.get('EVENT'),
-                #         station_code=row.get('SSN') # veya STATION_ID
-                #     )
-            return Result.ok(True)
-        except Exception as e:
-            return Result.fail(ProviderError("API", e, "Bulk download failed"))
+        # 3. Download servisi
+        self.downloader = WaveformDownloadService(registry=self.registry)
 
-    def download_single_waveform(self, filename: str, event_id: str, station_code: str, **kwargs) -> Result[bool, ProviderError]:
-        """Tek bir waveform indirme metodu"""
-        try:
-            provider = self._get_provider(station_code.split('.')[0]) # Station code'dan provider ismini çıkar
-            if not provider:
-                return Result.fail(ProviderError("API", ValueError(f"Provider not found for station {station_code}"), "Download failed"))
-            provider.download_single_waveforms(filename=filename, event_id=event_id, station_code=station_code, **kwargs)
-            return Result.ok(True)
-        except Exception as e:
-            return Result.fail(ProviderError("API", e, "Single waveform download failed"))
+    # ── Sorgulama (EarthquakeQueryService'e delege) ────────────────
 
-    def _get_provider(self, name: str) -> IDataProvider:
-        return next((p for p in self.providers if p.get_name() == name), None)
+    async def run_async(
+        self,
+        criteria: SearchCriteria,
+        strategy_name: str,
+    ) -> Result[PipelineResult, PipelineError]:
+        """Pipeline'ı asenkron çalıştır."""
+        return await self.query.run_async(criteria, strategy_name)
 
-    # --- HELPER ---
-    # Ancak Re-selection mantığı API seviyesinde tutulabilir.
-    
-    def re_selection(self, df: pd.DataFrame, strategy_name: str, new_criteria: SearchCriteria) -> Result[PipelineResult, PipelineError]:
-        """Varolan data üzerinde yeniden strateji uygula (Tekrar fetch etmeden)"""
-        if strategy_name not in self.strategies:
-            return Result.fail(ValueError(f"Strategy not found"))
-        
-        strategy = self.strategies[strategy_name]
-        try:
-            # Sadece logic çalıştır
-            selected, scored = strategy.select_and_score(df, new_criteria)
-            
-            # Sahte bir context ile rapor üret
-            dummy_ctx = PipelineContext([], strategy, new_criteria)
-            dummy_ctx.selected_df = selected
-            dummy_ctx.scored_df = scored
-            
-            report = self.pipeline.reporter.generate_report(dummy_ctx)
-            
-            return Result.ok(PipelineResult(
-                selected_df=selected,
-                scored_df=scored,
-                report=report,
-                execution_time=0.0
-            ))
-        except Exception as e:
-            return Result.fail(StrategyError(f"Re-selection failed: {e}"))
+    def run_sync(
+        self,
+        criteria: SearchCriteria,
+        strategy_name: str,
+    ) -> Result[PipelineResult, PipelineError]:
+        """Pipeline'ı senkron çalıştır."""
+        return self.query.run_sync(criteria, strategy_name)
+
+    def re_selection(
+        self,
+        df: pd.DataFrame,
+        strategy_name: str,
+        new_criteria: SearchCriteria,
+    ) -> Result[PipelineResult, PipelineError]:
+        """Var olan veri üzerinde yeniden strateji uygula."""
+        return self.query.re_selection(df, strategy_name, new_criteria)
+
+    # ── Download (WaveformDownloadService'e delege) ────────────────
+
+    def download_waveforms(
+        self,
+        result_df: pd.DataFrame,
+        **kwargs: Any,
+    ) -> Result[bool, ProviderError]:
+        """Toplu dalga formu indirme."""
+        return self.downloader.download_batch(result_df, **kwargs)
+
+    def download_single_waveform(
+        self,
+        filename: str,
+        event_id: str,
+        station_code: str,
+        **kwargs: Any,
+    ) -> Result[bool, ProviderError]:
+        """Tekil dalga formu indirme."""
+        return self.downloader.download_single(filename, event_id, station_code, **kwargs)
