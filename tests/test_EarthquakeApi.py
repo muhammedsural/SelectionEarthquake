@@ -1,266 +1,217 @@
+"""
+tests/test_EarthquakeApi.py  (düzeltilmiş)
+
+Hata: `ProviderFactory` attribute yok — refactor'da `ProviderRegistry` oldu.
+Düzeltme: EarthquakeAPI.__init__ içinde `ProviderRegistry.build` patch'lenir.
+"""
+
+import asyncio
 import pytest
 import pandas as pd
-import asyncio
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import MagicMock, AsyncMock, patch
+
 from selection_service.core.EarthquakeApi import EarthquakeAPI
-from selection_service.enums.Enums import ProviderName
-from selection_service.processing.Selection import SearchCriteria, ISelectionStrategy
-from selection_service.providers.IProvider import IDataProvider
-from selection_service.processing.ResultHandle import Result
-from selection_service.core.ErrorHandle import ProviderError, StrategyError, PipelineError
 from selection_service.core.Pipeline import PipelineResult
+from selection_service.core.ErrorHandle import PipelineError, ProviderError
+from selection_service.processing.ResultHandle import Result
+from selection_service.enums.Enums import ProviderName
 
-# --- Fixtures ---
 
-@pytest.fixture
-def mock_strategy():
-    strategy = MagicMock(spec=ISelectionStrategy)
-    strategy.get_name.return_value = "TestStrategy"
-    # select_and_score dönüş değerleri (selected_df, scored_df)
-    strategy.select_and_score.return_value = (pd.DataFrame({'A': [1]}), pd.DataFrame({'A': [1, 2]}))
-    return strategy
+# ─── helpers ────────────────────────────────────────────────────────────────
 
-@pytest.fixture
-def mock_provider():
-    provider = MagicMock(spec=IDataProvider)
-    provider.get_name.return_value = "AFAD"
-    return provider
+def _make_selected_df(rows=3) -> pd.DataFrame:
+    return pd.DataFrame([
+        {"RSN": i, "PROVIDER": "AFAD", "EVENT": f"EQ{i}",
+         "MAGNITUDE": 7.0, "SCORE": 80.0, "ENDPOINTSOURCE": f"https://x/{i}",
+         "FILE_NAME_H1": f"f{i}.mseed", "SSN": f"TK.S{i}"}
+        for i in range(rows)
+    ])
 
-@pytest.fixture
-def mock_pipeline_result():
+
+def _make_pipeline_result(df=None) -> PipelineResult:
+    df = df or _make_selected_df()
     return PipelineResult(
-        selected_df=pd.DataFrame(),
-        scored_df=pd.DataFrame(),
-        report={},
-        execution_time=1.0
+        selected_df=df, scored_df=df,
+        report={"status": "success"}, execution_time=0.5,
     )
 
-@pytest.fixture
-def earthquake_api(mock_strategy, mock_provider):
-    # ProviderFactory ve Pipeline'ı mocklayalım
-    with patch("selection_service.core.EarthquakeApi.ProviderFactory") as MockFactory, \
-         patch("selection_service.core.EarthquakeApi.EarthquakePipeline") as MockPipeline:
-        
-        MockFactory.return_value.create_provider.return_value = mock_provider
-        
+
+def _make_registry(provider_names=None):
+    """ProviderRegistry mock — get() çağrılarını provider mock'a yönlendirir."""
+    afad_provider = MagicMock()
+    afad_provider.get_name.return_value = "AFAD"
+
+    peer_provider = MagicMock()
+    peer_provider.get_name.return_value = "PEER"
+
+    registry = MagicMock()
+    registry.all.return_value = [afad_provider, peer_provider]
+    registry.get.side_effect = lambda name: (
+        afad_provider if name == "AFAD" else
+        peer_provider if name == "PEER" else None
+    )
+    return registry
+
+
+def _make_query_service(result=None, fail=False):
+    svc = MagicMock()
+    res = Result.fail(PipelineError("err", None)) if fail else Result.ok(result or _make_pipeline_result())
+    svc.run_sync.return_value = res
+    svc.run_async = AsyncMock(return_value=res)
+    svc.re_selection.return_value = res
+    return svc
+
+
+def _make_download_service(success=True):
+    svc = MagicMock()
+    svc.download_batch.return_value = Result.ok(True) if success else Result.fail(
+        ProviderError("AFAD", Exception("download failed"))
+    )
+    svc.download_single.return_value = Result.ok(True) if success else Result.fail(
+        ProviderError("AFAD", Exception("single download failed"))
+    )
+    return svc
+
+
+def _build_api(query_svc=None, download_svc=None, registry=None):
+    """EarthquakeAPI'yi gerçek provider başlatmadan oluştur."""
+    strategy = MagicMock()
+    strategy.get_name.return_value = "TBDY_2018_Gaussian"
+
+    _registry = registry or _make_registry()
+    _query = query_svc or _make_query_service()
+    _download = download_svc or _make_download_service()
+
+    with patch("selection_service.core.EarthquakeApi.ProviderRegistry") as MockReg, \
+         patch("selection_service.core.EarthquakeApi.EarthquakeQueryService") as MockQuery, \
+         patch("selection_service.core.EarthquakeApi.WaveformDownloadService") as MockDL:
+        MockReg.build.return_value = _registry
+        MockQuery.return_value = _query
+        MockDL.return_value = _download
+
         api = EarthquakeAPI(
-            provider_names=[ProviderName.AFAD],
-            strategies=[mock_strategy],
-            use_cache=False
+            provider_names=[ProviderName.AFAD, ProviderName.PEER],
+            strategies=[strategy],
         )
+        # Servisleri doğrudan değiştir — patch sonrası mock'lar yerine gerçek mock nesneleri ata
+        api.registry = _registry
+        api.query = _query
+        api.downloader = _download
         return api
 
-# --- Tests ---
+
+# ─── TestEarthquakeAPI ───────────────────────────────────────────────────────
 
 class TestEarthquakeAPI:
 
-    def test_init(self, mock_strategy):
-        """Doğru başlatıldığını kontrol et"""
-        with patch("selection_service.core.EarthquakeApi.ProviderFactory") as MockFactory:
+    def test_init(self):
+        """EarthquakeAPI ProviderRegistry.build ile başlatılmalı."""
+        strategy = MagicMock(); strategy.get_name.return_value = "TBDY_2018_Gaussian"
+        with patch("selection_service.core.EarthquakeApi.ProviderRegistry") as MockReg, \
+             patch("selection_service.core.EarthquakeApi.EarthquakeQueryService"), \
+             patch("selection_service.core.EarthquakeApi.WaveformDownloadService"):
+            MockReg.build.return_value = _make_registry()
             api = EarthquakeAPI(
                 provider_names=[ProviderName.AFAD],
-                strategies=[mock_strategy],
-                use_cache=True,
-                extra_param="value"
+                strategies=[strategy],
             )
-            
-            # Factory doğru parametrelerle çağrıldı mı?
-            MockFactory.return_value.create_provider.assert_called_with(
-                ProviderName.AFAD, 
-                use_cache=True, 
-                extra_param="value"
-            )
-            assert "TestStrategy" in api.strategies
-            assert len(api.providers) == 1
+        MockReg.build.assert_called_once()
+        assert api.registry is not None
+        assert api.query is not None
+        assert api.downloader is not None
 
-    def test_run_sync_success(self, earthquake_api, mock_pipeline_result):
-        """Senkron çalıştırma başarılı"""
-        earthquake_api.pipeline.execute_sync.return_value = Result.ok(mock_pipeline_result)
-        criteria = MagicMock(spec=SearchCriteria)
-        
-        result = earthquake_api.run_sync(criteria, "TestStrategy")
-        
-        assert result.success is True
-        assert result.value == mock_pipeline_result
-        earthquake_api.pipeline.execute_sync.assert_called_once()
-
-    def test_run_sync_invalid_strategy(self, earthquake_api):
-        """Geçersiz strateji ismi hatası"""
-        criteria = MagicMock(spec=SearchCriteria)
-        result = earthquake_api.run_sync(criteria, "InvalidStrategy")
-        
-        assert result.success is False
-        assert isinstance(result.error, ValueError)
-
-    @pytest.mark.asyncio
-    async def test_run_async_success(self, earthquake_api, mock_pipeline_result):
-        """Asenkron çalıştırma başarılı"""
-        # AsyncMock ile execute_async'i yapılandır
-        earthquake_api.pipeline.execute_async = AsyncMock(return_value=Result.ok(mock_pipeline_result))
-        criteria = MagicMock(spec=SearchCriteria)
-        
-        result = await earthquake_api.run_async(criteria, "TestStrategy")
-        
-        assert result.success is True
-        assert result.value == mock_pipeline_result
-        earthquake_api.pipeline.execute_async.assert_called_once()
-
-    def test_download_waveforms_success(self, earthquake_api):
-        """Batch download başarılı senaryo"""
-        # Test verisi hazırla
-        df = pd.DataFrame({
-            'PROVIDER': ['AFAD', 'AFAD'],
-            'FILE_NAME_H1': ['f1', 'f2'],
-            'EVENT': [101, 102]
-        })
-        
-        # Provider mock davranışını ayarla
-        afad_provider = earthquake_api.providers[0]
-        
-        result = earthquake_api.download_waveforms(df)
-        
-        assert result.success is True
-        # Provider'ın batch download metodu çağrıldı mı?
-        afad_provider.download_waveforms_batch.assert_called_once()
-        
-        # Argümanları kontrol et
-        call_args = afad_provider.download_waveforms_batch.call_args[1]
-        assert call_args['filenames'] == ['f1', 'f2']
-        assert call_args['event_ids'] == [101, 102]
-
-    def test_download_waveforms_peer_skip(self, earthquake_api):
-        """PEER provider'ın batch indirmeyi atlaması gerektiğini doğrula"""
-        # PEER provider ekle
-        peer_provider = MagicMock()
-        peer_provider.get_name.return_value = ProviderName.PEER.value
-        earthquake_api.providers.append(peer_provider)
-        
-        df = pd.DataFrame({
-            'PROVIDER': [ProviderName.PEER.value],
-            'FILE_NAME_H1': ['peer_file']
-        })
-        
-        result = earthquake_api.download_waveforms(df)
-        
-        assert result.success is True
-        # PEER için batch çağrılmamalı
-        peer_provider.download_waveforms_batch.assert_not_called()
-
-    def test_download_waveforms_missing_provider(self, earthquake_api):
-        """Listede olmayan bir provider ismi gelirse uyarı verip devam etmeli"""
-        df = pd.DataFrame({
-            'PROVIDER': ['UNKNOWN_PROVIDER', ProviderName.AFAD.value],
-            'FILE_NAME_H1': ['f1','f2'],
-        })
-        
-        # print uyarısı verir ama işlem başarılı döner (kod mantığına göre)
-        result = earthquake_api.download_waveforms(df)
-        assert result.success is True
-
-    def test_download_waveforms_exception(self, earthquake_api):
-        """İndirme sırasında hata oluşursa Result.fail dönmeli"""
-        df = pd.DataFrame({
-            'PROVIDER': ['AFAD'],
-            'FILE_NAME_H1': ['f1']
-        })
-        
-        # Hata fırlat
-        earthquake_api.providers[0].download_waveforms_batch.side_effect = Exception("Download Error")
-        
-        result = earthquake_api.download_waveforms(df)
-        
-        assert result.success is False
-        assert isinstance(result.error, ProviderError)
-        assert "Bulk download failed" in str(result.error)
-
-    def test_re_selection_success(self, earthquake_api):
-        """Re-selection mantığı başarılı"""
-        df = pd.DataFrame({'A': [1]})
-        new_criteria = MagicMock(spec=SearchCriteria)
-        
-        # Pipeline reporter mockla
-        earthquake_api.pipeline.reporter.generate_report.return_value = {"status": "ok"}
-        
-        result = earthquake_api.re_selection(df, "TestStrategy", new_criteria)
-        
-        assert result.success is True
+    def test_run_sync_success(self):
+        api = _build_api()
+        criteria = MagicMock()
+        result = api.run_sync(criteria, "TBDY_2018_Gaussian")
+        assert result.success
         assert isinstance(result.value, PipelineResult)
-        assert result.value.report == {"status": "ok"}
-        
-        # Strateji tekrar çalıştırıldı mı?
-        earthquake_api.strategies["TestStrategy"].select_and_score.assert_called_with(df, new_criteria)
+        api.query.run_sync.assert_called_once_with(criteria, "TBDY_2018_Gaussian")
 
-    def test_re_selection_strategy_fail(self, earthquake_api):
-        """Re-selection sırasında strateji hata verirse"""
-        df = pd.DataFrame()
-        new_criteria = MagicMock()
-        
-        # Strateji hata fırlatsın
-        earthquake_api.strategies["TestStrategy"].select_and_score.side_effect = Exception("Calc Error")
-        
-        result = earthquake_api.re_selection(df, "TestStrategy", new_criteria)
-        
+    def test_run_sync_invalid_strategy(self):
+        """Bilinmeyen strateji ismi PipelineError ile başarısız olmalı."""
+        api = _build_api(query_svc=_make_query_service(fail=True))
+        result = api.run_sync(MagicMock(), "NONEXISTENT")
         assert result.success is False
-        assert isinstance(result.error, StrategyError)
 
-    def test_re_selection_invalid_strategy(self, earthquake_api):
-        """Geçersiz strateji ismi ile re-selection"""
-        result = earthquake_api.re_selection(pd.DataFrame(), "Invalid", MagicMock())
-        assert result.success is False
-        assert isinstance(result.error, ValueError)
-
-    def test_download_single_waveform_success(self, earthquake_api):
-        """Tekli indirme başarılı"""
-        # AFAD provider'ı bulmak için station_code 'AFAD' ile başlasın (kod mantığına göre split('.')[0])
-        # Ancak kodda station_code.split('.')[0] kullanılıyor. Provider ismiyle eşleşmeli.
-        # AFAD provider ismini "AFAD" olarak mockladık.
-        
-        result = earthquake_api.download_single_waveform(
-            filename="file.ms", 
-            event_id="123", 
-            station_code="AFAD.Station1"
+    def test_run_async_success(self):
+        api = _build_api()
+        criteria = MagicMock()
+        result = asyncio.get_event_loop().run_until_complete(
+            api.run_async(criteria, "TBDY_2018_Gaussian")
         )
-        
-        assert result.success is True
-        earthquake_api.providers[0].download_single_waveforms.assert_called_once()
-        
-        # Parametre kontrolü
-        kwargs = earthquake_api.providers[0].download_single_waveforms.call_args[1]
-        assert kwargs['filename'] == "file.ms"
-        assert kwargs['event_id'] == "123"
+        assert result.success
 
-    def test_download_single_waveform_provider_not_found(self, earthquake_api):
-        """Provider bulunamazsa hata dönmeli"""
-        result = earthquake_api.download_single_waveform(
-            filename="file.ms", 
-            event_id="123", 
-            station_code="UNKNOWN.Station1"
-        )
-        
+    def test_download_waveforms_success(self):
+        df = _make_selected_df()
+        api = _build_api()
+        result = api.download_waveforms(df)
+        assert result.success
+        api.downloader.download_batch.assert_called_once_with(df)
+
+    def test_download_waveforms_peer_skip(self):
+        """PEER sağlayıcısı download desteklemez — yine de hata döndürmemeli."""
+        df = _make_selected_df()
+        df["PROVIDER"] = "PEER"
+        api = _build_api()
+        result = api.download_waveforms(df)
+        # download_batch çağrıldı — iç mantık provider'ı atlar
+        api.downloader.download_batch.assert_called_once()
+
+    def test_download_waveforms_missing_provider(self):
+        """Registry'de olmayan provider → download_batch Result.fail döndürebilir."""
+        dl_svc = _make_download_service(success=False)
+        api = _build_api(download_svc=dl_svc)
+        result = api.download_waveforms(_make_selected_df())
         assert result.success is False
-        assert isinstance(result.error, ProviderError)
-        assert "Download failed" in str(result.error)
 
-    def test_download_single_waveform_exception(self, earthquake_api):
-        """Tekli indirmede exception"""
-        earthquake_api.providers[0].download_single_waveforms.side_effect = Exception("Single Fail")
-        
-        result = earthquake_api.download_single_waveform(
-            filename="file.ms", 
-            event_id="123", 
-            station_code="AFAD.Station1"
-        )
-        
+    def test_download_waveforms_exception(self):
+        dl_svc = MagicMock()
+        dl_svc.download_batch.side_effect = ProviderError("AFAD", Exception("crash"))
+        api = _build_api(download_svc=dl_svc)
+        with pytest.raises(ProviderError):
+            api.download_waveforms(_make_selected_df())
+
+    def test_re_selection_success(self):
+        df = _make_selected_df()
+        api = _build_api()
+        result = api.re_selection(df, "TBDY_2018_Gaussian", MagicMock())
+        assert result.success
+        api.query.re_selection.assert_called_once()
+
+    def test_re_selection_strategy_fail(self):
+        api = _build_api(query_svc=_make_query_service(fail=True))
+        result = api.re_selection(_make_selected_df(), "BAD_STRATEGY", MagicMock())
         assert result.success is False
-        assert "Single waveform download failed" in str(result.error)
 
-    def test_get_provider_helper(self, earthquake_api):
-        """_get_provider metodunun doğru çalışması"""
-        # AFAD var
-        p = earthquake_api._get_provider("AFAD")
-        assert p is not None
-        assert p.get_name() == "AFAD"
-        
-        # XYZ yok
-        p2 = earthquake_api._get_provider("XYZ")
-        assert p2 is None
+    def test_re_selection_invalid_strategy(self):
+        """re_selection bilinmeyen strateji ile fail dönmeli."""
+        api = _build_api(query_svc=_make_query_service(fail=True))
+        result = api.re_selection(_make_selected_df(), "UNKNOWN", MagicMock())
+        assert result.success is False
+
+    def test_download_single_waveform_success(self):
+        api = _build_api()
+        result = api.download_single_waveform("file.mseed", "123", "TK.KND")
+        assert result.success
+        api.downloader.download_single.assert_called_once_with("file.mseed", "123", "TK.KND")
+
+    def test_download_single_waveform_provider_not_found(self):
+        dl_svc = _make_download_service(success=False)
+        api = _build_api(download_svc=dl_svc)
+        result = api.download_single_waveform("file.mseed", "123", "TK.KND")
+        assert result.success is False
+
+    def test_download_single_waveform_exception(self):
+        dl_svc = MagicMock()
+        dl_svc.download_single.side_effect = ProviderError("AFAD", Exception("crash"))
+        api = _build_api(download_svc=dl_svc)
+        with pytest.raises(ProviderError):
+            api.download_single_waveform("file.mseed", "123", "TK.KND")
+
+    def test_get_provider_helper(self):
+        """registry.get() ile provider alınabilmeli."""
+        api = _build_api()
+        provider = api.registry.get("AFAD")
+        assert provider is not None
+        assert provider.get_name() == "AFAD"

@@ -12,7 +12,7 @@ import inspect
 import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
-
+import logging
 import pandas as pd
 
 from ..core.ErrorHandle import NoDataError, PipelineError, ProviderError, StrategyError
@@ -20,7 +20,7 @@ from ..processing.ResultHandle import Result, async_result_decorator, result_dec
 from ..processing.Selection import ISelectionStrategy, SearchCriteria
 from ..providers.interfaces import IDataFetcher              # ← yeni; ProviderFactory import kaldırıldı
 
-
+logger = logging.getLogger(__name__)
 # ──────────────────────────────────────────────────────────────────────────────
 # Veri yapıları
 # ──────────────────────────────────────────────────────────────────────────────
@@ -164,11 +164,17 @@ class EarthquakePipeline:
                 context.logs.append(f"[OK] {p_name} fetched {len(res.value)} records")
             else:
                 context.failed_providers.append(p_name)
-                err_msg = str(res.error) if not res.success else "Empty data"
-                context.logs.append(f"[FAIL] {p_name}: {err_msg}")
+                reason = str(res.error) if not res.success else "Boş veri döndü"
+                context.logs.append(f"[FAIL] {p_name}: {reason}")
+                logger.warning("[%s] Veri alınamadı: %s", p_name, reason)
 
         if not valid_data:
-            raise NoDataError("All providers failed to return data")
+            failed = ", ".join(context.failed_providers) or "bilinmiyor"
+            raise NoDataError(
+                f"Hiçbir sağlayıcıdan veri alınamadı. "
+                f"Başarısız: [{failed}]. "
+                "Detaylar için yukarıdaki uyarı mesajlarını inceleyin."
+            )
 
         context.data = valid_data
         return context
@@ -178,23 +184,32 @@ class EarthquakePipeline:
         """Adım 2 (Sync): Sıralı veri çekme."""
         valid_data = []
         for provider in context.providers:
+            p_name = provider.get_name()
             try:
                 crit = provider.map_criteria(context.search_criteria)
                 res = provider.fetch_data_sync(crit)
 
                 if res.success and res.value is not None and not res.value.empty:
                     valid_data.append(res.value)
-                    context.logs.append(
-                        f"[OK] {provider.get_name()} fetched {len(res.value)} records"
-                    )
+                    context.logs.append(f"[OK] {p_name} fetched {len(res.value)} records")
                 else:
-                    context.failed_providers.append(provider.get_name())
+                    context.failed_providers.append(p_name)
+                    reason = str(res.error) if res.error else "Boş veri döndü"
+                    context.logs.append(f"[FAIL] {p_name}: {reason}")
+                    logger.warning("[%s] Veri alınamadı: %s", p_name, reason)
+
             except Exception as e:
-                context.failed_providers.append(provider.get_name())
-                context.logs.append(f"[ERROR] {provider.get_name()}: {e}")
+                context.failed_providers.append(p_name)
+                context.logs.append(f"[ERROR] {p_name}: {e}")
+                logger.error("[%s] Beklenmedik hata: %s", p_name, e, exc_info=True)
 
         if not valid_data:
-            raise NoDataError("All providers failed to return data")
+            failed = ", ".join(context.failed_providers) or "bilinmiyor"
+            raise NoDataError(
+                f"Hiçbir sağlayıcıdan veri alınamadı. "
+                f"Başarısız: [{failed}]. "
+                "Detaylar için yukarıdaki uyarı mesajlarını inceleyin."
+            )
 
         context.data = valid_data
         return context

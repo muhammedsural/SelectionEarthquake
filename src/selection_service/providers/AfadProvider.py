@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Type
 
 import pandas as pd
 
-from ..core.ErrorHandle import ProviderError
+from ..core.ErrorHandle import AfadEmptyResultError, AfadMappingError, ProviderError
 from ..enums.Enums import ProviderName
 from ..processing.Mappers import IColumnMapper
 from ..processing.ResultHandle import Result, async_result_decorator, result_decorator
@@ -41,16 +41,17 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
         self,
         column_mapper: Type[IColumnMapper],
         timeout: int = 30,
+        api_client: AfadApiClient | None = None,
+        file_manager: AfadFileManager | None = None,
     ) -> None:
         self.name = ProviderName.AFAD.value
         self.column_mapper = column_mapper
         self.timeout = timeout
-
-        # Bağımlılıklar: Adım 6'da constructor injection ile dışarıdan alınacak.
-        # Şimdilik default değerler içeride oluşturuluyor.
-        self.api_client = AfadApiClient(timeout=self.timeout)
-        self.file_manager = AfadFileManager(base_dir="Afad_events")
-
+ 
+        # DIP: Dışarıdan injection desteklenir; verilmezse default oluşturulur.
+        self.api_client = api_client or AfadApiClient(timeout=self.timeout)
+        self.file_manager = file_manager or AfadFileManager(base_dir="Afad_events")
+ 
         self.mapped_df: pd.DataFrame | None = None
         self.response_df: pd.DataFrame | None = None
 
@@ -66,15 +67,44 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
 
     @async_result_decorator
     async def fetch_data_async(self, criteria: Dict[str, Any]) -> pd.DataFrame:
-        """Asenkron veri çekme."""
-        data = await self.api_client.search_waveforms_async(criteria)
-        return self._process_response_data(data)
+        """Asenkron veri çekme.
+
+        AfadEmptyResultError ve AfadMappingError doğrudan yeniden fırlatılır;
+        diğer hatalar ProviderError'a sarılır.
+        """
+        try:
+            data = await self.api_client.search_waveforms_async(criteria)
+            return self._process_response_data(data)
+        except (AfadEmptyResultError, AfadMappingError):
+            raise
+        except ProviderError:
+            raise
+        except Exception as e:
+            logger.error("AFAD asenkron veri çekme sırasında beklenmedik hata: %s", e, exc_info=True)
+            raise ProviderError(
+                self.name, e, f"AFAD bağlantı/veri hatası: {e}"
+            ) from e
 
     @result_decorator
     def fetch_data_sync(self, criteria: Dict[str, Any]) -> pd.DataFrame:
-        """Senkron veri çekme."""
-        data = self.api_client.search_waveforms_sync(criteria)
-        return self._process_response_data(data)
+        """Senkron veri çekme.
+
+        AfadEmptyResultError ve AfadMappingError doğrudan yeniden fırlatılır;
+        bu sayede Pipeline katmanı hata türüne göre farklı mesaj üretebilir.
+        Diğer beklenmedik hatalar ProviderError'a sarılır.
+        """
+        try:
+            data = self.api_client.search_waveforms_sync(criteria)
+            return self._process_response_data(data)
+        except (AfadEmptyResultError, AfadMappingError):
+            raise  # Zaten açıklayıcı — Pipeline'a olduğu gibi ilet
+        except ProviderError:
+            raise
+        except Exception as e:
+            logger.error("AFAD senkron veri çekme sırasında beklenmedik hata: %s", e, exc_info=True)
+            raise ProviderError(
+                self.name, e, f"AFAD bağlantı/veri hatası: {e}"
+            ) from e
 
     # ──────────────────────────────────────────────────────────────
     # IWaveformDownloader sözleşmesi
@@ -182,10 +212,31 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
     # ──────────────────────────────────────────────────────────────
 
     def _process_response_data(self, data: List[Dict]) -> pd.DataFrame:
-        """API yanıtını standart DataFrame'e çevir (DRY — async + sync ortak)."""
+        """API yanıtını standart DataFrame'e çevir (DRY — async + sync ortak).
+
+        Boş yanıt durumlarını sessizce geçmek yerine sebebi açıklayan
+        özel hata fırlatır; çağıran katman (Pipeline) bu hataları
+        kullanıcıya anlamlı mesaj olarak iletir.
+
+        Raises:
+            AfadEmptyResultError: API sıfır kayıt döndürdüğünde.
+            AfadMappingError: Mapper sonrası kayıt sayısı sıfıra düştüğünde.
+        """
+        raw_count = len(data) if data else 0
+        logger.debug("AFAD API yanıtı: %d ham kayıt.", raw_count)
+
+        if raw_count == 0:
+            logger.warning(
+                "AFAD API sıfır kayıt döndürdü. "
+                "Arama kriteri (tarih, büyüklük, bölge) kontrol edilmeli."
+            )
+            raise AfadEmptyResultError(
+                "AFAD API'den sonuç dönmedi.",
+                criteria_hint="Tarih aralığını genişletin, büyüklük alt sınırını düşürün "
+                              "veya bbox/çember arama alanını büyütün.",
+            )
+
         self.response_df = pd.DataFrame(data)
-        if self.response_df.empty:
-            return pd.DataFrame()
 
         self.mapped_df = self.column_mapper.map_columns(df=self.response_df)
         self.mapped_df["PROVIDER"] = str(self.name)
@@ -196,7 +247,16 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
                 + self.mapped_df["RSN"].astype(str)
             )
 
-        logger.info("AFAD'dan %d kayıt alındı.", len(self.mapped_df))
+        mapped_count = len(self.mapped_df)
+        if mapped_count == 0:
+            logger.error(
+                "AFAD mapper sonrası 0 kayıt kaldı (ham kayıt: %d). "
+                "API yanıt şeması değişmiş olabilir.",
+                raw_count,
+            )
+            raise AfadMappingError(raw_count=raw_count)
+
+        logger.info("AFAD'dan %d kayıt alındı (ham: %d).", mapped_count, raw_count)
         return self.mapped_df
 
     def _prepare_download_payload(

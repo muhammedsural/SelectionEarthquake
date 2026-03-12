@@ -22,7 +22,6 @@ async def example_usage():
         max_magnitude=10.0,
         min_vs30=300,
         max_vs30=400,
-        mechanisms=["StrikeSlip"]
         # min_pga=0.6,
         # max_pga=1.5,
         # min_pgv=10,
@@ -33,8 +32,8 @@ async def example_usage():
         # max_t90=10,
         # min_arias=0.1,
         # max_arias=10,
-        # min_rjb=0,
-        # max_rjb=200,
+        min_rjb=0,
+        max_rjb=100,
         # min_rrup=0,
         # max_rrup=200,
         # min_repi=0,
@@ -44,7 +43,7 @@ async def example_usage():
         )
     
     # Initialize API
-    api = EarthquakeAPI(provider_names= [ProviderName.AFAD,ProviderName.PEER],
+    api = EarthquakeAPI(provider_names= [ProviderName.AFAD],
                         strategies= [strategy], 
                         use_cache=True)
 

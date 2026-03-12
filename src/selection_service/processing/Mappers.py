@@ -377,25 +377,36 @@ class FDSNColumnMapper(BaseColumnMapper):
 
 class ColumnMapperFactory:
     """Kolon eşleyici factory sınıfı"""
-    
-    _mappers = {
-        ProviderName.AFAD: AFADColumnMapper,
-        ProviderName.PEER: PEERColumnMapper,
-        # ProviderName.FDSN: BaseColumnMapper,
+ 
+    # Key olarak .value string kullanılır — farklı instance'lar arasında
+    # hash eşleşme sorunu yaşanmaz (OCP: register ile genişletme desteklenir).
+    _mappers: dict = {
+        ProviderName.AFAD.value: AFADColumnMapper,
+        ProviderName.PEER.value: PEERColumnMapper,
     }
-    
+ 
     @classmethod
-    def get_mapper(cls, provider: ProviderName) -> IColumnMapper:
-        """Provider'a göre uygun eşleyiciyi döndür"""
-        mapper_class = cls._mappers.get(provider, BaseColumnMapper)
-        # Always pass a default mapping dict so BaseColumnMapper can be instantiated safely.
-        return mapper_class()
-    
+    def _key(cls, provider) -> str:
+        """Provider → string key dönüşümü."""
+        if isinstance(provider, ProviderName):
+            return provider.value
+        if hasattr(provider, "value"):
+            return str(provider.value)
+        return str(provider)
+ 
     @classmethod
-    def register_mapper(cls, provider: ProviderName, mapper_class: Type[IColumnMapper]):
-        """Yeni eşleyici kaydet"""
-        cls._mappers[provider] = mapper_class
-
+    def get_mapper(cls, provider) -> IColumnMapper:
+        """Provider'a göre uygun eşleyiciyi döndür."""
+        mapper_class = cls._mappers.get(cls._key(provider))
+        if mapper_class is not None:
+            return mapper_class()
+        return BaseColumnMapper(column_mappings={})
+ 
+    @classmethod
+    def register_mapper(cls, provider, mapper_class: Type[IColumnMapper]) -> None:
+        """Yeni eşleyici kaydet (OCP: factory'ye dokunmadan genişletme)."""
+        cls._mappers[cls._key(provider)] = mapper_class
+ 
     @classmethod
     def create_mapper(cls, provider_Name, **kwargs) -> IColumnMapper:
         if provider_Name == ProviderName.AFAD:
@@ -404,3 +415,15 @@ class ColumnMapperFactory:
             return PEERColumnMapper(**kwargs)
         else:
             return BaseColumnMapper(column_mappings={}, **kwargs)
+ 
+    # ── Kısa alias'lar (OCP destekli tek API) ─────────────────────
+ 
+    @classmethod
+    def create(cls, provider, **kwargs) -> IColumnMapper:
+        """create_mapper() alias — tek giriş noktası."""
+        return cls.create_mapper(provider, **kwargs)
+ 
+    @classmethod
+    def register(cls, provider, mapper_class: Type[IColumnMapper]) -> None:
+        """register_mapper() alias."""
+        cls.register_mapper(provider, mapper_class)

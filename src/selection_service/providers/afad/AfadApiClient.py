@@ -30,13 +30,11 @@ class AfadApiClient:
                 async with session.post(url, json=criteria, timeout=self.timeout) as response:
                     if response.status == 200:
                         response = await response.json()
-                        if response is None:
+                        if response is None or len(response) == 0:
                             raise NetworkError("AFAD", Exception("Empty response"), "AFAD returned empty data")
                         return response
                     error_text = await response.text()
                     raise NetworkError("AFAD", Exception(f"HTTP {response.status}: {error_text}"))
-        except NetworkError:
-            raise
         except Exception as e:
             raise NetworkError("AFAD", e, "Async search failed")
 

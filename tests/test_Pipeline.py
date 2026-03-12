@@ -1,225 +1,435 @@
+import asyncio
+import time
 import pytest
 import pandas as pd
-import numpy as np
-import time
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock, AsyncMock
+
 from selection_service.core.Pipeline import (
-    EarthquakePipeline,
-    PipelineContext,
-    PipelineResult,
-    PipelineReporter
+    EarthquakePipeline, PipelineContext, PipelineResult, PipelineReporter,
 )
-from selection_service.core.ErrorHandle import NoDataError, PipelineError, ProviderError
+from selection_service.core.ErrorHandle import NoDataError, PipelineError
 from selection_service.processing.ResultHandle import Result
-from selection_service.processing.Selection import SearchCriteria
+from selection_service.core.Config import STANDARD_COLUMNS
 
-# --- Fixtures ---
 
-@pytest.fixture
-def mock_provider():
-    """Başarılı bir provider mock'u"""
-    provider = MagicMock()
-    provider.get_name.return_value = "TestProvider"
-    provider.map_criteria.return_value = {}
-    
-    # Basit bir dataframe dönen fetch metodları
-    df = pd.DataFrame({
-        "MAGNITUDE": [5.0, 6.0],
-        "RJB(km)": [10, 20],
-        "SCORE": [80, 90]
-    })
-    
-    provider.fetch_data_sync.return_value = Result.ok(df)
-    provider.fetch_data_async = AsyncMock(return_value=Result.ok(df))
-    return provider
+# ─── helpers ────────────────────────────────────────────────────────────────
 
-@pytest.fixture
-def mock_strategy():
-    """Seçim stratejisi mock'u"""
-    strategy = MagicMock()
-    strategy.get_name.return_value = "TestStrategy"
-    
-    def select_and_score_side_effect(df, criteria):
-        # Skorlanmış ve seçilmiş dataframe simülasyonu
-        scored = df.copy()
-        scored["SCORE"] = [80, 90] # Basit skorlama
-        selected = scored.iloc[[1]] # 2. satırı seç
-        return selected, scored
-        
-    strategy.select_and_score.side_effect = select_and_score_side_effect
-    return strategy
+def make_df(rows=2, with_endpoint=False) -> pd.DataFrame:
+    records = []
+    for i in range(rows):
+        r = {c: None for c in STANDARD_COLUMNS}
+        r.update({"RSN": i+1, "PROVIDER": "PEER", "EVENT": f"EQ_{i}",
+                  "YEAR": 2000, "MAGNITUDE": 7.0+i*0.1, "SSN": i+100,
+                  "STATION": f"ST{i}", "VS30(m/s)": 350.0,
+                  "RJB(km)": 50.0+i, "RRUP(km)": 51.0+i,
+                  "MECHANISM": "StrikeSlip", "PGA(cm2/sec)": 100.0,
+                  "PGV(cm/sec)": 20.0, "T90_avg(sec)": 15.0,
+                  "ENDPOINTSOURCE": f"https://x.com/{i}" if with_endpoint else None,
+                  "FILE_NAME_H1": f"F{i}.AT2"})
+        records.append(r)
+    return pd.DataFrame(records)
 
-@pytest.fixture
-def search_criteria():
-    """Arama kriterleri mock'u"""
-    return MagicMock(spec=SearchCriteria)
 
-@pytest.fixture
-def pipeline_context(mock_provider, mock_strategy, search_criteria):
-    """Temel pipeline context'i"""
+def make_provider(name, df=None, fail=False, empty=False, raise_exc=False):
+    p = MagicMock()
+    p.get_name.return_value = name
+    p.map_criteria.return_value = {}
+    if raise_exc:
+        p.fetch_data_sync.side_effect = RuntimeError(f"{name} crashed")
+        p.fetch_data_async = AsyncMock(side_effect=RuntimeError(f"{name} crashed"))
+    elif fail:
+        p.fetch_data_sync.return_value = Result.fail(Exception(f"{name} failed"))
+        p.fetch_data_async = AsyncMock(return_value=Result.fail(Exception(f"{name} failed")))
+    elif empty:
+        p.fetch_data_sync.return_value = Result.ok(pd.DataFrame())
+        p.fetch_data_async = AsyncMock(return_value=Result.ok(pd.DataFrame()))
+    else:
+        data = df if df is not None else make_df()
+        p.fetch_data_sync.return_value = Result.ok(data)
+        p.fetch_data_async = AsyncMock(return_value=Result.ok(data))
+    return p
+
+
+def make_strategy(num=5, score=80.0):
+    s = MagicMock()
+    s.get_name.return_value = "MockStrategy"
+    def _select(df, criteria):
+        scored = df.copy(); scored["SCORE"] = score
+        return scored.head(num), scored
+    s.select_and_score.side_effect = _select
+    return s
+
+
+def make_criteria():
+    c = MagicMock()
+    c.mechanisms = ["StrikeSlip"]
+    c.model_dump.return_value = {}
+    return c
+
+
+def ctx(providers=None, strategy=None, data=None):
     return PipelineContext(
-        providers=[mock_provider],
-        strategy=mock_strategy,
-        search_criteria=search_criteria
+        providers=providers or [],
+        strategy=strategy or make_strategy(),
+        search_criteria=make_criteria(),
+        data=data,
     )
 
-@pytest.fixture
-def pipeline():
-    """EarthquakePipeline örneği"""
-    return EarthquakePipeline()
 
-# --- PipelineReporter Tests ---
+def run(coro):
+    return asyncio.get_event_loop().run_until_complete(coro)
+
+
+# ─── PipelineResult ──────────────────────────────────────────────────────────
+
+class TestPipelineResult:
+    def test_default_lists(self):
+        r = PipelineResult(selected_df=pd.DataFrame(), scored_df=pd.DataFrame(),
+                           report={}, execution_time=1.0)
+        assert r.failed_providers == []
+        assert r.logs == []
+
+
+# ─── PipelineReporter ────────────────────────────────────────────────────────
 
 class TestPipelineReporter:
-    def test_generate_report_success(self, pipeline_context):
-        reporter = PipelineReporter()
-        
-        # Context'i manuel dolduralım
-        pipeline_context.selected_df = pd.DataFrame({
-            "MAGNITUDE": [6.0], "RJB(km)": [20], "SCORE": [90]
-        })
-        pipeline_context.scored_df = pd.DataFrame({
-            "MAGNITUDE": [5.0, 6.0], "RJB(km)": [10, 20], "SCORE": [80, 90]
-        })
-        
-        report = reporter.generate_report(pipeline_context)
-        
-        assert report["status"] == "success"
-        assert report["selected_count"] == 1
-        assert report["total_considered"] == 2
-        assert report["strategy"] == "TestStrategy"
-        assert report["statistics"]["magnitude_range"] == (6.0, 6.0)
-        assert report["statistics"]["score_range"] == (90, 90)
 
-    def test_generate_report_no_selection(self, pipeline_context):
-        reporter = PipelineReporter()
-        pipeline_context.selected_df = pd.DataFrame() # Boş
-        
-        report = reporter.generate_report(pipeline_context)
-        
-        assert report["status"] == "warning"
-        assert report["message"] == "No records selected"
+    def _ctx_with(self, rows=2, scored_rows=None):
+        c = ctx(providers=[make_provider("PEER")])
+        c.selected_df = make_df(rows); c.selected_df["SCORE"] = 80.0
+        c.scored_df = make_df(scored_rows or rows); c.scored_df["SCORE"] = 80.0
+        return c
 
-# --- EarthquakePipeline Tests (Sync) ---
+    def test_warning_selected_none(self):
+        c = ctx(); c.selected_df = None; c.scored_df = None
+        assert PipelineReporter().generate_report(c)["status"] == "warning"
 
-class TestEarthquakePipelineSync:
+    def test_warning_selected_empty(self):
+        c = ctx(); c.selected_df = pd.DataFrame(); c.scored_df = pd.DataFrame()
+        assert PipelineReporter().generate_report(c)["status"] == "warning"
 
-    def test_validate_inputs_success(self, pipeline, pipeline_context):
-        # Decorator'ı atlayarak veya doğrudan çağırarak test edebiliriz
-        # Ancak pipeline akışı içinde test etmek daha doğal
-        result = pipeline.execute_sync(pipeline_context)
-        assert result.success is True
+    def test_success_all_keys(self):
+        r = PipelineReporter().generate_report(self._ctx_with())
+        assert r["status"] == "success"
+        for k in ("selected_count","total_considered","strategy","providers","records","statistics","search_criteria"):
+            assert k in r
 
-    def test_validate_inputs_no_providers(self, pipeline, mock_strategy, search_criteria):
-        # Provider listesi boş
-        context = PipelineContext(
-            providers=[], 
-            strategy=mock_strategy, 
-            search_criteria=search_criteria
-        )
-        result = pipeline.execute_sync(context)
-        
+    def test_selected_count(self):
+        assert PipelineReporter().generate_report(self._ctx_with(3))["selected_count"] == 3
+
+    def test_total_considered_from_scored(self):
+        c = self._ctx_with(2, scored_rows=7)
+        assert PipelineReporter().generate_report(c)["total_considered"] == 7
+
+    def test_total_considered_scored_none(self):
+        c = self._ctx_with(); c.scored_df = None
+        assert PipelineReporter().generate_report(c)["total_considered"] == 0
+
+    def test_calculate_statistics_magnitude_range(self):
+        c = self._ctx_with(3); c.selected_df["MAGNITUDE"] = [5.0, 7.0, 8.0]
+        stats = PipelineReporter().generate_report(c)["statistics"]
+        assert stats["magnitude_range"] == (5.0, 8.0)
+
+    def test_statistics_distance_when_present(self):
+        c = self._ctx_with(2); c.selected_df["RJB(km)"] = [10.0, 30.0]
+        assert "distance_range" in PipelineReporter().generate_report(c)["statistics"]
+
+    def test_statistics_no_distance_when_absent(self):
+        c = self._ctx_with()
+        c.selected_df = pd.DataFrame({"MAGNITUDE": [7.0], "SCORE": [80.0]})
+        c.scored_df = c.selected_df.copy()
+        assert "distance_range" not in PipelineReporter().generate_report(c)["statistics"]
+
+    def test_criteria_model_dump_used(self):
+        r = PipelineReporter().generate_report(self._ctx_with())
+        assert isinstance(r["search_criteria"], dict)
+
+    def test_criteria_without_model_dump(self):
+        c = self._ctx_with()
+        c.search_criteria = {"raw": "criteria"}
+        assert PipelineReporter().generate_report(c)["search_criteria"] == {"raw": "criteria"}
+
+
+# ─── _validate_inputs ────────────────────────────────────────────────────────
+
+class TestValidateInputs:
+    def test_ok_with_providers(self):
+        result = EarthquakePipeline()._validate_inputs(ctx(providers=[make_provider("PEER")]))
+        assert result.success
+
+    def test_fail_no_providers(self):
+        result = EarthquakePipeline()._validate_inputs(ctx(providers=[]))
         assert result.success is False
         assert isinstance(result.error, PipelineError)
-        assert "No providers specified" in str(result.error)
 
-    # def test_fetch_data_sync_success(self, pipeline, pipeline_context):
-    #     result = pipeline.execute_sync(pipeline_context)
-        
-    #     assert result.success is True
-    #     ctx = result.value
-    #     assert len(ctx.scored_df) == 1
-    #     assert len(ctx.combined_df) == 2
-    #     assert "[OK] TestProvider fetched 2 records" in ctx.logs
 
-    # def test_fetch_data_sync_failure(self, pipeline, pipeline_context, mock_provider):
-    #     # Provider hata dönsün
-    #     mock_provider.fetch_data_sync.return_value = Result.fail(ProviderError("TestProvider", "API Error"))
-        
-    #     result = pipeline.execute_sync(pipeline_context)
-        
-    #     assert result.success is False
-    #     # NoDataError bekliyoruz çünkü tek provider vardı ve o da hata verdi
-    #     assert isinstance(result.error, NoDataError)
-    #     assert "TestProvider" in result.value.failed_providers
+# ─── _fetch_data_sync ────────────────────────────────────────────────────────
 
-    def test_combine_data_logic(self, pipeline, pipeline_context):
-        # 2 farklı provider verisi simülasyonu
-        df1 = pd.DataFrame({"A": [1], "B": [2]})
-        df2 = pd.DataFrame({"A": [3], "C": [4]}) # Farklı kolonlar
-        
-        pipeline_context.data = [df1, df2]
-        
-        # combine_data metodunu doğrudan test edelim (Result sarmalayıcısı ile)
-        # Not: _combine_data private olduğu için name mangling veya public wrapper gerekebilir.
-        # Python'da direkt erişebiliriz:
-        res = pipeline._combine_data(pipeline_context)
-        
-        assert res.success is True
-        combined = res.value.combined_df
-        
-        assert len(combined) == 2
-        assert "C" in combined.columns # Birleşim kümesi
-        assert combined.iloc[0]["C"] == 0 # Fillna(0) çalıştı mı? (Numerik varsayımı)
+class TestFetchDataSync:
+    def test_success(self):
+        c = ctx(providers=[make_provider("PEER", make_df(3))])
+        r = EarthquakePipeline()._fetch_data_sync(c)
+        assert r.success
+        assert len(r.value.data) == 1
 
-    def test_apply_strategy_success(self, pipeline, pipeline_context):
-        result = pipeline.execute_sync(pipeline_context)
-        
-        assert result.success is True
-        ctx = result.value
-        assert ctx.selected_df is not None
-        assert len(ctx.selected_df) == 1
-        assert ctx.scored_df is not None
+    def test_fail_result(self):
+        c = ctx(providers=[make_provider("AFAD", fail=True)])
+        r = EarthquakePipeline()._fetch_data_sync(c)
+        assert r.success is False
+        assert isinstance(r.error, NoDataError)
 
-# --- EarthquakePipeline Tests (Async) ---
+    def test_empty_result(self):
+        c = ctx(providers=[make_provider("AFAD", empty=True)])
+        assert EarthquakePipeline()._fetch_data_sync(c).success is False
 
-@pytest.mark.asyncio
-class TestEarthquakePipelineAsync:
+    def test_raise_exc(self):
+        c = ctx(providers=[make_provider("AFAD", raise_exc=True)])
+        r = EarthquakePipeline()._fetch_data_sync(c)
+        assert r.success is False
 
-    async def test_execute_async_success(self, pipeline, pipeline_context):
-        result = await pipeline.execute_async(pipeline_context)
-        
-        assert result.success is True
-        pipeline_result = result.value
-        assert isinstance(pipeline_result, PipelineResult)
-        assert len(pipeline_result.selected_df) == 1
-        assert pipeline_result.execution_time > 0
+    def test_one_good_one_bad(self):
+        c = ctx(providers=[make_provider("PEER", make_df()), make_provider("AFAD", fail=True)])
+        r = EarthquakePipeline()._fetch_data_sync(c)
+        assert r.success
+        assert "AFAD" in r.value.failed_providers
 
-    async def test_fetch_data_async_partial_failure(self, pipeline, pipeline_context, mock_provider):
-        # İki provider olsun: Biri başarılı, biri hatalı
-        fail_provider = MagicMock()
-        fail_provider.get_name.return_value = "FailProvider"
-        fail_provider.map_criteria.return_value = {}
-        fail_provider.fetch_data_async = AsyncMock(return_value=Result.fail(ProviderError("Fail", "Timeout")))
-        
-        pipeline_context.providers = [mock_provider, fail_provider]
-        
-        result = await pipeline.execute_async(pipeline_context)
-        
-        assert result.success is True # Bir provider başarılı olduğu için pipeline başarılı
-        ctx = result.value.report # PipelineResult içindeki report üzerinden veya context'e erişerek
-        
-        # PipelineResult failed_providers alanını kontrol edelim
-        assert "FailProvider" in result.value.failed_providers
-        assert len(result.value.selected_df) > 0 # Başarılı provider'dan gelen veri
+    def test_all_fail_no_data(self):
+        c = ctx(providers=[make_provider("PEER", fail=True), make_provider("AFAD", empty=True)])
+        r = EarthquakePipeline()._fetch_data_sync(c)
+        assert isinstance(r.error, NoDataError)
 
-    async def test_fetch_data_async_all_failure(self, pipeline, pipeline_context):
-        # Tek provider var ve o da hata veriyor (mock_provider'ı bozalım)
-        pipeline_context.providers[0].fetch_data_async = AsyncMock(side_effect=Exception("Network Down"))
-        
-        result = await pipeline.execute_async(pipeline_context)
-        
-        assert result.success is False
-        assert isinstance(result.error, NoDataError) or isinstance(result.error, ProviderError)
+    def test_ok_log(self):
+        c = ctx(providers=[make_provider("PEER", make_df(3))])
+        r = EarthquakePipeline()._fetch_data_sync(c)
+        assert any("[OK] PEER" in log for log in r.value.logs)
 
-    # async def test_combine_data_empty_columns(self, pipeline, pipeline_context):
-    #     """Tüm sütunları NaN olan verilerin temizlenmesi testi"""
-    #     # Tamamen boş sütunlu bir DF
-    #     df_empty_cols = pd.DataFrame({"A": [1, 2], "Empty": [None, None]})
-    #     pipeline_context.providers[0].fetch_data_async = AsyncMock(return_value=Result.ok(df_empty_cols))
-        
-    #     result = await pipeline.execute_async(pipeline_context)
-        
-    #     assert result.success is True
-    #     combined = result.value.scored_df # Scored df combined üzerinden gelir
-    #     assert "Empty" not in combined.columns
+    def test_error_log_on_exception(self):
+        c = ctx(providers=[make_provider("PEER", make_df()), make_provider("AFAD", raise_exc=True)])
+        r = EarthquakePipeline()._fetch_data_sync(c)
+        assert any("[ERROR] AFAD" in log for log in r.value.logs)
+
+
+# ─── _fetch_data_async ───────────────────────────────────────────────────────
+
+class TestFetchDataAsync:
+    def test_success(self):
+        c = ctx(providers=[make_provider("PEER", make_df())])
+        assert run(EarthquakePipeline()._fetch_data_async(c)).success
+
+    def test_fail_result(self):
+        c = ctx(providers=[make_provider("AFAD", fail=True)])
+        assert run(EarthquakePipeline()._fetch_data_async(c)).success is False
+
+    def test_empty_result(self):
+        c = ctx(providers=[make_provider("AFAD", empty=True)])
+        r = run(EarthquakePipeline()._fetch_data_async(c))
+        assert r.success is False
+
+    def test_raise_exc(self):
+        c = ctx(providers=[make_provider("PEER", raise_exc=True)])
+        assert run(EarthquakePipeline()._fetch_data_async(c)).success is False
+
+    def test_one_good_one_bad(self):
+        c = ctx(providers=[make_provider("PEER", make_df()), make_provider("AFAD", fail=True)])
+        r = run(EarthquakePipeline()._fetch_data_async(c))
+        assert r.success
+        assert "AFAD" in r.value.failed_providers
+
+    def test_all_fail_no_data(self):
+        c = ctx(providers=[make_provider("PEER", fail=True)])
+        r = run(EarthquakePipeline()._fetch_data_async(c))
+        assert isinstance(r.error, NoDataError)
+
+    def test_empty_data_log(self):
+        c = ctx(providers=[make_provider("PEER", make_df()), make_provider("AFAD", empty=True)])
+        r = run(EarthquakePipeline()._fetch_data_async(c))
+        assert r.success
+        assert any("AFAD" in log for log in r.value.logs)
+
+
+# ─── _combine_data ───────────────────────────────────────────────────────────
+
+class TestCombineData:
+    def test_endpointsource_preserved(self):
+        c = ctx(data=[make_df(2), make_df(1, with_endpoint=True)])
+        r = EarthquakePipeline()._combine_data(c)
+        assert r.success
+        assert "ENDPOINTSOURCE" in r.value.combined_df.columns
+
+    def test_afad_url_intact(self):
+        c = ctx(data=[make_df(1, with_endpoint=True)])
+        r = EarthquakePipeline()._combine_data(c)
+        assert r.value.combined_df["ENDPOINTSOURCE"].iloc[0] == "https://x.com/0"
+
+    def test_peer_endpointsource_none(self):
+        c = ctx(data=[make_df(2)])
+        r = EarthquakePipeline()._combine_data(c)
+        assert r.value.combined_df["ENDPOINTSOURCE"].isna().all()
+
+    def test_numeric_null_filled_zero(self):
+        """
+        Sayısal (float/int dtype) None → 0 ile doldurulmalı.
+        Önemli: kolonu açıkça float dtype ile oluştur, yoksa pandas
+        object olarak tutar ve numeric fillna etkilemez.
+        """
+        df = pd.DataFrame({
+            "RSN": pd.array([1], dtype="Float64"),          # nullable Int
+            "MAGNITUDE": pd.array([None], dtype="Float64"), # gerçekten sayısal null
+            "ENDPOINTSOURCE": [None],
+            "EVENT": ["test"],
+        })
+        c = ctx(data=[df])
+        r = EarthquakePipeline()._combine_data(c)
+        assert r.value.combined_df["MAGNITUDE"].iloc[0] == 0
+
+    def test_string_null_filled_empty(self):
+        df = pd.DataFrame({"EVENT": [None], "MECHANISM": [None], "ENDPOINTSOURCE": [None]})
+        c = ctx(data=[df])
+        r = EarthquakePipeline()._combine_data(c)
+        assert r.value.combined_df["EVENT"].iloc[0] == ""
+
+    def test_empty_data_list(self):
+        c = ctx(data=[])
+        r = EarthquakePipeline()._combine_data(c)
+        assert r.success is False
+        assert isinstance(r.error, NoDataError)
+
+    def test_all_empty_dfs(self):
+        c = ctx(data=[pd.DataFrame(), pd.DataFrame()])
+        r = EarthquakePipeline()._combine_data(c)
+        assert r.success is False
+
+    def test_row_count(self):
+        c = ctx(data=[make_df(2), make_df(3)])
+        r = EarthquakePipeline()._combine_data(c)
+        assert len(r.value.combined_df) == 5
+
+    def test_combined_log(self):
+        c = ctx(data=[make_df(2)])
+        r = EarthquakePipeline()._combine_data(c)
+        assert any("Combined total" in log for log in r.value.logs)
+
+
+# ─── _apply_strategy ─────────────────────────────────────────────────────────
+
+class TestApplyStrategy:
+    def test_success(self):
+        c = ctx(strategy=make_strategy()); c.combined_df = make_df(5)
+        r = EarthquakePipeline()._apply_strategy(c)
+        assert r.success
+        assert "SCORE" in r.value.selected_df.columns
+
+    def test_empty_combined_no_data(self):
+        c = ctx(strategy=make_strategy()); c.combined_df = pd.DataFrame()
+        r = EarthquakePipeline()._apply_strategy(c)
+        assert r.success is False
+        assert isinstance(r.error, NoDataError)
+
+    def test_log_strategy_name(self):
+        c = ctx(strategy=make_strategy()); c.combined_df = make_df(3)
+        r = EarthquakePipeline()._apply_strategy(c)
+        assert any("MockStrategy" in log for log in r.value.logs)
+
+
+# ─── _finalize_result ────────────────────────────────────────────────────────
+
+class TestFinalizeResult:
+    def _ctx(self):
+        c = ctx(providers=[make_provider("PEER")])
+        c.selected_df = make_df(2); c.selected_df["SCORE"] = 80.0
+        c.scored_df = c.selected_df.copy()
+        c.start_time = time.time() - 0.1
+        return c
+
+    def test_returns_pipeline_result(self):
+        r = EarthquakePipeline()._finalize_result(self._ctx())
+        assert r.success
+        assert isinstance(r.value, PipelineResult)
+
+    def test_execution_time_positive(self):
+        r = EarthquakePipeline()._finalize_result(self._ctx())
+        assert r.value.execution_time > 0
+
+
+# ─── _compose_sync / _compose_async ─────────────────────────────────────────
+
+class TestComposers:
+    def test_sync_passes_through(self):
+        composed = EarthquakePipeline()._compose_sync(
+            lambda c: Result.ok(c), lambda c: Result.ok(c)
+        )
+        assert composed(MagicMock()).success
+
+    def test_sync_short_circuits(self):
+        called = []
+        composed = EarthquakePipeline()._compose_sync(
+            lambda c: Result.fail(Exception("stop")),
+            lambda c: called.append(True) or Result.ok(c),
+        )
+        composed(MagicMock())
+        assert called == []
+
+    def test_async_passes_through(self):
+        composed = EarthquakePipeline()._compose_async(lambda c: Result.ok(c))
+        assert run(composed(MagicMock())).success
+
+    def test_async_short_circuits(self):
+        called = []
+        composed = EarthquakePipeline()._compose_async(
+            lambda c: Result.fail(Exception("stop")),
+            lambda c: called.append(True) or Result.ok(c),
+        )
+        run(composed(MagicMock()))
+        assert called == []
+
+    def test_async_awaits_coroutine(self):
+        async def async_step(c): return Result.ok(c)
+        composed = EarthquakePipeline()._compose_async(async_step)
+        assert run(composed(MagicMock())).success
+
+
+# ─── uçtan uca ───────────────────────────────────────────────────────────────
+
+class TestEndToEnd:
+    def test_sync_success(self):
+        c = ctx(providers=[make_provider("PEER", make_df(5))], strategy=make_strategy())
+        r = EarthquakePipeline().execute_sync(c)
+        assert r.success
+        assert isinstance(r.value, PipelineResult)
+
+    def test_sync_no_providers(self):
+        assert EarthquakePipeline().execute_sync(ctx(providers=[])).success is False
+
+    def test_sync_all_fail(self):
+        c = ctx(providers=[make_provider("PEER", fail=True)])
+        assert EarthquakePipeline().execute_sync(c).success is False
+
+    def test_async_success(self):
+        c = ctx(providers=[make_provider("PEER", make_df(5))], strategy=make_strategy())
+        r = run(EarthquakePipeline().execute_async(c))
+        assert r.success
+
+    def test_async_no_providers(self):
+        r = run(EarthquakePipeline().execute_async(ctx(providers=[])))
+        assert r.success is False
+
+    def test_multi_provider(self):
+        c = ctx(providers=[
+            make_provider("PEER", make_df(3)),
+            make_provider("AFAD", make_df(2, with_endpoint=True)),
+        ], strategy=make_strategy(num=10))
+        r = EarthquakePipeline().execute_sync(c)
+        assert r.success
+        assert len(r.value.selected_df) <= 10
+
+    def test_failed_providers_propagated(self):
+        c = ctx(providers=[make_provider("PEER", make_df()), make_provider("AFAD", fail=True)])
+        r = EarthquakePipeline().execute_sync(c)
+        assert r.success
+        assert "AFAD" in r.value.failed_providers
+
+    def test_start_time_reset(self):
+        c = ctx(providers=[make_provider("PEER", make_df())])
+        c.start_time = 0.0
+        r = EarthquakePipeline().execute_sync(c)
+        assert r.value.execution_time < 10
