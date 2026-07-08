@@ -1,0 +1,5432 @@
+{
+  "status": "success",
+  "search_criteria": {
+    "start_date": "2000-01-01",
+    "end_date": "2025-09-05",
+    "min_magnitude": 7.0,
+    "max_magnitude": 8.0,
+    "min_depth": null,
+    "max_depth": null,
+    "station_code": null,
+    "network": null,
+    "country": null,
+    "province": null,
+    "district": null,
+    "neighborhood": null,
+    "min_latitude": null,
+    "max_latitude": null,
+    "min_longitude": null,
+    "max_longitude": null,
+    "circleLatitude": null,
+    "circleLongitude": null,
+    "circleRadius": null,
+    "min_pga": 50.0,
+    "max_pga": 500.0,
+    "min_pgv": 5.0,
+    "max_pgv": 100.0,
+    "min_pgd": null,
+    "max_pgd": null,
+    "fault_type": null,
+    "event_name": null,
+    "min_Repi": null,
+    "max_Repi": null,
+    "min_Rhyp": null,
+    "max_Rhyp": null,
+    "min_Rjb": 0.0,
+    "max_Rjb": 100.0,
+    "min_Rrup": 0.0,
+    "max_Rrup": 120.0,
+    "min_vs30": 300.0,
+    "max_vs30": 400.0,
+    "mechanisms": [
+      "StrikeSlip"
+    ],
+    "region": null,
+    "bbox": [],
+    "target_magnitude": null,
+    "target_rjb": null,
+    "target_rrup": null,
+    "target_repi": null,
+    "target_vs30": null,
+    "target_pga": null,
+    "target_pgv": null,
+    "target_pgd": null,
+    "target_t90": null,
+    "target_arias": null,
+    "target_depth": null,
+    "weights": {
+      "magnitude": 6.0,
+      "rjb": 5.0,
+      "rrup": 5.0,
+      "repi": 3.0,
+      "vs30": 5.0,
+      "pga": 3.0,
+      "pgv": 2.5,
+      "pgd": 1.5,
+      "t90": 2.0,
+      "arias": 1.5,
+      "depth": 1.0,
+      "mechanism": 4.0
+    }
+  },
+  "selected_count": 11,
+  "total_considered": 59,
+  "strategy": "TBDY_2018_Constraint",
+  "providers": [
+    "PEER"
+  ],
+  "records": [
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1163,
+      "EVENT": "Kocaeli, Turkey",
+      "YEAR": 1999,
+      "MAGNITUDE": 7.51,
+      "MAGNITUDE_TYPE": "Mw",
+      "STATION": "Hava Alani",
+      "SSN": 730,
+      "STATION_ID": "-999",
+      "STATION_LAT": 40.9824,
+      "STATION_LON": 28.82,
+      "VS30(m/s)": 354.37,
+      "STRIKE1": 271.0,
+      "DIP1": 80.0,
+      "RAKE1": 180,
+      "MECHANISM": "StrikeSlip",
+      "ENDPOINTSOURCE": null,
+      "EPICENTER_DEPTH(km)": 101.86,
+      "HYPOCENTER_DEPTH(km)": 103.11,
+      "RJB(km)": 58.33,
+      "RRUP(km)": 60.05,
+      "HYPO_LAT": 40.748,
+      "HYPO_LON": 29.99,
+      "HYPO_DEPTH(km)": 16.0,
+      "T90_avg(sec)": 36.7,
+      "ARIAS_INTENSITY(m/sec)": 0.2,
+      "LOWFREQ(Hz)": 0.025,
+      "FILE_NAME_H1": "KOCAELI\\DHM000.AT2",
+      "FILE_NAME_H2": "KOCAELI\\DHM090.AT2",
+      "FILE_NAME_V": "KOCAELI\\DHM-UP.AT2",
+      "PGA(cm2/sec)": 87.990167125,
+      "PGV(cm/sec)": 19.0,
+      "PGD(cm)": 23.283,
+      "HARD_FILTERS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.51,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 58.33,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 60.05,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 354.37,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 87.990167125,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 19.0,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "ERROR_METRICS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.51,
+          "absolute_error": 0.009999999999999787,
+          "normalized_error": 0.009999999999999787,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 58.33,
+          "absolute_error": 8.329999999999998,
+          "normalized_error": 0.08329999999999999,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 60.05,
+          "absolute_error": 0.04999999999999716,
+          "normalized_error": 0.000416666666666643,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 354.37,
+          "absolute_error": 4.3700000000000045,
+          "normalized_error": 0.043700000000000044,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 87.990167125,
+          "absolute_error": 187.009832875,
+          "normalized_error": 0.4155774063888889,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 19.0,
+          "absolute_error": 33.5,
+          "normalized_error": 0.3526315789473684,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "ERROR_TOTAL": 0.12937509314327483,
+      "SCORE": 88.54454167364375,
+      "SCORE_BREAKDOWN": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.51,
+          "absolute_error": 0.009999999999999787,
+          "normalized_error": 0.009999999999999787,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 58.33,
+          "absolute_error": 8.329999999999998,
+          "normalized_error": 0.08329999999999999,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 60.05,
+          "absolute_error": 0.04999999999999716,
+          "normalized_error": 0.000416666666666643,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 354.37,
+          "absolute_error": 4.3700000000000045,
+          "normalized_error": 0.043700000000000044,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 87.990167125,
+          "absolute_error": 187.009832875,
+          "normalized_error": 0.4155774063888889,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 19.0,
+          "absolute_error": 33.5,
+          "normalized_error": 0.3526315789473684,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "SELECTION_STATUS": "selected",
+      "SELECTION_REASON": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1177,
+      "EVENT": "Kocaeli, Turkey",
+      "YEAR": 1999,
+      "MAGNITUDE": 7.51,
+      "MAGNITUDE_TYPE": "Mw",
+      "STATION": "Zeytinburnu",
+      "SSN": 1145,
+      "STATION_ID": "-999",
+      "STATION_LAT": 40.986,
+      "STATION_LON": 28.908,
+      "VS30(m/s)": 341.56,
+      "STRIKE1": 271.0,
+      "DIP1": 80.0,
+      "RAKE1": 180,
+      "MECHANISM": "StrikeSlip",
+      "ENDPOINTSOURCE": null,
+      "EPICENTER_DEPTH(km)": 94.83,
+      "HYPOCENTER_DEPTH(km)": 96.17,
+      "RJB(km)": 51.98,
+      "RRUP(km)": 53.88,
+      "HYPO_LAT": 40.748,
+      "HYPO_LON": 29.99,
+      "HYPO_DEPTH(km)": 16.0,
+      "T90_avg(sec)": 39.4,
+      "ARIAS_INTENSITY(m/sec)": 0.3,
+      "LOWFREQ(Hz)": 0.075,
+      "FILE_NAME_H1": "KOCAELI\\ZYT000.AT2",
+      "FILE_NAME_H2": "KOCAELI\\ZYT090.AT2",
+      "FILE_NAME_V": "KOCAELI\\ZYT-UP.AT2",
+      "PGA(cm2/sec)": 106.66693205,
+      "PGV(cm/sec)": 15.551,
+      "PGD(cm)": 18.229,
+      "HARD_FILTERS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.51,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 51.98,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 53.88,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 341.56,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 106.66693205,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 15.551,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "ERROR_METRICS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.51,
+          "absolute_error": 0.009999999999999787,
+          "normalized_error": 0.009999999999999787,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 51.98,
+          "absolute_error": 1.9799999999999969,
+          "normalized_error": 0.01979999999999997,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 53.88,
+          "absolute_error": 6.119999999999997,
+          "normalized_error": 0.050999999999999976,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 341.56,
+          "absolute_error": 8.439999999999998,
+          "normalized_error": 0.08439999999999998,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 106.66693205,
+          "absolute_error": 168.33306795,
+          "normalized_error": 0.3740734843333333,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 15.551,
+          "absolute_error": 36.949,
+          "normalized_error": 0.38893684210526314,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "ERROR_TOTAL": 0.13260147520551374,
+      "SCORE": 88.29230950971056,
+      "SCORE_BREAKDOWN": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.51,
+          "absolute_error": 0.009999999999999787,
+          "normalized_error": 0.009999999999999787,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 51.98,
+          "absolute_error": 1.9799999999999969,
+          "normalized_error": 0.01979999999999997,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 53.88,
+          "absolute_error": 6.119999999999997,
+          "normalized_error": 0.050999999999999976,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 341.56,
+          "absolute_error": 8.439999999999998,
+          "normalized_error": 0.08439999999999998,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 106.66693205,
+          "absolute_error": 168.33306795,
+          "normalized_error": 0.3740734843333333,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 15.551,
+          "absolute_error": 36.949,
+          "normalized_error": 0.38893684210526314,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "SELECTION_STATUS": "selected",
+      "SELECTION_REASON": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1157,
+      "EVENT": "Kocaeli, Turkey",
+      "YEAR": 1999,
+      "MAGNITUDE": 7.51,
+      "MAGNITUDE_TYPE": "Mw",
+      "STATION": "Cekmece",
+      "SSN": 625,
+      "STATION_ID": "-999",
+      "STATION_LAT": 41.0238,
+      "STATION_LON": 28.7594,
+      "VS30(m/s)": 346.0,
+      "STRIKE1": 271.0,
+      "DIP1": 80.0,
+      "RAKE1": 180,
+      "MECHANISM": "StrikeSlip",
+      "ENDPOINTSOURCE": null,
+      "EPICENTER_DEPTH(km)": 107.98,
+      "HYPOCENTER_DEPTH(km)": 109.16,
+      "RJB(km)": 64.95,
+      "RRUP(km)": 66.69,
+      "HYPO_LAT": 40.748,
+      "HYPO_LON": 29.99,
+      "HYPO_DEPTH(km)": 16.0,
+      "T90_avg(sec)": 37.0,
+      "ARIAS_INTENSITY(m/sec)": 0.5,
+      "LOWFREQ(Hz)": 0.025,
+      "FILE_NAME_H1": "KOCAELI\\CNA000.AT2",
+      "FILE_NAME_H2": "KOCAELI\\CNA090.AT2",
+      "FILE_NAME_V": "KOCAELI\\CNA-UP.AT2",
+      "PGA(cm2/sec)": 156.05322145,
+      "PGV(cm/sec)": 12.931,
+      "PGD(cm)": 15.903,
+      "HARD_FILTERS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.51,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 64.95,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 66.69,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 346.0,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 156.05322145,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 12.931,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "ERROR_METRICS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.51,
+          "absolute_error": 0.009999999999999787,
+          "normalized_error": 0.009999999999999787,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 64.95,
+          "absolute_error": 14.950000000000003,
+          "normalized_error": 0.14950000000000002,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 66.69,
+          "absolute_error": 6.689999999999998,
+          "normalized_error": 0.05574999999999998,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 346.0,
+          "absolute_error": 4.0,
+          "normalized_error": 0.04,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 156.05322145,
+          "absolute_error": 118.94677855,
+          "normalized_error": 0.26432617455555557,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 12.931,
+          "absolute_error": 39.569,
+          "normalized_error": 0.41651578947368423,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "ERROR_TOTAL": 0.13372742343274852,
+      "SCORE": 88.20462302765483,
+      "SCORE_BREAKDOWN": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.51,
+          "absolute_error": 0.009999999999999787,
+          "normalized_error": 0.009999999999999787,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 64.95,
+          "absolute_error": 14.950000000000003,
+          "normalized_error": 0.14950000000000002,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 66.69,
+          "absolute_error": 6.689999999999998,
+          "normalized_error": 0.05574999999999998,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 346.0,
+          "absolute_error": 4.0,
+          "normalized_error": 0.04,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 156.05322145,
+          "absolute_error": 118.94677855,
+          "normalized_error": 0.26432617455555557,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 12.931,
+          "absolute_error": 39.569,
+          "normalized_error": 0.41651578947368423,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "SELECTION_STATUS": "selected",
+      "SELECTION_REASON": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 900,
+      "EVENT": "Landers",
+      "YEAR": 1992,
+      "MAGNITUDE": 7.28,
+      "MAGNITUDE_TYPE": "Mw",
+      "STATION": "Yermo Fire Station",
+      "SSN": 296,
+      "STATION_ID": "22074",
+      "STATION_LAT": 34.904,
+      "STATION_LON": -116.823,
+      "VS30(m/s)": 353.63,
+      "STRIKE1": 336.0,
+      "DIP1": 90.0,
+      "RAKE1": 180,
+      "MECHANISM": "StrikeSlip",
+      "ENDPOINTSOURCE": null,
+      "EPICENTER_DEPTH(km)": 85.99,
+      "HYPOCENTER_DEPTH(km)": 86.28,
+      "RJB(km)": 23.62,
+      "RRUP(km)": 23.62,
+      "HYPO_LAT": 34.2,
+      "HYPO_LON": -116.436,
+      "HYPO_DEPTH(km)": 7.0,
+      "T90_avg(sec)": 18.9,
+      "ARIAS_INTENSITY(m/sec)": 0.9,
+      "LOWFREQ(Hz)": 0.07,
+      "FILE_NAME_H1": "LANDERS\\YER270.AT2",
+      "FILE_NAME_H2": "LANDERS\\YER360.AT2",
+      "FILE_NAME_V": "LANDERS\\YER-UP.AT2",
+      "PGA(cm2/sec)": 217.77627654999998,
+      "PGV(cm/sec)": 40.263,
+      "PGD(cm)": 33.155,
+      "HARD_FILTERS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.28,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 23.62,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 23.62,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 353.63,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 217.77627654999998,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 40.263,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "ERROR_METRICS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.28,
+          "absolute_error": 0.21999999999999975,
+          "normalized_error": 0.21999999999999975,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 23.62,
+          "absolute_error": 26.38,
+          "normalized_error": 0.2638,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 23.62,
+          "absolute_error": 36.379999999999995,
+          "normalized_error": 0.30316666666666664,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 353.63,
+          "absolute_error": 3.6299999999999955,
+          "normalized_error": 0.03629999999999996,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 217.77627654999998,
+          "absolute_error": 57.22372345000002,
+          "normalized_error": 0.12716382988888894,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 40.263,
+          "absolute_error": 12.237000000000002,
+          "normalized_error": 0.1288105263157895,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "ERROR_TOTAL": 0.15417728898162067,
+      "SCORE": 86.64180187450597,
+      "SCORE_BREAKDOWN": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.28,
+          "absolute_error": 0.21999999999999975,
+          "normalized_error": 0.21999999999999975,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 23.62,
+          "absolute_error": 26.38,
+          "normalized_error": 0.2638,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 23.62,
+          "absolute_error": 36.379999999999995,
+          "normalized_error": 0.30316666666666664,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 353.63,
+          "absolute_error": 3.6299999999999955,
+          "normalized_error": 0.03629999999999996,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 217.77627654999998,
+          "absolute_error": 57.22372345000002,
+          "normalized_error": 0.12716382988888894,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 40.263,
+          "absolute_error": 12.237000000000002,
+          "normalized_error": 0.1288105263157895,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "SELECTION_STATUS": "selected",
+      "SELECTION_REASON": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 862,
+      "EVENT": "Landers",
+      "YEAR": 1992,
+      "MAGNITUDE": 7.28,
+      "MAGNITUDE_TYPE": "Mw",
+      "STATION": "Indio - Coachella Canal",
+      "SSN": 266,
+      "STATION_ID": "12026",
+      "STATION_LAT": 33.717,
+      "STATION_LON": -116.155,
+      "VS30(m/s)": 339.02,
+      "STRIKE1": 336.0,
+      "DIP1": 90.0,
+      "RAKE1": 180,
+      "MECHANISM": "StrikeSlip",
+      "ENDPOINTSOURCE": null,
+      "EPICENTER_DEPTH(km)": 59.68,
+      "HYPOCENTER_DEPTH(km)": 60.09,
+      "RJB(km)": 54.25,
+      "RRUP(km)": 54.25,
+      "HYPO_LAT": 34.2,
+      "HYPO_LON": -116.436,
+      "HYPO_DEPTH(km)": 7.0,
+      "T90_avg(sec)": 37.9,
+      "ARIAS_INTENSITY(m/sec)": 0.3,
+      "LOWFREQ(Hz)": 0.1,
+      "FILE_NAME_H1": "LANDERS\\IND000.AT2",
+      "FILE_NAME_H2": "LANDERS\\IND090.AT2",
+      "FILE_NAME_V": "LANDERS\\IND-UP.AT2",
+      "PGA(cm2/sec)": 102.185293,
+      "PGV(cm/sec)": 13.37,
+      "PGD(cm)": 6.9545,
+      "HARD_FILTERS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.28,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 54.25,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 54.25,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 339.02,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 102.185293,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 13.37,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "ERROR_METRICS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.28,
+          "absolute_error": 0.21999999999999975,
+          "normalized_error": 0.21999999999999975,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 54.25,
+          "absolute_error": 4.25,
+          "normalized_error": 0.0425,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 54.25,
+          "absolute_error": 5.75,
+          "normalized_error": 0.04791666666666667,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 339.02,
+          "absolute_error": 10.980000000000018,
+          "normalized_error": 0.10980000000000018,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 102.185293,
+          "absolute_error": 172.814707,
+          "normalized_error": 0.3840326822222222,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 13.37,
+          "absolute_error": 39.13,
+          "normalized_error": 0.4118947368421053,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "ERROR_TOTAL": 0.17373486939014202,
+      "SCORE": 85.1981163786663,
+      "SCORE_BREAKDOWN": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.28,
+          "absolute_error": 0.21999999999999975,
+          "normalized_error": 0.21999999999999975,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 54.25,
+          "absolute_error": 4.25,
+          "normalized_error": 0.0425,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 54.25,
+          "absolute_error": 5.75,
+          "normalized_error": 0.04791666666666667,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 339.02,
+          "absolute_error": 10.980000000000018,
+          "normalized_error": 0.10980000000000018,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 102.185293,
+          "absolute_error": 172.814707,
+          "normalized_error": 0.3840326822222222,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 13.37,
+          "absolute_error": 39.13,
+          "normalized_error": 0.4118947368421053,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "SELECTION_STATUS": "selected",
+      "SELECTION_REASON": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 848,
+      "EVENT": "Landers",
+      "YEAR": 1992,
+      "MAGNITUDE": 7.28,
+      "MAGNITUDE_TYPE": "Mw",
+      "STATION": "Coolwater",
+      "SSN": 24,
+      "STATION_ID": "23",
+      "STATION_LAT": 34.851,
+      "STATION_LON": -116.858,
+      "VS30(m/s)": 352.98,
+      "STRIKE1": 336.0,
+      "DIP1": 90.0,
+      "RAKE1": 180,
+      "MECHANISM": "StrikeSlip",
+      "ENDPOINTSOURCE": null,
+      "EPICENTER_DEPTH(km)": 82.12,
+      "HYPOCENTER_DEPTH(km)": 82.42,
+      "RJB(km)": 19.74,
+      "RRUP(km)": 19.74,
+      "HYPO_LAT": 34.2,
+      "HYPO_LON": -116.436,
+      "HYPO_DEPTH(km)": 7.0,
+      "T90_avg(sec)": 10.6,
+      "ARIAS_INTENSITY(m/sec)": 2.2,
+      "LOWFREQ(Hz)": 0.1,
+      "FILE_NAME_H1": "LANDERS\\CLW-LN.AT2",
+      "FILE_NAME_H2": "LANDERS\\CLW-TR.AT2",
+      "FILE_NAME_V": "LANDERS\\CLW-UP.AT2",
+      "PGA(cm2/sec)": 344.10554184999995,
+      "PGV(cm/sec)": 33.224,
+      "PGD(cm)": 16.832,
+      "HARD_FILTERS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.28,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 19.74,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 19.74,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 352.98,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 344.10554184999995,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 33.224,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "ERROR_METRICS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.28,
+          "absolute_error": 0.21999999999999975,
+          "normalized_error": 0.21999999999999975,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 19.74,
+          "absolute_error": 30.26,
+          "normalized_error": 0.30260000000000004,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 19.74,
+          "absolute_error": 40.260000000000005,
+          "normalized_error": 0.3355,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 352.98,
+          "absolute_error": 2.980000000000018,
+          "normalized_error": 0.02980000000000018,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 344.10554184999995,
+          "absolute_error": 69.10554184999995,
+          "normalized_error": 0.15356787077777767,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 33.224,
+          "absolute_error": 19.276000000000003,
+          "normalized_error": 0.20290526315789478,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "ERROR_TOTAL": 0.17776759056223893,
+      "SCORE": 84.90639477714132,
+      "SCORE_BREAKDOWN": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.28,
+          "absolute_error": 0.21999999999999975,
+          "normalized_error": 0.21999999999999975,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 19.74,
+          "absolute_error": 30.26,
+          "normalized_error": 0.30260000000000004,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 19.74,
+          "absolute_error": 40.260000000000005,
+          "normalized_error": 0.3355,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 352.98,
+          "absolute_error": 2.980000000000018,
+          "normalized_error": 0.02980000000000018,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 344.10554184999995,
+          "absolute_error": 69.10554184999995,
+          "normalized_error": 0.15356787077777767,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 33.224,
+          "absolute_error": 19.276000000000003,
+          "normalized_error": 0.20290526315789478,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "SELECTION_STATUS": "selected",
+      "SELECTION_REASON": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1636,
+      "EVENT": "Manjil, Iran",
+      "YEAR": 1990,
+      "MAGNITUDE": 7.37,
+      "MAGNITUDE_TYPE": "Mw",
+      "STATION": "Qazvin",
+      "SSN": 1515,
+      "STATION_ID": "-999",
+      "STATION_LAT": 36.26,
+      "STATION_LON": 50.0,
+      "VS30(m/s)": 302.64,
+      "STRIKE1": 289.0,
+      "DIP1": 88.0,
+      "RAKE1": -9,
+      "MECHANISM": "StrikeSlip",
+      "ENDPOINTSOURCE": null,
+      "EPICENTER_DEPTH(km)": 84.03,
+      "HYPOCENTER_DEPTH(km)": 85.54,
+      "RJB(km)": 49.97,
+      "RRUP(km)": 49.97,
+      "HYPO_LAT": 36.8358,
+      "HYPO_LON": 49.3918,
+      "HYPO_DEPTH(km)": 16.0,
+      "T90_avg(sec)": 25.7,
+      "ARIAS_INTENSITY(m/sec)": 0.4,
+      "LOWFREQ(Hz)": 0.25,
+      "FILE_NAME_H1": "MANJIL\\185066.AT2",
+      "FILE_NAME_H2": "MANJIL\\185336.AT2",
+      "FILE_NAME_V": "MANJIL\\185-UP.AT2",
+      "PGA(cm2/sec)": 164.5359737,
+      "PGV(cm/sec)": 13.991,
+      "PGD(cm)": 3.6192,
+      "HARD_FILTERS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.37,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 49.97,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 49.97,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 302.64,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 164.5359737,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 13.991,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "ERROR_METRICS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.37,
+          "absolute_error": 0.1299999999999999,
+          "normalized_error": 0.1299999999999999,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 49.97,
+          "absolute_error": 0.030000000000001137,
+          "normalized_error": 0.00030000000000001136,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 49.97,
+          "absolute_error": 10.030000000000001,
+          "normalized_error": 0.08358333333333334,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 302.64,
+          "absolute_error": 47.360000000000014,
+          "normalized_error": 0.47360000000000013,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 164.5359737,
+          "absolute_error": 110.4640263,
+          "normalized_error": 0.245475614,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 13.991,
+          "absolute_error": 38.509,
+          "normalized_error": 0.4053578947368421,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "ERROR_TOTAL": 0.19118812029573934,
+      "SCORE": 83.94979625482895,
+      "SCORE_BREAKDOWN": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.37,
+          "absolute_error": 0.1299999999999999,
+          "normalized_error": 0.1299999999999999,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 49.97,
+          "absolute_error": 0.030000000000001137,
+          "normalized_error": 0.00030000000000001136,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 49.97,
+          "absolute_error": 10.030000000000001,
+          "normalized_error": 0.08358333333333334,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 302.64,
+          "absolute_error": 47.360000000000014,
+          "normalized_error": 0.47360000000000013,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 164.5359737,
+          "absolute_error": 110.4640263,
+          "normalized_error": 0.245475614,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 13.991,
+          "absolute_error": 38.509,
+          "normalized_error": 0.4053578947368421,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "SELECTION_STATUS": "selected",
+      "SELECTION_REASON": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1634,
+      "EVENT": "Manjil, Iran",
+      "YEAR": 1990,
+      "MAGNITUDE": 7.37,
+      "MAGNITUDE_TYPE": "Mw",
+      "STATION": "Abhar",
+      "SSN": 1496,
+      "STATION_ID": "-999",
+      "STATION_LAT": 36.15,
+      "STATION_LON": 49.22,
+      "VS30(m/s)": 302.64,
+      "STRIKE1": 289.0,
+      "DIP1": 88.0,
+      "RAKE1": -9,
+      "MECHANISM": "StrikeSlip",
+      "ENDPOINTSOURCE": null,
+      "EPICENTER_DEPTH(km)": 77.85,
+      "HYPOCENTER_DEPTH(km)": 79.47,
+      "RJB(km)": 75.58,
+      "RRUP(km)": 75.58,
+      "HYPO_LAT": 36.8358,
+      "HYPO_LON": 49.3918,
+      "HYPO_DEPTH(km)": 16.0,
+      "T90_avg(sec)": 23.3,
+      "ARIAS_INTENSITY(m/sec)": 1.9,
+      "LOWFREQ(Hz)": 0.25,
+      "FILE_NAME_H1": "MANJIL\\184057.AT2",
+      "FILE_NAME_H2": "MANJIL\\184327.AT2",
+      "FILE_NAME_V": "MANJIL\\184-UP.AT2",
+      "PGA(cm2/sec)": 177.17674555,
+      "PGV(cm/sec)": 39.768,
+      "PGD(cm)": 18.45,
+      "HARD_FILTERS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.37,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 75.58,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 75.58,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 302.64,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 177.17674555,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 39.768,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "ERROR_METRICS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.37,
+          "absolute_error": 0.1299999999999999,
+          "normalized_error": 0.1299999999999999,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 75.58,
+          "absolute_error": 25.58,
+          "normalized_error": 0.25579999999999997,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 75.58,
+          "absolute_error": 15.579999999999998,
+          "normalized_error": 0.12983333333333333,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 302.64,
+          "absolute_error": 47.360000000000014,
+          "normalized_error": 0.47360000000000013,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 177.17674555,
+          "absolute_error": 97.82325445000001,
+          "normalized_error": 0.2173850098888889,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 39.768,
+          "absolute_error": 12.732,
+          "normalized_error": 0.13402105263157893,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "ERROR_TOTAL": 0.19151991369340018,
+      "SCORE": 83.9264193999294,
+      "SCORE_BREAKDOWN": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.37,
+          "absolute_error": 0.1299999999999999,
+          "normalized_error": 0.1299999999999999,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 75.58,
+          "absolute_error": 25.58,
+          "normalized_error": 0.25579999999999997,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 75.58,
+          "absolute_error": 15.579999999999998,
+          "normalized_error": 0.12983333333333333,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 302.64,
+          "absolute_error": 47.360000000000014,
+          "normalized_error": 0.47360000000000013,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 177.17674555,
+          "absolute_error": 97.82325445000001,
+          "normalized_error": 0.2173850098888889,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 39.768,
+          "absolute_error": 12.732,
+          "normalized_error": 0.13402105263157893,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "SELECTION_STATUS": "selected",
+      "SELECTION_REASON": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1144,
+      "EVENT": "Gulf of Aqaba",
+      "YEAR": 1995,
+      "MAGNITUDE": 7.2,
+      "MAGNITUDE_TYPE": "Mw",
+      "STATION": "Eilat",
+      "SSN": 712,
+      "STATION_ID": "-999",
+      "STATION_LAT": 29.563,
+      "STATION_LON": 34.938,
+      "VS30(m/s)": 354.88,
+      "STRIKE1": 201.0,
+      "DIP1": 78.0,
+      "RAKE1": 0,
+      "MECHANISM": "StrikeSlip",
+      "ENDPOINTSOURCE": null,
+      "EPICENTER_DEPTH(km)": 93.35,
+      "HYPOCENTER_DEPTH(km)": 94.18,
+      "RJB(km)": 43.29,
+      "RRUP(km)": 44.1,
+      "HYPO_LAT": 28.76,
+      "HYPO_LON": 34.66,
+      "HYPO_DEPTH(km)": 12.5,
+      "T90_avg(sec)": 23.0,
+      "ARIAS_INTENSITY(m/sec)": 0.2,
+      "LOWFREQ(Hz)": 0.0625,
+      "FILE_NAME_H1": "AQABA\\EIL-EW.AT2",
+      "FILE_NAME_H2": "AQABA\\EIL-NS.AT2",
+      "FILE_NAME_V": "AQABA\\EIL-UP.AT2",
+      "PGA(cm2/sec)": 90.145668795,
+      "PGV(cm/sec)": 13.271,
+      "PGD(cm)": 6.6331,
+      "HARD_FILTERS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.2,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 43.29,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 44.1,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 354.88,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 90.145668795,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 13.271,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "ERROR_METRICS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.2,
+          "absolute_error": 0.2999999999999998,
+          "normalized_error": 0.2999999999999998,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 43.29,
+          "absolute_error": 6.710000000000001,
+          "normalized_error": 0.0671,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 44.1,
+          "absolute_error": 15.899999999999999,
+          "normalized_error": 0.13249999999999998,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 354.88,
+          "absolute_error": 4.8799999999999955,
+          "normalized_error": 0.048799999999999955,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 90.145668795,
+          "absolute_error": 184.854331205,
+          "normalized_error": 0.41078740267777775,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 13.271,
+          "absolute_error": 39.229,
+          "normalized_error": 0.41293684210526316,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "ERROR_TOTAL": 0.1960177492547201,
+      "SCORE": 83.61079930654327,
+      "SCORE_BREAKDOWN": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.2,
+          "absolute_error": 0.2999999999999998,
+          "normalized_error": 0.2999999999999998,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 43.29,
+          "absolute_error": 6.710000000000001,
+          "normalized_error": 0.0671,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 44.1,
+          "absolute_error": 15.899999999999999,
+          "normalized_error": 0.13249999999999998,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 354.88,
+          "absolute_error": 4.8799999999999955,
+          "normalized_error": 0.048799999999999955,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 90.145668795,
+          "absolute_error": 184.854331205,
+          "normalized_error": 0.41078740267777775,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 13.271,
+          "absolute_error": 39.229,
+          "normalized_error": 0.41293684210526316,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "SELECTION_STATUS": "selected",
+      "SELECTION_REASON": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1762,
+      "EVENT": "Hector Mine",
+      "YEAR": 1999,
+      "MAGNITUDE": 7.13,
+      "MAGNITUDE_TYPE": "Mw",
+      "STATION": "Amboy",
+      "SSN": 295,
+      "STATION_ID": "21081",
+      "STATION_LAT": 34.56,
+      "STATION_LON": -115.743,
+      "VS30(m/s)": 382.93,
+      "STRIKE1": 332.0,
+      "DIP1": 82.0,
+      "RAKE1": 179,
+      "MECHANISM": "StrikeSlip",
+      "ENDPOINTSOURCE": null,
+      "EPICENTER_DEPTH(km)": 47.97,
+      "HYPOCENTER_DEPTH(km)": 50.2,
+      "RJB(km)": 41.81,
+      "RRUP(km)": 43.05,
+      "HYPO_LAT": 34.5981,
+      "HYPO_LON": -116.2645,
+      "HYPO_DEPTH(km)": 14.8,
+      "T90_avg(sec)": 26.7,
+      "ARIAS_INTENSITY(m/sec)": 0.9,
+      "LOWFREQ(Hz)": 0.08,
+      "FILE_NAME_H1": "HECTOR\\ABY090.AT2",
+      "FILE_NAME_H2": "HECTOR\\ABY360.AT2",
+      "FILE_NAME_V": "HECTOR\\ABY-UP.AT2",
+      "PGA(cm2/sec)": 182.9332491,
+      "PGV(cm/sec)": 23.776,
+      "PGD(cm)": 14.822,
+      "HARD_FILTERS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.13,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 41.81,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 43.05,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 382.93,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 182.9332491,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 23.776,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "ERROR_METRICS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.13,
+          "absolute_error": 0.3700000000000001,
+          "normalized_error": 0.3700000000000001,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 41.81,
+          "absolute_error": 8.189999999999998,
+          "normalized_error": 0.08189999999999997,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 43.05,
+          "absolute_error": 16.950000000000003,
+          "normalized_error": 0.14125000000000001,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 382.93,
+          "absolute_error": 32.93000000000001,
+          "normalized_error": 0.3293000000000001,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 182.9332491,
+          "absolute_error": 92.06675089999999,
+          "normalized_error": 0.20459277977777776,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 23.776,
+          "absolute_error": 28.724,
+          "normalized_error": 0.3023578947368421,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "ERROR_TOTAL": 0.20420009635923142,
+      "SCORE": 83.04267729452869,
+      "SCORE_BREAKDOWN": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.13,
+          "absolute_error": 0.3700000000000001,
+          "normalized_error": 0.3700000000000001,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 41.81,
+          "absolute_error": 8.189999999999998,
+          "normalized_error": 0.08189999999999997,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 43.05,
+          "absolute_error": 16.950000000000003,
+          "normalized_error": 0.14125000000000001,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 382.93,
+          "absolute_error": 32.93000000000001,
+          "normalized_error": 0.3293000000000001,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 182.9332491,
+          "absolute_error": 92.06675089999999,
+          "normalized_error": 0.20459277977777776,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 23.776,
+          "absolute_error": 28.724,
+          "normalized_error": 0.3023578947368421,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "SELECTION_STATUS": "selected",
+      "SELECTION_REASON": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1776,
+      "EVENT": "Hector Mine",
+      "YEAR": 1999,
+      "MAGNITUDE": 7.13,
+      "MAGNITUDE_TYPE": "Mw",
+      "STATION": "Desert Hot Springs",
+      "SSN": 267,
+      "STATION_ID": "12149",
+      "STATION_LAT": 33.962,
+      "STATION_LON": -116.509,
+      "VS30(m/s)": 359.0,
+      "STRIKE1": 332.0,
+      "DIP1": 82.0,
+      "RAKE1": 179,
+      "MECHANISM": "StrikeSlip",
+      "ENDPOINTSOURCE": null,
+      "EPICENTER_DEPTH(km)": 74.27,
+      "HYPOCENTER_DEPTH(km)": 75.73,
+      "RJB(km)": 56.4,
+      "RRUP(km)": 56.4,
+      "HYPO_LAT": 34.5981,
+      "HYPO_LON": -116.2645,
+      "HYPO_DEPTH(km)": 14.8,
+      "T90_avg(sec)": 28.1,
+      "ARIAS_INTENSITY(m/sec)": 0.1,
+      "LOWFREQ(Hz)": 0.078,
+      "FILE_NAME_H1": "HECTOR\\DSP090.AT2",
+      "FILE_NAME_H2": "HECTOR\\DSP360.AT2",
+      "FILE_NAME_V": "HECTOR\\DSP-UP.AT2",
+      "PGA(cm2/sec)": 75.063041095,
+      "PGV(cm/sec)": 8.9578,
+      "PGD(cm)": 4.9634,
+      "HARD_FILTERS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.13,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 56.4,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 56.4,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 359.0,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 75.063041095,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 8.9578,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "ERROR_METRICS": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.13,
+          "absolute_error": 0.3700000000000001,
+          "normalized_error": 0.3700000000000001,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 56.4,
+          "absolute_error": 6.399999999999999,
+          "normalized_error": 0.06399999999999999,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 56.4,
+          "absolute_error": 3.6000000000000014,
+          "normalized_error": 0.030000000000000013,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 359.0,
+          "absolute_error": 9.0,
+          "normalized_error": 0.09,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 75.063041095,
+          "absolute_error": 199.93695890499998,
+          "normalized_error": 0.44430435312222216,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 8.9578,
+          "absolute_error": 43.5422,
+          "normalized_error": 0.45833894736842107,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "ERROR_TOTAL": 0.2080919000700919,
+      "SCORE": 82.77515973263138,
+      "SCORE_BREAKDOWN": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.13,
+          "absolute_error": 0.3700000000000001,
+          "normalized_error": 0.3700000000000001,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 56.4,
+          "absolute_error": 6.399999999999999,
+          "normalized_error": 0.06399999999999999,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 56.4,
+          "absolute_error": 3.6000000000000014,
+          "normalized_error": 0.030000000000000013,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 359.0,
+          "absolute_error": 9.0,
+          "normalized_error": 0.09,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 75.063041095,
+          "absolute_error": 199.93695890499998,
+          "normalized_error": 0.44430435312222216,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 8.9578,
+          "absolute_error": 43.5422,
+          "normalized_error": 0.45833894736842107,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "SELECTION_STATUS": "selected",
+      "SELECTION_REASON": "selected"
+    }
+  ],
+  "statistics": {
+    "magnitude_range": [
+      7.13,
+      7.51
+    ],
+    "score_range": [
+      82.77515973263138,
+      88.54454167364375
+    ],
+    "distance_range": [
+      19.74,
+      75.58
+    ]
+  },
+  "selection_summary": {
+    "status_counts": {
+      "rejected": 48,
+      "selected": 11
+    },
+    "rejection_reasons": {
+      "num_records_limit:11": 41,
+      "max_per_event:3": 7
+    }
+  },
+  "score_breakdown": [
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1163,
+      "EVENT": "Kocaeli, Turkey",
+      "STATION": "Hava Alani",
+      "SCORE": 88.54454167364375,
+      "criteria": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.51,
+          "absolute_error": 0.009999999999999787,
+          "normalized_error": 0.009999999999999787,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 58.33,
+          "absolute_error": 8.329999999999998,
+          "normalized_error": 0.08329999999999999,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 60.05,
+          "absolute_error": 0.04999999999999716,
+          "normalized_error": 0.000416666666666643,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 354.37,
+          "absolute_error": 4.3700000000000045,
+          "normalized_error": 0.043700000000000044,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 87.990167125,
+          "absolute_error": 187.009832875,
+          "normalized_error": 0.4155774063888889,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 19.0,
+          "absolute_error": 33.5,
+          "normalized_error": 0.3526315789473684,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "selection_reason": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1177,
+      "EVENT": "Kocaeli, Turkey",
+      "STATION": "Zeytinburnu",
+      "SCORE": 88.29230950971056,
+      "criteria": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.51,
+          "absolute_error": 0.009999999999999787,
+          "normalized_error": 0.009999999999999787,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 51.98,
+          "absolute_error": 1.9799999999999969,
+          "normalized_error": 0.01979999999999997,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 53.88,
+          "absolute_error": 6.119999999999997,
+          "normalized_error": 0.050999999999999976,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 341.56,
+          "absolute_error": 8.439999999999998,
+          "normalized_error": 0.08439999999999998,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 106.66693205,
+          "absolute_error": 168.33306795,
+          "normalized_error": 0.3740734843333333,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 15.551,
+          "absolute_error": 36.949,
+          "normalized_error": 0.38893684210526314,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "selection_reason": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1157,
+      "EVENT": "Kocaeli, Turkey",
+      "STATION": "Cekmece",
+      "SCORE": 88.20462302765483,
+      "criteria": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.51,
+          "absolute_error": 0.009999999999999787,
+          "normalized_error": 0.009999999999999787,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 64.95,
+          "absolute_error": 14.950000000000003,
+          "normalized_error": 0.14950000000000002,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 66.69,
+          "absolute_error": 6.689999999999998,
+          "normalized_error": 0.05574999999999998,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 346.0,
+          "absolute_error": 4.0,
+          "normalized_error": 0.04,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 156.05322145,
+          "absolute_error": 118.94677855,
+          "normalized_error": 0.26432617455555557,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 12.931,
+          "absolute_error": 39.569,
+          "normalized_error": 0.41651578947368423,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "selection_reason": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 900,
+      "EVENT": "Landers",
+      "STATION": "Yermo Fire Station",
+      "SCORE": 86.64180187450597,
+      "criteria": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.28,
+          "absolute_error": 0.21999999999999975,
+          "normalized_error": 0.21999999999999975,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 23.62,
+          "absolute_error": 26.38,
+          "normalized_error": 0.2638,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 23.62,
+          "absolute_error": 36.379999999999995,
+          "normalized_error": 0.30316666666666664,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 353.63,
+          "absolute_error": 3.6299999999999955,
+          "normalized_error": 0.03629999999999996,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 217.77627654999998,
+          "absolute_error": 57.22372345000002,
+          "normalized_error": 0.12716382988888894,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 40.263,
+          "absolute_error": 12.237000000000002,
+          "normalized_error": 0.1288105263157895,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "selection_reason": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 862,
+      "EVENT": "Landers",
+      "STATION": "Indio - Coachella Canal",
+      "SCORE": 85.1981163786663,
+      "criteria": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.28,
+          "absolute_error": 0.21999999999999975,
+          "normalized_error": 0.21999999999999975,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 54.25,
+          "absolute_error": 4.25,
+          "normalized_error": 0.0425,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 54.25,
+          "absolute_error": 5.75,
+          "normalized_error": 0.04791666666666667,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 339.02,
+          "absolute_error": 10.980000000000018,
+          "normalized_error": 0.10980000000000018,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 102.185293,
+          "absolute_error": 172.814707,
+          "normalized_error": 0.3840326822222222,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 13.37,
+          "absolute_error": 39.13,
+          "normalized_error": 0.4118947368421053,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "selection_reason": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 848,
+      "EVENT": "Landers",
+      "STATION": "Coolwater",
+      "SCORE": 84.90639477714132,
+      "criteria": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.28,
+          "absolute_error": 0.21999999999999975,
+          "normalized_error": 0.21999999999999975,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 19.74,
+          "absolute_error": 30.26,
+          "normalized_error": 0.30260000000000004,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 19.74,
+          "absolute_error": 40.260000000000005,
+          "normalized_error": 0.3355,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 352.98,
+          "absolute_error": 2.980000000000018,
+          "normalized_error": 0.02980000000000018,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 344.10554184999995,
+          "absolute_error": 69.10554184999995,
+          "normalized_error": 0.15356787077777767,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 33.224,
+          "absolute_error": 19.276000000000003,
+          "normalized_error": 0.20290526315789478,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "selection_reason": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1636,
+      "EVENT": "Manjil, Iran",
+      "STATION": "Qazvin",
+      "SCORE": 83.94979625482895,
+      "criteria": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.37,
+          "absolute_error": 0.1299999999999999,
+          "normalized_error": 0.1299999999999999,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 49.97,
+          "absolute_error": 0.030000000000001137,
+          "normalized_error": 0.00030000000000001136,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 49.97,
+          "absolute_error": 10.030000000000001,
+          "normalized_error": 0.08358333333333334,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 302.64,
+          "absolute_error": 47.360000000000014,
+          "normalized_error": 0.47360000000000013,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 164.5359737,
+          "absolute_error": 110.4640263,
+          "normalized_error": 0.245475614,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 13.991,
+          "absolute_error": 38.509,
+          "normalized_error": 0.4053578947368421,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "selection_reason": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1634,
+      "EVENT": "Manjil, Iran",
+      "STATION": "Abhar",
+      "SCORE": 83.9264193999294,
+      "criteria": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.37,
+          "absolute_error": 0.1299999999999999,
+          "normalized_error": 0.1299999999999999,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 75.58,
+          "absolute_error": 25.58,
+          "normalized_error": 0.25579999999999997,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 75.58,
+          "absolute_error": 15.579999999999998,
+          "normalized_error": 0.12983333333333333,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 302.64,
+          "absolute_error": 47.360000000000014,
+          "normalized_error": 0.47360000000000013,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 177.17674555,
+          "absolute_error": 97.82325445000001,
+          "normalized_error": 0.2173850098888889,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 39.768,
+          "absolute_error": 12.732,
+          "normalized_error": 0.13402105263157893,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "selection_reason": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1144,
+      "EVENT": "Gulf of Aqaba",
+      "STATION": "Eilat",
+      "SCORE": 83.61079930654327,
+      "criteria": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.2,
+          "absolute_error": 0.2999999999999998,
+          "normalized_error": 0.2999999999999998,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 43.29,
+          "absolute_error": 6.710000000000001,
+          "normalized_error": 0.0671,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 44.1,
+          "absolute_error": 15.899999999999999,
+          "normalized_error": 0.13249999999999998,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 354.88,
+          "absolute_error": 4.8799999999999955,
+          "normalized_error": 0.048799999999999955,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 90.145668795,
+          "absolute_error": 184.854331205,
+          "normalized_error": 0.41078740267777775,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 13.271,
+          "absolute_error": 39.229,
+          "normalized_error": 0.41293684210526316,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "selection_reason": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1762,
+      "EVENT": "Hector Mine",
+      "STATION": "Amboy",
+      "SCORE": 83.04267729452869,
+      "criteria": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.13,
+          "absolute_error": 0.3700000000000001,
+          "normalized_error": 0.3700000000000001,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 41.81,
+          "absolute_error": 8.189999999999998,
+          "normalized_error": 0.08189999999999997,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 43.05,
+          "absolute_error": 16.950000000000003,
+          "normalized_error": 0.14125000000000001,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 382.93,
+          "absolute_error": 32.93000000000001,
+          "normalized_error": 0.3293000000000001,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 182.9332491,
+          "absolute_error": 92.06675089999999,
+          "normalized_error": 0.20459277977777776,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 23.776,
+          "absolute_error": 28.724,
+          "normalized_error": 0.3023578947368421,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "selection_reason": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1776,
+      "EVENT": "Hector Mine",
+      "STATION": "Desert Hot Springs",
+      "SCORE": 82.77515973263138,
+      "criteria": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.13,
+          "absolute_error": 0.3700000000000001,
+          "normalized_error": 0.3700000000000001,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 56.4,
+          "absolute_error": 6.399999999999999,
+          "normalized_error": 0.06399999999999999,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 56.4,
+          "absolute_error": 3.6000000000000014,
+          "normalized_error": 0.030000000000000013,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 359.0,
+          "absolute_error": 9.0,
+          "normalized_error": 0.09,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 75.063041095,
+          "absolute_error": 199.93695890499998,
+          "normalized_error": 0.44430435312222216,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 8.9578,
+          "absolute_error": 43.5422,
+          "normalized_error": 0.45833894736842107,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "selection_reason": "selected"
+    }
+  ],
+  "error_metrics": [
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1163,
+      "EVENT": "Kocaeli, Turkey",
+      "STATION": "Hava Alani",
+      "ERROR_TOTAL": 0.12937509314327483,
+      "SCORE": 88.54454167364375,
+      "metrics": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.51,
+          "absolute_error": 0.009999999999999787,
+          "normalized_error": 0.009999999999999787,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 58.33,
+          "absolute_error": 8.329999999999998,
+          "normalized_error": 0.08329999999999999,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 60.05,
+          "absolute_error": 0.04999999999999716,
+          "normalized_error": 0.000416666666666643,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 354.37,
+          "absolute_error": 4.3700000000000045,
+          "normalized_error": 0.043700000000000044,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 87.990167125,
+          "absolute_error": 187.009832875,
+          "normalized_error": 0.4155774063888889,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 19.0,
+          "absolute_error": 33.5,
+          "normalized_error": 0.3526315789473684,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "hard_filters": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.51,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 58.33,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 60.05,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 354.37,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 87.990167125,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 19.0,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "selection_reason": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1177,
+      "EVENT": "Kocaeli, Turkey",
+      "STATION": "Zeytinburnu",
+      "ERROR_TOTAL": 0.13260147520551374,
+      "SCORE": 88.29230950971056,
+      "metrics": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.51,
+          "absolute_error": 0.009999999999999787,
+          "normalized_error": 0.009999999999999787,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 51.98,
+          "absolute_error": 1.9799999999999969,
+          "normalized_error": 0.01979999999999997,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 53.88,
+          "absolute_error": 6.119999999999997,
+          "normalized_error": 0.050999999999999976,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 341.56,
+          "absolute_error": 8.439999999999998,
+          "normalized_error": 0.08439999999999998,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 106.66693205,
+          "absolute_error": 168.33306795,
+          "normalized_error": 0.3740734843333333,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 15.551,
+          "absolute_error": 36.949,
+          "normalized_error": 0.38893684210526314,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "hard_filters": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.51,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 51.98,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 53.88,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 341.56,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 106.66693205,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 15.551,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "selection_reason": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1157,
+      "EVENT": "Kocaeli, Turkey",
+      "STATION": "Cekmece",
+      "ERROR_TOTAL": 0.13372742343274852,
+      "SCORE": 88.20462302765483,
+      "metrics": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.51,
+          "absolute_error": 0.009999999999999787,
+          "normalized_error": 0.009999999999999787,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 64.95,
+          "absolute_error": 14.950000000000003,
+          "normalized_error": 0.14950000000000002,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 66.69,
+          "absolute_error": 6.689999999999998,
+          "normalized_error": 0.05574999999999998,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 346.0,
+          "absolute_error": 4.0,
+          "normalized_error": 0.04,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 156.05322145,
+          "absolute_error": 118.94677855,
+          "normalized_error": 0.26432617455555557,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 12.931,
+          "absolute_error": 39.569,
+          "normalized_error": 0.41651578947368423,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "hard_filters": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.51,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 64.95,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 66.69,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 346.0,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 156.05322145,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 12.931,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "selection_reason": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 900,
+      "EVENT": "Landers",
+      "STATION": "Yermo Fire Station",
+      "ERROR_TOTAL": 0.15417728898162067,
+      "SCORE": 86.64180187450597,
+      "metrics": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.28,
+          "absolute_error": 0.21999999999999975,
+          "normalized_error": 0.21999999999999975,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 23.62,
+          "absolute_error": 26.38,
+          "normalized_error": 0.2638,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 23.62,
+          "absolute_error": 36.379999999999995,
+          "normalized_error": 0.30316666666666664,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 353.63,
+          "absolute_error": 3.6299999999999955,
+          "normalized_error": 0.03629999999999996,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 217.77627654999998,
+          "absolute_error": 57.22372345000002,
+          "normalized_error": 0.12716382988888894,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 40.263,
+          "absolute_error": 12.237000000000002,
+          "normalized_error": 0.1288105263157895,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "hard_filters": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.28,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 23.62,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 23.62,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 353.63,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 217.77627654999998,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 40.263,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "selection_reason": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 862,
+      "EVENT": "Landers",
+      "STATION": "Indio - Coachella Canal",
+      "ERROR_TOTAL": 0.17373486939014202,
+      "SCORE": 85.1981163786663,
+      "metrics": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.28,
+          "absolute_error": 0.21999999999999975,
+          "normalized_error": 0.21999999999999975,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 54.25,
+          "absolute_error": 4.25,
+          "normalized_error": 0.0425,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 54.25,
+          "absolute_error": 5.75,
+          "normalized_error": 0.04791666666666667,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 339.02,
+          "absolute_error": 10.980000000000018,
+          "normalized_error": 0.10980000000000018,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 102.185293,
+          "absolute_error": 172.814707,
+          "normalized_error": 0.3840326822222222,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 13.37,
+          "absolute_error": 39.13,
+          "normalized_error": 0.4118947368421053,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "hard_filters": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.28,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 54.25,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 54.25,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 339.02,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 102.185293,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 13.37,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "selection_reason": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 848,
+      "EVENT": "Landers",
+      "STATION": "Coolwater",
+      "ERROR_TOTAL": 0.17776759056223893,
+      "SCORE": 84.90639477714132,
+      "metrics": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.28,
+          "absolute_error": 0.21999999999999975,
+          "normalized_error": 0.21999999999999975,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 19.74,
+          "absolute_error": 30.26,
+          "normalized_error": 0.30260000000000004,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 19.74,
+          "absolute_error": 40.260000000000005,
+          "normalized_error": 0.3355,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 352.98,
+          "absolute_error": 2.980000000000018,
+          "normalized_error": 0.02980000000000018,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 344.10554184999995,
+          "absolute_error": 69.10554184999995,
+          "normalized_error": 0.15356787077777767,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 33.224,
+          "absolute_error": 19.276000000000003,
+          "normalized_error": 0.20290526315789478,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "hard_filters": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.28,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 19.74,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 19.74,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 352.98,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 344.10554184999995,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 33.224,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "selection_reason": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1636,
+      "EVENT": "Manjil, Iran",
+      "STATION": "Qazvin",
+      "ERROR_TOTAL": 0.19118812029573934,
+      "SCORE": 83.94979625482895,
+      "metrics": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.37,
+          "absolute_error": 0.1299999999999999,
+          "normalized_error": 0.1299999999999999,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 49.97,
+          "absolute_error": 0.030000000000001137,
+          "normalized_error": 0.00030000000000001136,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 49.97,
+          "absolute_error": 10.030000000000001,
+          "normalized_error": 0.08358333333333334,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 302.64,
+          "absolute_error": 47.360000000000014,
+          "normalized_error": 0.47360000000000013,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 164.5359737,
+          "absolute_error": 110.4640263,
+          "normalized_error": 0.245475614,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 13.991,
+          "absolute_error": 38.509,
+          "normalized_error": 0.4053578947368421,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "hard_filters": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.37,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 49.97,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 49.97,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 302.64,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 164.5359737,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 13.991,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "selection_reason": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1634,
+      "EVENT": "Manjil, Iran",
+      "STATION": "Abhar",
+      "ERROR_TOTAL": 0.19151991369340018,
+      "SCORE": 83.9264193999294,
+      "metrics": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.37,
+          "absolute_error": 0.1299999999999999,
+          "normalized_error": 0.1299999999999999,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 75.58,
+          "absolute_error": 25.58,
+          "normalized_error": 0.25579999999999997,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 75.58,
+          "absolute_error": 15.579999999999998,
+          "normalized_error": 0.12983333333333333,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 302.64,
+          "absolute_error": 47.360000000000014,
+          "normalized_error": 0.47360000000000013,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 177.17674555,
+          "absolute_error": 97.82325445000001,
+          "normalized_error": 0.2173850098888889,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 39.768,
+          "absolute_error": 12.732,
+          "normalized_error": 0.13402105263157893,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "hard_filters": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.37,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 75.58,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 75.58,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 302.64,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 177.17674555,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 39.768,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "selection_reason": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1144,
+      "EVENT": "Gulf of Aqaba",
+      "STATION": "Eilat",
+      "ERROR_TOTAL": 0.1960177492547201,
+      "SCORE": 83.61079930654327,
+      "metrics": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.2,
+          "absolute_error": 0.2999999999999998,
+          "normalized_error": 0.2999999999999998,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 43.29,
+          "absolute_error": 6.710000000000001,
+          "normalized_error": 0.0671,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 44.1,
+          "absolute_error": 15.899999999999999,
+          "normalized_error": 0.13249999999999998,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 354.88,
+          "absolute_error": 4.8799999999999955,
+          "normalized_error": 0.048799999999999955,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 90.145668795,
+          "absolute_error": 184.854331205,
+          "normalized_error": 0.41078740267777775,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 13.271,
+          "absolute_error": 39.229,
+          "normalized_error": 0.41293684210526316,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "hard_filters": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.2,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 43.29,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 44.1,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 354.88,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 90.145668795,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 13.271,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "selection_reason": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1762,
+      "EVENT": "Hector Mine",
+      "STATION": "Amboy",
+      "ERROR_TOTAL": 0.20420009635923142,
+      "SCORE": 83.04267729452869,
+      "metrics": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.13,
+          "absolute_error": 0.3700000000000001,
+          "normalized_error": 0.3700000000000001,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 41.81,
+          "absolute_error": 8.189999999999998,
+          "normalized_error": 0.08189999999999997,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 43.05,
+          "absolute_error": 16.950000000000003,
+          "normalized_error": 0.14125000000000001,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 382.93,
+          "absolute_error": 32.93000000000001,
+          "normalized_error": 0.3293000000000001,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 182.9332491,
+          "absolute_error": 92.06675089999999,
+          "normalized_error": 0.20459277977777776,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 23.776,
+          "absolute_error": 28.724,
+          "normalized_error": 0.3023578947368421,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "hard_filters": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.13,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 41.81,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 43.05,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 382.93,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 182.9332491,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 23.776,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "selection_reason": "selected"
+    },
+    {
+      "PROVIDER": "PEER",
+      "RSN": 1776,
+      "EVENT": "Hector Mine",
+      "STATION": "Desert Hot Springs",
+      "ERROR_TOTAL": 0.2080919000700919,
+      "SCORE": 82.77515973263138,
+      "metrics": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "active",
+          "target": 7.5,
+          "value": 7.13,
+          "absolute_error": 0.3700000000000001,
+          "normalized_error": 0.3700000000000001,
+          "scale": 1.0
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "active",
+          "target": 50.0,
+          "value": 56.4,
+          "absolute_error": 6.399999999999999,
+          "normalized_error": 0.06399999999999999,
+          "scale": 100.0
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "active",
+          "target": 60.0,
+          "value": 56.4,
+          "absolute_error": 3.6000000000000014,
+          "normalized_error": 0.030000000000000013,
+          "scale": 120.0
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "active",
+          "target": 350.0,
+          "value": 359.0,
+          "absolute_error": 9.0,
+          "normalized_error": 0.09,
+          "scale": 100.0
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "active",
+          "target": 275.0,
+          "value": 75.063041095,
+          "absolute_error": 199.93695890499998,
+          "normalized_error": 0.44430435312222216,
+          "scale": 450.0
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "active",
+          "target": 52.5,
+          "value": 8.9578,
+          "absolute_error": 43.5422,
+          "normalized_error": 0.45833894736842107,
+          "scale": 95.0
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "active",
+          "target": [
+            "StrikeSlip"
+          ],
+          "value": "StrikeSlip",
+          "absolute_error": 0.0,
+          "normalized_error": 0.0,
+          "match": 1.0
+        }
+      ],
+      "hard_filters": [
+        {
+          "criterion": "magnitude",
+          "column": "MAGNITUDE",
+          "status": "passed",
+          "value": 7.13,
+          "min": 7.0,
+          "max": 8.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rjb",
+          "column": "RJB(km)",
+          "status": "passed",
+          "value": 56.4,
+          "min": 0.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "rrup",
+          "column": "RRUP(km)",
+          "status": "passed",
+          "value": 56.4,
+          "min": 0.0,
+          "max": 120.0,
+          "reason": ""
+        },
+        {
+          "criterion": "vs30",
+          "column": "VS30(m/s)",
+          "status": "passed",
+          "value": 359.0,
+          "min": 300.0,
+          "max": 400.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pga",
+          "column": "PGA(cm2/sec)",
+          "status": "passed",
+          "value": 75.063041095,
+          "min": 50.0,
+          "max": 500.0,
+          "reason": ""
+        },
+        {
+          "criterion": "pgv",
+          "column": "PGV(cm/sec)",
+          "status": "passed",
+          "value": 8.9578,
+          "min": 5.0,
+          "max": 100.0,
+          "reason": ""
+        },
+        {
+          "criterion": "mechanism",
+          "column": "MECHANISM",
+          "status": "passed",
+          "value": "StrikeSlip",
+          "target": [
+            "StrikeSlip"
+          ],
+          "reason": ""
+        }
+      ],
+      "selection_reason": "selected"
+    }
+  ]
+}
