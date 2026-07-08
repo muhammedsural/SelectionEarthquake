@@ -77,7 +77,7 @@ def ctx(providers=None, strategy=None, data=None):
 
 
 def run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
+    return asyncio.run(coro)
 
 
 # ─── PipelineResult ──────────────────────────────────────────────────────────
@@ -121,6 +121,7 @@ class TestPipelineReporter:
             "search_criteria",
             "selection_summary",
             "score_breakdown",
+            "error_metrics",
         ):
             assert k in r
 
@@ -177,6 +178,16 @@ class TestPipelineReporter:
         c.selected_df["SELECTION_REASON"] = ["selected"]
         breakdown = PipelineReporter().generate_report(c)["score_breakdown"]
         assert breakdown[0]["criteria"][0]["criterion"] == "magnitude"
+
+    def test_error_metrics_for_selected_records(self):
+        c = self._ctx_with(1)
+        c.selected_df["ERROR_TOTAL"] = [0.1]
+        c.selected_df["ERROR_METRICS"] = [[{"criterion": "magnitude", "normalized_error": 0.0}]]
+        c.selected_df["HARD_FILTERS"] = [[{"criterion": "magnitude", "status": "passed"}]]
+        c.selected_df["SELECTION_REASON"] = ["selected"]
+        metrics = PipelineReporter().generate_report(c)["error_metrics"]
+        assert metrics[0]["metrics"][0]["criterion"] == "magnitude"
+        assert metrics[0]["hard_filters"][0]["status"] == "passed"
 
 
 # ─── _validate_inputs ────────────────────────────────────────────────────────

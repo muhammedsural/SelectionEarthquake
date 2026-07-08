@@ -12,6 +12,14 @@
 
 ::: selection_service.processing.Selection.TBDYSelectionStrategy
 
+::: selection_service.processing.Selection.TBDY2018ConstraintStrategy
+
+::: selection_service.processing.Selection.ConstraintSelectionStrategy
+
+::: selection_service.processing.Selection.ParetoSelectionStrategy
+
+::: selection_service.processing.Selection.SpectrumMatchStrategy
+
 ::: selection_service.processing.Selection.EurocodeSelectionStrategy
 
 ::: selection_service.processing.Mappers

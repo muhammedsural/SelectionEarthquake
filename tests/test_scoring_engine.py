@@ -22,6 +22,10 @@ from selection_service.processing.Selection import (
     SearchCriteria,
     ScoringWeights,
     TBDYSelectionStrategy,
+    TBDY2018ConstraintStrategy,
+    ConstraintSelectionStrategy,
+    ParetoSelectionStrategy,
+    SpectrumMatchStrategy,
     EurocodeSelectionStrategy,
     BaseSelectionStrategy,
 )
@@ -333,6 +337,208 @@ class TestScoringPresets:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+class TestConstraintSelectionStrategy:
+
+    def test_get_name(self, config):
+        strategy = TBDY2018ConstraintStrategy(config=config)
+        assert strategy.get_name() == "TBDY_2018_Constraint"
+
+    def test_backward_compatible_constraint_alias(self, config):
+        strategy = ConstraintSelectionStrategy(config=config)
+        assert isinstance(strategy, TBDY2018ConstraintStrategy)
+
+    def test_hard_filters_reject_out_of_range_and_explain_reason(self):
+        config = SelectionConfig(
+            design_code=DesignCode.TBDY_2018,
+            num_records=3,
+            min_score=0.0,
+        )
+        criteria = SearchCriteria(
+            start_date="2000-01-01",
+            end_date="2025-01-01",
+            min_magnitude=7.0,
+            max_magnitude=8.0,
+            mechanisms=["StrikeSlip"],
+        )
+        df = make_df([
+            {"RSN": 1, "MAGNITUDE": 7.5, "MECHANISM": "StrikeSlip", "STATION": "S1", "EVENT": "E1"},
+            {"RSN": 2, "MAGNITUDE": 6.5, "MECHANISM": "StrikeSlip", "STATION": "S2", "EVENT": "E2"},
+            {"RSN": 3, "MAGNITUDE": 7.5, "MECHANISM": "Normal", "STATION": "S3", "EVENT": "E3"},
+        ])
+        strategy = ConstraintSelectionStrategy(config=config)
+
+        selected, scored = strategy.select_and_score(df, criteria)
+
+        assert selected["RSN"].tolist() == [1]
+        reasons = dict(zip(scored["RSN"], scored["SELECTION_REASON"]))
+        assert reasons[2] == "magnitude_below_min:7.0"
+        assert reasons[3] == "mechanism_mismatch"
+        assert "HARD_FILTERS" in scored.columns
+
+    def test_error_metrics_rank_candidates_without_weighted_scoring(self):
+        config = SelectionConfig(
+            design_code=DesignCode.TBDY_2018,
+            num_records=1,
+            min_score=0.0,
+        )
+        criteria = SearchCriteria(
+            start_date="2000-01-01",
+            end_date="2025-01-01",
+            min_magnitude=7.0,
+            max_magnitude=8.0,
+            target_magnitude=7.5,
+            target_vs30=350.0,
+            mechanisms=["StrikeSlip"],
+        )
+        df = make_df([
+            {"RSN": 1, "MAGNITUDE": 7.5, "VS30(m/s)": 350.0, "MECHANISM": "StrikeSlip", "STATION": "S1", "EVENT": "E1"},
+            {"RSN": 2, "MAGNITUDE": 7.9, "VS30(m/s)": 390.0, "MECHANISM": "StrikeSlip", "STATION": "S2", "EVENT": "E2"},
+        ])
+        strategy = ConstraintSelectionStrategy(config=config)
+
+        selected, scored = strategy.select_and_score(df, criteria)
+
+        assert selected["RSN"].tolist() == [1]
+        assert "ERROR_METRICS" in scored.columns
+        assert "ERROR_TOTAL" in scored.columns
+        assert scored.loc[scored["RSN"] == 1, "ERROR_TOTAL"].iloc[0] < scored.loc[
+            scored["RSN"] == 2, "ERROR_TOTAL"
+        ].iloc[0]
+
+    def test_diversity_limits_reject_same_station_or_event(self):
+        config = SelectionConfig(
+            design_code=DesignCode.TBDY_2018,
+            num_records=3,
+            max_per_station=1,
+            max_per_event=1,
+            min_score=0.0,
+        )
+        criteria = SearchCriteria(
+            start_date="2000-01-01",
+            end_date="2025-01-01",
+            target_magnitude=7.5,
+        )
+        df = make_df([
+            {"RSN": 1, "MAGNITUDE": 7.5, "STATION": "S1", "EVENT": "E1"},
+            {"RSN": 2, "MAGNITUDE": 7.5, "STATION": "S1", "EVENT": "E2"},
+            {"RSN": 3, "MAGNITUDE": 7.5, "STATION": "S3", "EVENT": "E1"},
+            {"RSN": 4, "MAGNITUDE": 7.5, "STATION": "S4", "EVENT": "E4"},
+        ])
+        strategy = ConstraintSelectionStrategy(config=config)
+
+        selected, scored = strategy.select_and_score(df, criteria)
+
+        assert selected["RSN"].tolist() == [1, 4]
+        reasons = dict(zip(scored["RSN"], scored["SELECTION_REASON"]))
+        assert reasons[2] == "max_per_station:1"
+        assert reasons[3] == "max_per_event:1"
+
+    def test_peer_and_afad_rows_share_same_output_columns(self):
+        config = SelectionConfig(
+            design_code=DesignCode.TBDY_2018,
+            num_records=2,
+            min_score=0.0,
+        )
+        criteria = SearchCriteria(
+            start_date="2000-01-01",
+            end_date="2025-01-01",
+            target_magnitude=7.5,
+            mechanisms=["StrikeSlip"],
+        )
+        df = make_df([
+            {"RSN": 1, "PROVIDER": "PEER", "MAGNITUDE": 7.5, "MECHANISM": "StrikeSlip", "STATION": "S1", "EVENT": "E1"},
+            {"RSN": 2, "PROVIDER": "AFAD", "MAGNITUDE": 7.5, "MECHANISM": "StrikeSlip", "STATION": "S2", "EVENT": "E2"},
+        ])
+        strategy = ConstraintSelectionStrategy(config=config)
+
+        selected, scored = strategy.select_and_score(df, criteria)
+
+        assert selected["PROVIDER"].tolist() == ["PEER", "AFAD"]
+        for column in ("SCORE", "ERROR_TOTAL", "ERROR_METRICS", "HARD_FILTERS", "SELECTION_REASON"):
+            assert column in scored.columns
+
+
+class TestParetoSelectionStrategy:
+
+    def test_get_name(self, config):
+        strategy = ParetoSelectionStrategy(config=config)
+        assert strategy.get_name() == "Pareto_Selection"
+
+    def test_pareto_front_is_selected_before_dominated_records(self):
+        config = SelectionConfig(
+            design_code=DesignCode.TBDY_2018,
+            num_records=2,
+            min_score=0.0,
+        )
+        criteria = SearchCriteria(
+            start_date="2000-01-01",
+            end_date="2025-01-01",
+            target_magnitude=7.5,
+            target_vs30=350.0,
+        )
+        df = make_df([
+            {"RSN": 1, "MAGNITUDE": 7.5, "VS30(m/s)": 380.0, "STATION": "S1", "EVENT": "E1"},
+            {"RSN": 2, "MAGNITUDE": 7.8, "VS30(m/s)": 350.0, "STATION": "S2", "EVENT": "E2"},
+            {"RSN": 3, "MAGNITUDE": 7.9, "VS30(m/s)": 390.0, "STATION": "S3", "EVENT": "E3"},
+        ])
+        strategy = ParetoSelectionStrategy(config=config)
+
+        selected, scored = strategy.select_and_score(df, criteria)
+
+        assert set(selected["RSN"]) == {1, 2}
+        ranks = dict(zip(scored["RSN"], scored["PARETO_RANK"]))
+        assert ranks[1] == 0
+        assert ranks[2] == 0
+        assert ranks[3] > 0
+        assert bool(scored.loc[scored["RSN"] == 1, "PARETO_FRONT"].iloc[0]) is True
+
+
+class TestSpectrumMatchStrategy:
+
+    def test_get_name(self, config):
+        strategy = SpectrumMatchStrategy(config=config)
+        assert strategy.get_name() == "Spectrum_Match"
+
+    def test_spectrum_metrics_drive_selection_before_context_metrics(self):
+        config = SelectionConfig(
+            design_code=DesignCode.TBDY_2018,
+            num_records=1,
+            min_score=0.0,
+        )
+        criteria = SearchCriteria(
+            start_date="2000-01-01",
+            end_date="2025-01-01",
+            target_magnitude=7.5,
+            target_pga=100.0,
+            target_pgv=20.0,
+        )
+        df = make_df([
+            {
+                "RSN": 1,
+                "MAGNITUDE": 7.5,
+                "PGA(cm2/sec)": 180.0,
+                "PGV(cm/sec)": 40.0,
+                "STATION": "S1",
+                "EVENT": "E1",
+            },
+            {
+                "RSN": 2,
+                "MAGNITUDE": 7.9,
+                "PGA(cm2/sec)": 100.0,
+                "PGV(cm/sec)": 20.0,
+                "STATION": "S2",
+                "EVENT": "E2",
+            },
+        ])
+        strategy = SpectrumMatchStrategy(config=config)
+
+        selected, scored = strategy.select_and_score(df, criteria)
+
+        assert selected["RSN"].tolist() == [2]
+        assert "SPECTRUM_ERROR" in scored.columns
+        assert scored.loc[scored["RSN"] == 2, "SPECTRUM_ERROR"].iloc[0] == pytest.approx(0.0)
+
+
 # BaseSelectionStrategy.get_name ve EurocodeSelectionStrategy
 # ─────────────────────────────────────────────────────────────────────────────
 

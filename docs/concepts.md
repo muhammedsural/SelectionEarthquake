@@ -34,6 +34,22 @@ parametre formatlarina `to_afad_params()`, `to_peer_params()` ve
 Selection strategy, bir DataFrame'i puanlayip secilecek kayitlari belirler.
 Ana strateji `TBDYSelectionStrategy` sinifidir.
 
+Ek stratejiler:
+
+- `TBDY2018ConstraintStrategy`: Sert kriter, hata metrikleri ve cesitlilik
+  limitleriyle izlenebilir secim yapar.
+- `ConstraintSelectionStrategy`: Eski importlari bozmamak icin
+  `TBDY2018ConstraintStrategy` alias'i olarak kalir.
+- `ParetoSelectionStrategy`: Cok kriterli hata metriklerinde nondominated
+  kayitlari one alir.
+- `SpectrumMatchStrategy`: `PGA`, `PGV`, `PGD`, `Arias` ve `T90` hedeflerine
+  oncelik verir.
+
+Bu stratejiler `ERROR_METRICS`, `ERROR_TOTAL`, `HARD_FILTERS` ve
+`SELECTION_REASON` kolonlarini uretir. PEER ve AFAD mapper ciktilari ortak
+`STANDARD_COLUMNS` semasina geldigi icin iki provider icin ayni kolonlari
+uretmek mumkundur.
+
 ## Pipeline
 
 Pipeline sirasi:

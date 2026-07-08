@@ -11,9 +11,29 @@ earthquake-selection-example --providers peer --num-records 11 --report-path sel
 Bu komut:
 
 1. PEER flatfile verisini okur.
-2. TBDY 2018 Gaussian stratejisini calistirir.
+2. Secilen stratejiyi calistirir.
 3. Secilen kayitlari CSV'ye yazar.
 4. Raporu JSON olarak yazar.
+
+## Constraint-first secim
+
+```bash
+earthquake-selection-example --providers peer --strategy constraint --num-records 11
+```
+
+Bu mod agirlikli puanlama yerine sert filtre, hata metrikleri ve cesitlilik
+kontrollu secim uygular. JSON raporda `error_metrics`, CSV ciktisinda
+`ERROR_TOTAL`, `ERROR_METRICS`, `HARD_FILTERS` ve `SELECTION_REASON` gorunur.
+
+## Pareto ve spectrum secimi
+
+```bash
+earthquake-selection-example --providers peer --strategy pareto --num-records 11
+earthquake-selection-example --providers peer --strategy spectrum --num-records 11
+```
+
+`pareto`, cok kriterli hata metriklerinde nondominated kayitlari one alir.
+`spectrum`, `PGA`, `PGV`, `PGD`, `Arias` ve `T90` hedeflerine oncelik verir.
 
 ## AFAD ile arama
 
@@ -46,6 +66,7 @@ PEER download desteklemez ve indirme adiminda atlanir.
 | `--mechanism` | `StrikeSlip` | Birden fazla kez verilebilir |
 | `--num-records` | `11` | Secilecek maksimum kayit sayisi |
 | `--min-score` | `55.0` | Minimum kabul skoru |
+| `--strategy` | `gaussian` | `gaussian`, `constraint`, `pareto`, `spectrum` |
 | `--scoring-preset` | `tbdy_2018_record_selection` | Hazir agirlik seti |
 | `--report-path` | `selection_report.json` | JSON rapor yolu |
 | `--selected-csv` | `selected_records.csv` | CSV cikti yolu |

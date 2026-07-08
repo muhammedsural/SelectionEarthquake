@@ -77,6 +77,7 @@ class PipelineReporter:
             "statistics": self._calculate_statistics(context.selected_df),
             "selection_summary": self._selection_summary(context.scored_df),
             "score_breakdown": self._selected_score_breakdown(context.selected_df),
+            "error_metrics": self._selected_error_metrics(context.selected_df),
         }
 
     def _calculate_statistics(self, df: pd.DataFrame) -> Dict[str, Any]:
@@ -113,6 +114,24 @@ class PipelineReporter:
         for _, record in df.iterrows():
             item = {col: record.get(col) for col in id_columns}
             item["criteria"] = record.get("SCORE_BREAKDOWN", [])
+            item["selection_reason"] = record.get("SELECTION_REASON", "")
+            rows.append(item)
+        return rows
+
+    def _selected_error_metrics(self, df: pd.DataFrame | None) -> List[Dict[str, Any]]:
+        """Expose constraint strategy error metrics for selected records."""
+        if df is None or df.empty or "ERROR_METRICS" not in df.columns:
+            return []
+
+        id_columns = [
+            c for c in ("PROVIDER", "RSN", "EVENT", "STATION", "ERROR_TOTAL", "SCORE")
+            if c in df.columns
+        ]
+        rows: List[Dict[str, Any]] = []
+        for _, record in df.iterrows():
+            item = {col: record.get(col) for col in id_columns}
+            item["metrics"] = record.get("ERROR_METRICS", [])
+            item["hard_filters"] = record.get("HARD_FILTERS", [])
             item["selection_reason"] = record.get("SELECTION_REASON", "")
             rows.append(item)
         return rows

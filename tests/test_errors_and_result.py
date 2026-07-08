@@ -92,7 +92,7 @@ class TestResultDecorator:
         async def async_add(self, a, b):
             return a + b
 
-        result = asyncio.get_event_loop().run_until_complete(async_add(None, 4, 5))
+        result = asyncio.run(async_add(None, 4, 5))
         assert result.success is True
         assert result.value == 9
 
@@ -103,7 +103,7 @@ class TestResultDecorator:
         async def async_fail(self):
             raise RuntimeError("async boom")
 
-        result = asyncio.get_event_loop().run_until_complete(async_fail(None))
+        result = asyncio.run(async_fail(None))
         assert result.success is False
         assert isinstance(result.error, RuntimeError)
 

@@ -11,9 +11,12 @@ from selection_service.core.EarthquakeApi import EarthquakeAPI
 from selection_service.core.LoggingConfig import setup_logging
 from selection_service.enums.Enums import DesignCode, ProviderName
 from selection_service.processing.Selection import (
+    ParetoSelectionStrategy,
     ScoringWeights,
     SearchCriteria,
     SelectionConfig,
+    SpectrumMatchStrategy,
+    TBDY2018ConstraintStrategy,
     TBDYSelectionStrategy,
 )
 
@@ -47,6 +50,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--num-records", type=int, default=11)
     parser.add_argument("--min-score", type=float, default=55.0)
     parser.add_argument(
+        "--strategy",
+        default="gaussian",
+        choices=["gaussian", "constraint", "pareto", "spectrum"],
+        help="Selection strategy: gaussian, constraint, pareto, or spectrum",
+    )
+    parser.add_argument(
         "--scoring-preset",
         default="tbdy_2018_record_selection",
         choices=sorted(ScoringWeights.preset_descriptions()),
@@ -79,7 +88,13 @@ def main(argv: list[str] | None = None) -> int:
         mechanisms=args.mechanism,
         weights=ScoringWeights.from_preset(args.scoring_preset),
     )
-    strategy = TBDYSelectionStrategy(config=config)
+    strategies = {
+        "gaussian": TBDYSelectionStrategy,
+        "constraint": TBDY2018ConstraintStrategy,
+        "pareto": ParetoSelectionStrategy,
+        "spectrum": SpectrumMatchStrategy,
+    }
+    strategy = strategies[args.strategy](config=config)
     api = EarthquakeAPI(provider_names=providers, strategies=[strategy], use_cache=True)
 
     result = api.run_sync(criteria=criteria, strategy_name=strategy.get_name())

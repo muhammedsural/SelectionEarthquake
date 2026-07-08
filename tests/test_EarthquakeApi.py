@@ -137,9 +137,7 @@ class TestEarthquakeAPI:
     def test_run_async_success(self):
         api = _build_api()
         criteria = MagicMock()
-        result = asyncio.get_event_loop().run_until_complete(
-            api.run_async(criteria, "TBDY_2018_Gaussian")
-        )
+        result = asyncio.run(api.run_async(criteria, "TBDY_2018_Gaussian"))
         assert result.success
 
     def test_download_waveforms_success(self):

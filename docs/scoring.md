@@ -96,3 +96,45 @@ Ornek eleman:
 - `active`: Kriter skora katildi.
 - `missing`: Kolon veya deger eksik oldugu icin katilmadi.
 - `inactive_weight`: Agirlik `0.0` oldugu icin katilmadi.
+
+## Secim stratejileri
+
+`TBDY2018ConstraintStrategy`, agirlikli Gaussian puan yerine once sert
+filtreleri uygular, sonra adaylari hata metriklerine gore siralar.
+
+```python
+from selection_service.processing.Selection import TBDY2018ConstraintStrategy
+
+strategy = TBDY2018ConstraintStrategy(config)
+```
+
+Urettigi ek kolonlar:
+
+| Kolon | Aciklama |
+| --- | --- |
+| `HARD_FILTERS` | Her sert kriterin gecti/kaldi durumu |
+| `ERROR_METRICS` | Her hedef kriter icin mutlak ve normalize hata |
+| `ERROR_TOTAL` | Aktif hata metriklerinin ortalama normalize hatasi |
+| `SCORE` | Geriye uyumluluk icin `100 / (1 + ERROR_TOTAL)` uygunluk skoru |
+| `PARETO_RANK` | Pareto stratejisinde nondominated front sirasi |
+| `SPECTRUM_ERROR` | Spectrum stratejisinde siddet/spektrum vekil hatasi |
+
+Secim mantigi:
+
+1. Aralik ve mekanizma kriterleri sert filtre olarak uygulanir.
+2. Gecen kayitlar `ERROR_TOTAL` dusukten yuksege siralanir.
+3. `max_per_station`, `max_per_event` ve `num_records` cesitlilik limitleri uygulanir.
+4. `SELECTION_REASON` her secim veya eleme nedenini yazar.
+
+Mevcut stratejiler:
+
+| Strateji | `get_name()` | Amac |
+| --- | --- | --- |
+| `TBDYSelectionStrategy` | `TBDY_2018_Gaussian` | Agirlikli Gaussian skor |
+| `TBDY2018ConstraintStrategy` | `TBDY_2018_Constraint` | Sert filtre + hata metrikleri |
+| `ConstraintSelectionStrategy` | `TBDY_2018_Constraint` | Geriye uyumlu alias |
+| `ParetoSelectionStrategy` | `Pareto_Selection` | Nondominated adaylari one alir |
+| `SpectrumMatchStrategy` | `Spectrum_Match` | `PGA`, `PGV`, `PGD`, `Arias`, `T90` hedeflerine oncelik verir |
+
+`SpectrumMatchStrategy` gercek response spectrum kolonlari olmadiginda mevcut
+ortak kolonlari spektrum/yer hareketi vekili olarak kullanir.

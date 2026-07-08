@@ -26,6 +26,10 @@ from .processing.Selection import (
     SearchCriteria,
     BaseSelectionStrategy,
     TBDYSelectionStrategy,
+    TBDY2018ConstraintStrategy,
+    ConstraintSelectionStrategy,
+    ParetoSelectionStrategy,
+    SpectrumMatchStrategy,
     EurocodeSelectionStrategy
 )
 from .processing.Mappers import ColumnMapperFactory
@@ -35,8 +39,9 @@ __all__ = [
     "EarthquakePipeline", "EarthquakeAPI",
     "setup_logging",
     "ProviderName", "DesignCode",
-    "ProviderFactory", "IDataProvider"
+    "ProviderFactory", "IDataProvider",
     "SelectionConfig", "SearchCriteria", "BaseSelectionStrategy",
-    "TBDYSelectionStrategy", "EurocodeSelectionStrategy",
+    "TBDYSelectionStrategy", "TBDY2018ConstraintStrategy", "ConstraintSelectionStrategy",
+    "ParetoSelectionStrategy", "SpectrumMatchStrategy", "EurocodeSelectionStrategy",
     "ColumnMapperFactory"
 ]
