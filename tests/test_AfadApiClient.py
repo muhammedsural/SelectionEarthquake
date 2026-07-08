@@ -166,6 +166,28 @@ class TestSearchWaveformsSync:
             # Verify correct URL was called
             call_args = mock_post.call_args
             assert "GetWaveforms" in call_args[0][0]
+            assert call_args.kwargs["json"] == {"magnitude": 5.0}
+
+    def test_search_waveforms_sync_sends_fault_type_payload(self):
+        """AFAD faultType filtresi HTTP payload icinde korunmali."""
+        client = AfadApiClient()
+        expected_response = [{"eventID": 1}]
+        criteria = {
+            "minMagnitude": 6.0,
+            "maxMagnitude": 7.0,
+            "faultType": "SS",
+        }
+
+        with patch('requests.post') as mock_post:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = expected_response
+            mock_post.return_value = mock_response
+
+            result = client.search_waveforms_sync(criteria)
+
+            assert result == expected_response
+            assert mock_post.call_args.kwargs["json"] == criteria
 
     def test_search_waveforms_sync_http_error_400(self):
         """Test sync search with HTTP 400 error"""

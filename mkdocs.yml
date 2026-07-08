@@ -1,0 +1,61 @@
+site_name: SelectionEarthquake
+site_description: Earthquake record search, scoring, selection, and waveform download library.
+site_url: https://muhammedsural.github.io/SELECTIONEARTHQUAKE/
+repo_url: https://github.com/muhammedsural/SelectionEarthquake
+repo_name: muhammedsural/SelectionEarthquake
+
+theme:
+  name: material
+  language: tr
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - content.code.copy
+    - content.tabs.link
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            show_source: true
+            show_root_heading: true
+            members_order: source
+            docstring_style: google
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Baslangic:
+      - Genel Bakis: index.md
+      - Kurulum: installation.md
+      - Hizli Baslangic: quickstart.md
+      - CLI: cli.md
+  - Kullanici Rehberi:
+      - Temel Kavramlar: concepts.md
+      - Arama Kriterleri: search-criteria.md
+      - Scoring ve Presetler: scoring.md
+      - Raporlama: reporting.md
+      - Waveform Indirme: waveform-download.md
+  - Gelistirme:
+      - Mimari: architecture.md
+      - Provider Gelistirme: provider-development.md
+      - Test ve Kalite: testing.md
+      - Sorun Giderme: troubleshooting.md
+  - API Referansi:
+      - Core: api/core.md
+      - Processing: api/processing.md
+      - Providers: api/providers.md
+      - Services: api/services.md

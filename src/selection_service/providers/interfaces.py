@@ -162,9 +162,9 @@ class IWaveformDownloader(Protocol):
 
         Returns:
             {
-              'total'     : int,           # istenen dosya sayısı
-              'downloaded': int,           # başarıyla indirilen dosya sayısı
-              'batches'   : List[dict],    # her batch'in detayı
+                'total': int,
+                'downloaded': int,
+                'batches': List[dict],
             }
         """
         ...

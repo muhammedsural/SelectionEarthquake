@@ -1,4 +1,5 @@
 # providers/afad/AfadApiClient.py
+import inspect
 import aiohttp
 import requests
 from typing import Dict, Any, Optional
@@ -24,10 +25,12 @@ class AfadApiClient:
 
     async def search_waveforms_async(self, criteria: Dict[str, Any]) -> Dict:
         url = f"{self.BASE_URL}/Waveforms/GetWaveforms"
-        print(f"Afad request payload: {criteria}, headers: {self.headers}")  # Debug log
         try:
             async with aiohttp.ClientSession(headers=self.headers) as session:
-                async with session.post(url, json=criteria, timeout=self.timeout) as response:
+                request = session.post(url, json=criteria, timeout=self.timeout)
+                if inspect.isawaitable(request):
+                    request = await request
+                async with request as response:
                     if response.status == 200:
                         response = await response.json()
                         if response is None or len(response) == 0:
@@ -42,7 +45,6 @@ class AfadApiClient:
         url = f"{self.BASE_URL}/Waveforms/GetWaveforms"
         try:
             response = requests.post(url, json=criteria, headers=self.headers, timeout=self.timeout)
-            print(f"Afad request payload: {criteria}, headers: {self.headers}, response status: {response.status_code}, response text: {response.text[:200]}")  # Debug log
             if response.status_code == 200:
                 return response.json()
             raise NetworkError("AFAD", Exception(f"HTTP {response.status_code}: {response.text}"))

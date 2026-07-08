@@ -75,6 +75,8 @@ class PipelineReporter:
             "providers": [p.get_name() for p in context.providers],
             "records": context.selected_df.to_dict("records"),
             "statistics": self._calculate_statistics(context.selected_df),
+            "selection_summary": self._selection_summary(context.scored_df),
+            "score_breakdown": self._selected_score_breakdown(context.selected_df),
         }
 
     def _calculate_statistics(self, df: pd.DataFrame) -> Dict[str, Any]:
@@ -85,6 +87,35 @@ class PipelineReporter:
         if "RJB(km)" in df.columns:
             stats["distance_range"] = (df["RJB(km)"].min(), df["RJB(km)"].max())
         return stats
+
+    def _selection_summary(self, df: pd.DataFrame | None) -> Dict[str, Any]:
+        """Summarize selected/rejected records and rejection reasons."""
+        if df is None or df.empty or "SELECTION_STATUS" not in df.columns:
+            return {"status_counts": {}, "rejection_reasons": {}}
+
+        status_counts = df["SELECTION_STATUS"].value_counts().to_dict()
+        if "SELECTION_REASON" not in df.columns:
+            return {"status_counts": status_counts, "rejection_reasons": {}}
+
+        rejected = df[df["SELECTION_STATUS"] == "rejected"]
+        return {
+            "status_counts": status_counts,
+            "rejection_reasons": rejected["SELECTION_REASON"].value_counts().to_dict(),
+        }
+
+    def _selected_score_breakdown(self, df: pd.DataFrame | None) -> List[Dict[str, Any]]:
+        """Expose compact criterion-level score details for selected records."""
+        if df is None or df.empty or "SCORE_BREAKDOWN" not in df.columns:
+            return []
+
+        id_columns = [c for c in ("PROVIDER", "RSN", "EVENT", "STATION", "SCORE") if c in df.columns]
+        rows: List[Dict[str, Any]] = []
+        for _, record in df.iterrows():
+            item = {col: record.get(col) for col in id_columns}
+            item["criteria"] = record.get("SCORE_BREAKDOWN", [])
+            item["selection_reason"] = record.get("SELECTION_REASON", "")
+            rows.append(item)
+        return rows
 
 
 # ──────────────────────────────────────────────────────────────────────────────

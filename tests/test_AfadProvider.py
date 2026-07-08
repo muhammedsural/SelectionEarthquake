@@ -16,6 +16,7 @@ from unittest.mock import MagicMock, patch
 from selection_service.providers.AfadProvider import AFADDataProvider
 from selection_service.core.ErrorHandle import ProviderError
 from selection_service.processing.Mappers import AFADColumnMapper
+from selection_service.processing.Selection import SearchCriteria
 
 
 @pytest.fixture
@@ -35,6 +36,35 @@ def afad_provider():
 
 
 class TestAfadDataProvider:
+
+    def test_map_criteria_uses_fault_type_for_afad(self, afad_provider):
+        criteria = SearchCriteria(
+            start_date="2023-01-01",
+            end_date="2023-12-31",
+            magnitude_range=(6.0, 7.0),
+            latitude_range=(35.0, 42.0),
+            longitude_range=(25.0, 45.0),
+            fault_type="StrikeSlip",
+        )
+
+        params = afad_provider.map_criteria(criteria)
+
+        assert params["faultType"] == "SS"
+
+    def test_map_criteria_combines_fault_type_and_mechanisms_for_afad(self, afad_provider):
+        criteria = SearchCriteria(
+            start_date="2023-01-01",
+            end_date="2023-12-31",
+            magnitude_range=(6.0, 7.0),
+            latitude_range=(35.0, 42.0),
+            longitude_range=(25.0, 45.0),
+            fault_type="Reverse",
+            mechanisms=["StrikeSlip"],
+        )
+
+        params = afad_provider.map_criteria(criteria)
+
+        assert params["faultType"] == "SS"
 
     def test_handle_retry_all_succeed(self, afad_provider):
         """Retry'da tüm dosyalar başarıyla indirilirse recovered sayısı = eksik dosya sayısı."""

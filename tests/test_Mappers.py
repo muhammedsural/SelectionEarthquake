@@ -394,7 +394,10 @@ class TestMapperInteroperability:
         peer_df = PEERColumnMapper().map_columns(peer_csv_row)
         afad_df = AFADColumnMapper().map_columns(afad_api_row)
 
-        combined = pd.concat([peer_df, afad_df], ignore_index=True)
+        combined = pd.concat(
+            [peer_df.astype(object), afad_df.astype(object)],
+            ignore_index=True,
+        )
         assert "ENDPOINTSOURCE" in combined.columns
         assert "T90_avg(sec)" in combined.columns
 
@@ -405,7 +408,10 @@ class TestMapperInteroperability:
         afad_df = AFADColumnMapper().map_columns(afad_api_row)
         afad_df["PROVIDER"] = "AFAD"
 
-        combined = pd.concat([peer_df, afad_df], ignore_index=True)
+        combined = pd.concat(
+            [peer_df.astype(object), afad_df.astype(object)],
+            ignore_index=True,
+        )
         peer_rows = combined[combined["PROVIDER"] == "PEER"]
         afad_rows = combined[combined["PROVIDER"] == "AFAD"]
 

@@ -141,6 +141,32 @@ class TestMechanismValidator:
     def test_empty_mechanisms_valid(self, base_criteria):
         assert base_criteria.mechanisms == []
 
+    def test_valid_fault_type(self):
+        c = SearchCriteria(
+            start_date="2000-01-01",
+            end_date="2025-01-01",
+            fault_type="Reverse",
+        )
+        assert c.fault_type == "Reverse"
+        assert c.get_mechanism_targets() == ["Reverse"]
+
+    def test_invalid_fault_type_raises(self):
+        with pytest.raises(ValidationError, match="Geçersiz mekanizma"):
+            SearchCriteria(
+                start_date="2000-01-01",
+                end_date="2025-01-01",
+                fault_type="BadFault",
+            )
+
+    def test_fault_type_and_mechanisms_are_deduplicated(self):
+        c = SearchCriteria(
+            start_date="2000-01-01",
+            end_date="2025-01-01",
+            fault_type="StrikeSlip",
+            mechanisms=["StrikeSlip", "Reverse"],
+        )
+        assert c.get_mechanism_targets() == ["StrikeSlip", "Reverse"]
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # check_distances validator
@@ -312,6 +338,21 @@ class TestEffectiveTarget:
                            target_magnitude=7.5)
         assert c.get_effective_target("magnitude") == pytest.approx(7.5)
 
+    def test_distance_alias_fields_are_used_for_targets(self):
+        c = SearchCriteria(
+            start_date="2000-01-01",
+            end_date="2025-01-01",
+            min_Rjb=10.0,
+            max_Rjb=30.0,
+            min_Rrup=20.0,
+            max_Rrup=60.0,
+            min_Repi=5.0,
+            max_Repi=25.0,
+        )
+        assert c.get_effective_target("rjb") == pytest.approx(20.0)
+        assert c.get_effective_target("rrup") == pytest.approx(40.0)
+        assert c.get_effective_target("repi") == pytest.approx(15.0)
+
 
 class TestGetSigma:
 
@@ -338,6 +379,15 @@ class TestGetSigma:
     def test_sigma_no_value_returns_one(self, base_criteria):
         sigma = base_criteria.get_sigma("magnitude")
         assert sigma == pytest.approx(1.0)
+
+    def test_distance_alias_fields_are_used_for_sigma(self):
+        c = SearchCriteria(
+            start_date="2000-01-01",
+            end_date="2025-01-01",
+            min_Rjb=10.0,
+            max_Rjb=40.0,
+        )
+        assert c.get_sigma("rjb") == pytest.approx(10.0)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -368,6 +418,14 @@ class TestParamConversions:
                                mechanisms=[mech])
             assert c.to_afad_params()["faultType"] == code
 
+    def test_to_afad_fault_type_mapping(self):
+        c = SearchCriteria(
+            start_date="2000-01-01",
+            end_date="2025-01-01",
+            fault_type="Normal",
+        )
+        assert c.to_afad_params()["faultType"] == "N"
+
     def test_to_peer_params_basic(self, full_criteria):
         params = full_criteria.to_peer_params()
         assert params["min_magnitude"] == 6.0
@@ -380,6 +438,23 @@ class TestParamConversions:
         params = c.to_peer_params()
         assert "mechanisms" in params
 
+    def test_to_peer_params_fault_type_numeric(self):
+        c = SearchCriteria(
+            start_date="2000-01-01",
+            end_date="2025-01-01",
+            fault_type="Reverse",
+        )
+        assert c.to_peer_params()["mechanisms"] == [2]
+
+    def test_to_peer_params_combines_fault_type_and_mechanisms(self):
+        c = SearchCriteria(
+            start_date="2000-01-01",
+            end_date="2025-01-01",
+            fault_type="Reverse",
+            mechanisms=["StrikeSlip"],
+        )
+        assert c.to_peer_params()["mechanisms"] == [0, 2]
+
     def test_to_fdsn_params_basic(self, base_criteria):
         params = base_criteria.to_fdsn_params()
         assert "starttime" in params
@@ -391,6 +466,115 @@ class TestParamConversions:
         params = c.to_fdsn_params()
         assert "minlatitude" in params
         assert "maxlatitude" in params
+
+
+class TestSearchCriteriaCombinations:
+
+    @pytest.mark.parametrize(
+        "criteria_kwargs,expected_peer",
+        [
+            (
+                {
+                    "min_magnitude": 6.5,
+                    "max_magnitude": 7.5,
+                    "min_vs30": 300.0,
+                    "max_vs30": 450.0,
+                    "mechanisms": ["StrikeSlip"],
+                },
+                {
+                    "min_magnitude": 6.5,
+                    "max_magnitude": 7.5,
+                    "min_vs30": 300.0,
+                    "max_vs30": 450.0,
+                    "mechanisms": [0],
+                },
+            ),
+            (
+                {
+                    "min_Rjb": 0.0,
+                    "max_Rjb": 50.0,
+                    "min_Rrup": 0.0,
+                    "max_Rrup": 60.0,
+                    "min_pga": 50.0,
+                    "max_pga": 250.0,
+                },
+                {
+                    "min_Rjb": 0.0,
+                    "max_Rjb": 50.0,
+                    "min_Rrup": 0.0,
+                    "max_Rrup": 60.0,
+                    "min_pga": 50.0,
+                    "max_pga": 250.0,
+                },
+            ),
+            (
+                {
+                    "min_depth": 0.0,
+                    "max_depth": 30.0,
+                    "min_pgv": 5.0,
+                    "max_pgv": 40.0,
+                    "min_pgd": 1.0,
+                    "max_pgd": 10.0,
+                },
+                {
+                    "min_depth": 0.0,
+                    "max_depth": 30.0,
+                    "min_pgv": 5.0,
+                    "max_pgv": 40.0,
+                    "min_pgd": 1.0,
+                    "max_pgd": 10.0,
+                },
+            ),
+        ],
+    )
+    def test_to_peer_params_preserves_search_combinations(self, criteria_kwargs, expected_peer):
+        criteria = SearchCriteria(
+            start_date="2000-01-01",
+            end_date="2025-01-01",
+            **criteria_kwargs,
+        )
+        params = criteria.to_peer_params()
+        for key, value in expected_peer.items():
+            assert params[key] == value
+
+    def test_to_afad_params_combines_location_magnitude_and_intensity(self):
+        criteria = SearchCriteria(
+            start_date="2023-02-06",
+            end_date="2023-02-07",
+            min_latitude=35.0,
+            max_latitude=40.0,
+            min_longitude=35.0,
+            max_longitude=42.0,
+            min_magnitude=6.0,
+            max_magnitude=8.0,
+            min_pga=100.0,
+            max_pga=500.0,
+            province="Kahramanmaras",
+            mechanisms=["Reverse"],
+        )
+        params = criteria.to_afad_params()
+        assert params["fromLatitude"] == 35.0
+        assert params["toLongitude"] == 42.0
+        assert params["fromMagnitude"] == 6.0
+        assert params["toPGA"] == 500.0
+        assert params["province"] == "Kahramanmaras"
+        assert params["faultType"] == "R"
+
+    def test_targets_and_preset_weights_can_be_combined(self):
+        weights = ScoringWeights.from_preset("site_response")
+        criteria = SearchCriteria(
+            start_date="2000-01-01",
+            end_date="2025-01-01",
+            min_magnitude=6.0,
+            max_magnitude=8.0,
+            target_magnitude=7.2,
+            min_vs30=250.0,
+            max_vs30=500.0,
+            weights=weights,
+        )
+        assert criteria.get_effective_target("magnitude") == pytest.approx(7.2)
+        assert criteria.get_effective_target("vs30") == pytest.approx(375.0)
+        assert criteria.weights.vs30 > criteria.weights.magnitude
 
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -17,7 +17,7 @@ Neden ayrı bir sınıf?
 from __future__ import annotations
 
 import logging
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from ..enums.Enums import ProviderName
 from ..providers.interfaces import IDataFetcher
@@ -51,7 +51,7 @@ class ProviderRegistry:
         cls,
         provider_names: List[ProviderName],
         use_cache: bool = True,
-        **kwargs,
+        **kwargs: Any,
     ) -> "ProviderRegistry":
         """ProviderName listesinden registry oluştur.
 

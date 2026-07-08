@@ -20,6 +20,7 @@ from selection_service.enums.Enums import DesignCode
 from selection_service.processing.Selection import (
     SelectionConfig,
     SearchCriteria,
+    ScoringWeights,
     TBDYSelectionStrategy,
     EurocodeSelectionStrategy,
     BaseSelectionStrategy,
@@ -181,6 +182,13 @@ class TestCalculateTotalScore:
         score = strategy._calculate_total_score(record, criteria)
         assert score >= 0.0
 
+    def test_score_breakdown_contains_active_criteria(self, strategy, criteria):
+        record = make_record(MAGNITUDE=7.5, **{"VS30(m/s)": 350.0})
+        score, breakdown = strategy._calculate_score_breakdown(record, criteria)
+        assert score > 0
+        assert any(item["criterion"] == "magnitude" for item in breakdown)
+        assert all("weighted_score" in item for item in breakdown)
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # _apply_selection_rules testleri
@@ -294,6 +302,34 @@ class TestSelectAndScore:
         selected, scored = strategy.select_and_score(df, criteria)
         if not selected.empty:
             assert set(selected["RSN"]).issubset(set(scored["RSN"]))
+
+    def test_traceability_columns_added(self, strategy, criteria):
+        df = make_df([
+            {"RSN": 1, "MAGNITUDE": 7.5, "MECHANISM": "StrikeSlip",
+             "VS30(m/s)": 350.0, "STATION": "S1", "EVENT": "E1"}
+        ])
+        selected, scored = strategy.select_and_score(df, criteria)
+        assert "SCORE_BREAKDOWN" in scored.columns
+        assert "SELECTION_STATUS" in scored.columns
+        assert "SELECTION_REASON" in scored.columns
+        assert selected["SELECTION_REASON"].iloc[0] == "selected"
+
+
+class TestScoringPresets:
+
+    def test_from_preset_returns_weights(self):
+        weights = ScoringWeights.from_preset("tbdy_2018_record_selection")
+        assert weights.magnitude > 0
+        assert weights.vs30 > 0
+
+    def test_preset_descriptions_document_available_presets(self):
+        descriptions = ScoringWeights.preset_descriptions()
+        assert "balanced" in descriptions
+        assert "tbdy_2018_record_selection" in descriptions
+
+    def test_unknown_preset_raises_clear_error(self):
+        with pytest.raises(ValueError, match="Unknown scoring preset"):
+            ScoringWeights.from_preset("missing")
 
 
 # ─────────────────────────────────────────────────────────────────────────────

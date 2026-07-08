@@ -1,140 +1,166 @@
 # SelectionEarthquake
 
-Deprem kayıtlarının karakteristik özelliklerinin bilgilerini farklı veri sağlayıcılardan (AFAD,PEER) çekip normalize eden, ardından belirlenen kriterlere göre puanlayan ve strateji tabanlı seçim yapan Python kütüphanesi.
-Böylece araştırmacılar ve mühendisler, bina özelinde uygun deprem kayıtlarını hızlı ve güvenilir şekilde elde edebilir.
+Deprem kayitlarini AFAD ve PEER gibi veri saglayicilardan cekip ortak kolona
+normalize eden, arama kriterlerine gore puanlayan ve TBDY 2018 odakli kayit
+secimi yapan Python kutuphanesi.
 
----
+## Paket ve Import Adi
 
-## 🚀 Özellikler
-
-- 🌐 Çoklu veri sağlayıcı desteği (AFAD, PEER)
-- 🔎 Esnek arama kriterleri (`magnitude`, `depth`, `distance`, `Vs30`, vb.)
-- 🧩 Pipeline tabanlı mimari
-- 📂 Çıktılar: CSV, XLSX, MiniSeed, Pandas DataFrame
-- ⚡ Asenkron (async) sorgular ile hızlı veri çekme
-- 🏆 Puanlama sistemi ve strateji tabanlı kayıt seçimi (örn. TBDY 2018’e göre seçim)
-- 🧪 Test altyapısı (pytest) ve kolay genişletilebilir provider mimarisi
-
----
-
-## 📦 Kurulum
+Paket kurulum adi:
 
 ```bash
-# PyPI'den yükleme
 pip install earthquake-selection
+```
 
-# Yerel geliştirme için
+Python import paketi:
+
+```python
+import selection_service
+```
+
+Yerel gelistirme kurulumu:
+
+```bash
 git clone https://github.com/muhammedsural/SelectionEarthquake.git
 cd SelectionEarthquake
-pip install -e .
-
+pip install -e ".[dev]"
 ```
 
-## ⚡ Hızlı Başlangıç
+## Ozellikler
 
-```py
-import asyncio
+- Coklu veri saglayici destegi: AFAD, PEER
+- Ortak `SearchCriteria` modeli ve provider bazli kriter donusumu
+- Pipeline tabanli sorgu, birlestirme, puanlama ve secim akisi
+- TBDY 2018 icin Gaussian tabanli secim stratejisi
+- Kriter bazli skor kirilimi: `SCORE_BREAKDOWN`
+- Her kayit icin secim/eleme aciklamasi: `SELECTION_STATUS`, `SELECTION_REASON`
+- CSV, JSON rapor ve Pandas DataFrame ciktilari
+- AFAD icin waveform indirme destegi
+- Pytest tabanli test altyapisi
+
+## Hizli Baslangic
+
+```python
+from selection_service.core.EarthquakeApi import EarthquakeAPI
 from selection_service.enums.Enums import DesignCode, ProviderName
-from selection_service.core.Pipeline import EarthquakeAPI
-from selection_service.processing.Selection import (SelectionConfig,
-                                                    SearchCriteria,
-                                                    TBDYSelectionStrategy)
-from selection_service.core.LoggingConfig import setup_logging
+from selection_service.processing.Selection import (
+    ScoringWeights,
+    SearchCriteria,
+    SelectionConfig,
+    TBDYSelectionStrategy,
+)
 
-setup_logging()
+config = SelectionConfig(
+    design_code=DesignCode.TBDY_2018,
+    num_records=11,
+    max_per_station=3,
+    max_per_event=3,
+    min_score=55,
+)
+strategy = TBDYSelectionStrategy(config=config)
 
-async def example_usage():
-    # Seçim stratejisi oluşturma
-    con = SelectionConfig(design_code=DesignCode.TBDY_2018,
-                          num_records=22,
-                          max_per_station=3,
-                          max_per_event=3,
-                          min_score=55)
-    strategy = TBDYSelectionStrategy(config=con)
+criteria = SearchCriteria(
+    start_date="2000-01-01",
+    end_date="2025-09-05",
+    min_magnitude=7.0,
+    max_magnitude=8.0,
+    min_vs30=300,
+    max_vs30=400,
+    mechanisms=["StrikeSlip"],
+    weights=ScoringWeights.from_preset("tbdy_2018_record_selection"),
+)
 
-    #Arama kriterleri
-    search_criteria = SearchCriteria(
-        start_date="2000-01-01",
-        end_date="2025-09-05",
-        min_magnitude=7.0,
-        max_magnitude=10.0,
-        min_vs30=300,
-        max_vs30=400
-        # mechanisms=["StrikeSlip"]
-        )
-    
-    # API
-    api = EarthquakeAPI(providerNames= [ProviderName.AFAD, 
-                                   ProviderName.PEER],
-                        strategies= [strategy])
+api = EarthquakeAPI(
+    provider_names=[ProviderName.PEER],
+    strategies=[strategy],
+    use_cache=True,
+)
 
-    # Asenkron arama
-    result = await api.run_async(criteria=search_criteria,
-                                 strategy_name=strategy.get_name())
-    
-    # Senkron arama
-    # result = api.run_sync(criteria=search_criteria,
-    # strategy_name=strategy.get_name())
-    
-    
-    if result.success:
-        print(result.value.selected_df[['PROVIDER','RSN','EVENT','YEAR','MAGNITUDE','STATION','VS30(m/s)','RRUP(km)','MECHANISM','PGA(cm2/sec)','PGV(cm/sec)','SCORE']].head(7))
-        return result.value
-    else:
-        print(f"[ERROR]: {result.error}")
-        return None
-    
-if __name__ == "__main__":
-    df = asyncio.run(example_usage())
+result = api.run_sync(criteria=criteria, strategy_name=strategy.get_name())
+
+if result.success:
+    selected = result.value.selected_df
+    report = result.value.report
+    print(selected[["PROVIDER", "RSN", "EVENT", "MAGNITUDE", "SCORE", "SELECTION_REASON"]].head())
+    print(report["selection_summary"])
+else:
+    print(result.error)
 ```
 
-PROVIDER | RSN      | EVENT         | YEAR  | MAGNITUDE |           STATION            | VS30(m/s) | RRUP(km)   |  MECHANISM  | PGA(cm2/sec) | PGV(cm/sec) | SCORE  
----------|----------|---------------|------ |---------- |------------------------------|-----------|----------  | ----------- |-----------   |-----------  |-------------
-PEER     |  900     |  Landers      |  1992 |    7.28   |  Yermo Fire Station          |    353.63 |  23.620000 |  StrikeSlip |  217.776277  |  40.263000  |  100.000000
-PEER     |  3753    |  Landers      |  1992 |    7.28   |  Fun Valley                  |    388.63 |  25.020000 |  StrikeSlip |  206.125976  |  19.963000  |  100.000000
-PEER     |  1615    |  Duzce, Turkey|  1999 |    7.14   |  Lamont 1062                 |    338.00 |  9.140000  |  StrikeSlip |  202.664229  |  14.630000  |  100.000000
-PEER     |  881     |  Landers      |  1992 |    7.28   |  Morongo Valley Fire Station |    396.41 |  17.360000 |  StrikeSlip |  188.768206  |  24.317000  |  100.000000
-PEER     |  1762    |  Hector Mine  |  1999 |    7.13   |  Amboy                       |    382.93 |  43.050000 |  StrikeSlip |  182.933249  |  23.776000  |  100.000000
-AFAD     |  327943  |  17966        |  2023 |    7.70   |  DSİ, Musa Şahin Bulvarı     |    350.00 |  27.110381 |  StrikeSlip |  185.737903  |  29.642165  |  91.304348
-AFAD     |  327943  |  17966        |  2023 |    7.70   |  DSİ, Musa Şahin Bulvarı     |    350.00 |  27.110381 |  StrikeSlip |  185.737903  |  29.642165  |  91.304348
+## Komut Satiri Ornegi
 
-
-## 🛠 Mimari
+Kurulumdan sonra uc uca arama, secim, CSV ve JSON rapor uretimi:
 
 ```bash
-selection_service/
-│
-├── providers/          # Veri sağlayıcılar (AFAD, FDSN, PEER…)
-├── core/               # Pipeline ve API
-├── processing/         # SearchCriteria, Result, vs.
-├── utility/            # Yardımcı fonksiyonlar
-├── enums/              # ProviderName gibi enumlar
-├── data/               # Kullanılan csv ve excel dosyaları
-
-tests/              # pytest testleri
-
+earthquake-selection-example --providers peer --num-records 11 --report-path selection_report.json --selected-csv selected_records.csv
 ```
 
-## 🤝 Provider Ekleme Adımları
+AFAD ile waveform indirme akisini da baslatmak icin:
 
-- enums.Enums.ProviderName kısmına ismini ekle
+```bash
+earthquake-selection-example --providers afad --download-waveforms --export-type mseed
+```
 
-- Yeni provider eklemek için providers/ altına python dosyasını aç.
+AFAD API ag baglantisi gerektirir. PEER veri seti lokal flatfile ile calisir ve
+waveform indirme desteklemez; download adiminda desteklenmeyen provider atlanir.
 
-- Provider sınıfı mutlaka IDataProvider'ı miras almalı.
+## Scoring Presetleri
 
-- Provider a özel BaseColumnMapper sınıfını miras alan mapping sınıfını yaz ve ColumnMapperFactory e ekle
+Hazir agirlik setleri `ScoringWeights.from_preset(...)` ile secilir:
 
-- ProviderFactory de create methoduna ekle
+- `balanced`: Varsayilan dengeli agirliklar.
+- `tbdy_2018_record_selection`: Magnitude, mesafe, Vs30 ve mekanizmayi one cikarir.
+- `site_response`: Vs30, sure ve siddet olcutlerine daha fazla agirlik verir.
 
-- Unit test yazmayı unutma.
+Preset aciklamalari:
 
+```python
+from selection_service.processing.Selection import ScoringWeights
 
-## 📌 Yol Haritası
+print(ScoringWeights.preset_descriptions())
+```
 
-- [ ] Yeni provider: FDSN
+## Rapor Izlenebilirligi
 
+`PipelineResult.report` asagidaki ek alanlari icerir:
 
-## 📜 Lisans
+- `selection_summary`: Secilen/reddedilen kayit sayilari ve eleme gerekceleri.
+- `score_breakdown`: Secilen kayitlar icin kriter bazli hedef, deger, agirlik ve katki.
+
+`scored_df` tum kayitlar icin su kolonlari tasir:
+
+- `SCORE_BREAKDOWN`
+- `SELECTION_STATUS`
+- `SELECTION_REASON`
+
+## Mimari
+
+```text
+selection_service/
+  core/        Pipeline, API facade, config, error types
+  services/    Query, provider registry, waveform download orchestration
+  providers/   AFAD, PEER, cache, provider interfaces
+  processing/  SearchCriteria, selection strategy, mappers, Result
+  utility/     Data file loading helpers
+  data/        Packaged CSV/XLSX data
+tests/         pytest suite
+examples/      Usage examples
+```
+
+## Test
+
+```bash
+pytest
+```
+
+Pytest ayarlari tek kaynak olarak `pyproject.toml` icindedir.
+
+## Yol Haritasi
+
+- FDSN provider entegrasyonunu tamamla veya v2 kapsaminda ayri tut.
+- Eurocode stratejisini gercek kurallarla doldur veya deneysel olarak etiketle.
+- Rapor ciktilarini HTML/PDF formatina genislet.
+
+## Lisans
 
 MIT License

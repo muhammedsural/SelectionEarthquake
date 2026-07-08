@@ -82,6 +82,60 @@ SCORING_MAP = {
     }
 }
 
+SCORING_PRESETS = {
+    "balanced": {
+        "description": (
+            "Default preset. Magnitude, distance, site class, intensity, "
+            "duration, depth, and mechanism all contribute to the score."
+        ),
+        "weights": {
+            key: config["weight"]
+            for key, config in SCORING_MAP.items()
+            if "weight" in config
+        },
+    },
+    "tbdy_2018_record_selection": {
+        "description": (
+            "TBDY 2018-oriented preset. Emphasizes magnitude, source-to-site "
+            "distance, Vs30, and fault mechanism for record selection."
+        ),
+        "weights": {
+            "magnitude": 6.0,
+            "rjb": 5.0,
+            "rrup": 5.0,
+            "repi": 3.0,
+            "vs30": 5.0,
+            "pga": 3.0,
+            "pgv": 2.5,
+            "pgd": 1.5,
+            "t90": 2.0,
+            "arias": 1.5,
+            "depth": 1.0,
+            "mechanism": 4.0,
+        },
+    },
+    "site_response": {
+        "description": (
+            "Site-response preset. Gives more influence to Vs30, duration, "
+            "and intensity measures while keeping magnitude and distance active."
+        ),
+        "weights": {
+            "magnitude": 3.0,
+            "rjb": 3.0,
+            "rrup": 3.0,
+            "repi": 2.0,
+            "vs30": 6.0,
+            "pga": 4.0,
+            "pgv": 4.0,
+            "pgd": 3.0,
+            "t90": 5.0,
+            "arias": 4.0,
+            "depth": 1.0,
+            "mechanism": 2.0,
+        },
+    },
+}
+
 #BUG Peer provider için ['T90_avg(sec)', 'ENDPOINTSOURCE'] başlıkları tanımlı değil hata veriyor.
 STANDARD_COLUMNS = ["PROVIDER","RSN","EVENT", "YEAR", "MAGNITUDE", "MAGNITUDE_TYPE", 
                     "STATION","SSN","STATION_ID","STATION_LAT","STATION_LON","VS30(m/s)",

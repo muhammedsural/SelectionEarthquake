@@ -111,7 +111,17 @@ class TestPipelineReporter:
     def test_success_all_keys(self):
         r = PipelineReporter().generate_report(self._ctx_with())
         assert r["status"] == "success"
-        for k in ("selected_count","total_considered","strategy","providers","records","statistics","search_criteria"):
+        for k in (
+            "selected_count",
+            "total_considered",
+            "strategy",
+            "providers",
+            "records",
+            "statistics",
+            "search_criteria",
+            "selection_summary",
+            "score_breakdown",
+        ):
             assert k in r
 
     def test_selected_count(self):
@@ -148,6 +158,25 @@ class TestPipelineReporter:
         c = self._ctx_with()
         c.search_criteria = {"raw": "criteria"}
         assert PipelineReporter().generate_report(c)["search_criteria"] == {"raw": "criteria"}
+
+    def test_selection_summary_counts_rejections(self):
+        c = self._ctx_with(1, scored_rows=3)
+        c.scored_df["SELECTION_STATUS"] = ["selected", "rejected", "rejected"]
+        c.scored_df["SELECTION_REASON"] = [
+            "selected",
+            "score_below_min_score:55.0",
+            "max_per_event:3",
+        ]
+        summary = PipelineReporter().generate_report(c)["selection_summary"]
+        assert summary["status_counts"]["rejected"] == 2
+        assert summary["rejection_reasons"]["max_per_event:3"] == 1
+
+    def test_score_breakdown_for_selected_records(self):
+        c = self._ctx_with(1)
+        c.selected_df["SCORE_BREAKDOWN"] = [[{"criterion": "magnitude"}]]
+        c.selected_df["SELECTION_REASON"] = ["selected"]
+        breakdown = PipelineReporter().generate_report(c)["score_breakdown"]
+        assert breakdown[0]["criteria"][0]["criterion"] == "magnitude"
 
 
 # ─── _validate_inputs ────────────────────────────────────────────────────────

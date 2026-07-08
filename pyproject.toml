@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "earthquake_selection"
-version = "1.1.0"
+name = "earthquake-selection"
+version = "1.2.0"
 description = "A library for earthquake selection"
 readme = "README.md"
 authors = [
@@ -55,6 +55,9 @@ dev = [
     "twine>=5.0.0"
 ]
 
+[project.scripts]
+earthquake-selection-example = "selection_service.cli:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["selection_service*"]
@@ -79,8 +82,9 @@ Issues = "https://github.com/muhammedsural/SELECTIONEARTHQUAKE/issues"
 Changelog = "https://github.com/muhammedsural/SELECTIONEARTHQUAKE/releases"
 
 [tool.pytest.ini_options]
+pythonpath = ["src"]
 testpaths = ["tests"]
-addopts = "-v"
+addopts = "-v -p no:cacheprovider"
 asyncio_mode = "auto"
 
 [tool.black]

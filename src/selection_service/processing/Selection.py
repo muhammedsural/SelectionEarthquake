@@ -6,7 +6,13 @@ from typing import Any, Dict, List, Optional, Protocol, Tuple
 import pandas as pd
 from pydantic import BaseModel, Field, model_validator
 from ..enums.Enums import DesignCode
-from ..core.Config import MECHANISM_MAP,REVERSE_MECHANISM_MAP, SCORING_MAP, get_mechanism_numeric
+from ..core.Config import (
+    MECHANISM_MAP,
+    REVERSE_MECHANISM_MAP,
+    SCORING_MAP,
+    SCORING_PRESETS,
+    get_mechanism_numeric,
+)
 
 class ScoringWeights(BaseModel):
     """
@@ -30,6 +36,24 @@ class ScoringWeights(BaseModel):
 
     def get_weight(self, key: str) -> float:
         return getattr(self, key, 0.0)
+
+    @classmethod
+    def from_preset(cls, name: str) -> "ScoringWeights":
+        """Documented scoring presets for repeatable selection profiles."""
+        try:
+            preset = SCORING_PRESETS[name]
+        except KeyError as exc:
+            available = ", ".join(sorted(SCORING_PRESETS))
+            raise ValueError(f"Unknown scoring preset '{name}'. Available: {available}") from exc
+        return cls(**preset["weights"])
+
+    @classmethod
+    def preset_descriptions(cls) -> Dict[str, str]:
+        """Return user-facing descriptions for all built-in scoring presets."""
+        return {
+            name: preset["description"]
+            for name, preset in SCORING_PRESETS.items()
+        }
 class SelectionConfig(BaseModel):
     """Seçim konfigürasyonu.
 
@@ -113,6 +137,22 @@ class SearchCriteria(BaseModel):
     weights: ScoringWeights = Field(default_factory=ScoringWeights)
 
     # --- Yardımcı Metodlar ---
+    def _get_range_value(self, prefix: str, key: str) -> Optional[float]:
+        """Return min/max field values while preserving legacy distance casing."""
+        aliases = {
+            "rjb": "Rjb",
+            "rrup": "Rrup",
+            "repi": "Repi",
+            "rhyp": "Rhyp",
+        }
+        value = getattr(self, f"{prefix}_{key}", None)
+        if value is not None:
+            return value
+        alias = aliases.get(key)
+        if alias is None:
+            return None
+        return getattr(self, f"{prefix}_{alias}", None)
+
     def get_effective_target(self, key: str) -> Optional[float]:
         """
         Belirli bir parametre için hedef değeri döndürür.
@@ -126,8 +166,8 @@ class SearchCriteria(BaseModel):
             return explicit
         
         # Aralık ortalaması kontrolü
-        min_val = getattr(self, f"min_{key}", None)
-        max_val = getattr(self, f"max_{key}", None)
+        min_val = self._get_range_value("min", key)
+        max_val = self._get_range_value("max", key)
         
         # Sadece aralık verildiyse ve target yoksa, aralık ortasını hedef al
         if min_val is not None and max_val is not None:
@@ -141,8 +181,8 @@ class SearchCriteria(BaseModel):
         strictness = config.get('sigma_strictness', 4.0)
         
         # Eğer kullanıcının bir aralığı varsa, aralığı baz al
-        min_val = getattr(self, f"min_{key}", None)
-        max_val = getattr(self, f"max_{key}", None)
+        min_val = self._get_range_value("min", key)
+        max_val = self._get_range_value("max", key)
         
         if min_val is not None and max_val is not None:
             diff = max_val - min_val
@@ -151,6 +191,19 @@ class SearchCriteria(BaseModel):
         # Aralık yoksa, hedef değerin %10'u kadar bir sigma uydur (Fallback)
         target = self.get_effective_target(key)
         return (target * 0.1) if target else 1.0
+
+    def scoring_preset_docs(self) -> Dict[str, str]:
+        """Built-in scoring preset descriptions for UI/CLI documentation."""
+        return ScoringWeights.preset_descriptions()
+
+    def get_mechanism_targets(self) -> List[str]:
+        """Return all requested fault mechanism labels from both public fields."""
+        targets: List[str] = []
+        if self.mechanisms:
+            targets.extend(self.mechanisms)
+        if self.fault_type:
+            targets.append(self.fault_type)
+        return list(dict.fromkeys(targets))
     
     def to_afad_params(self) -> Dict[str, Any]:
         """AFAD API'sine özel parametre dönüşümü"""
@@ -195,7 +248,8 @@ class SearchCriteria(BaseModel):
         # if self.region:
         #     params["region"] = self.region
             
-        if self.mechanisms:
+        mechanism_targets = self.get_mechanism_targets()
+        if mechanism_targets:
             # AFAD fay mekanizması parametrelerine dönüşüm
             mechanism_map = {
                 "StrikeSlip": "SS",
@@ -203,7 +257,7 @@ class SearchCriteria(BaseModel):
                 "Normal": "N",
                 "Oblique": "T"
             }
-            mechParams = [mechanism_map.get(m, m) for m in self.mechanisms]
+            mechParams = [mechanism_map.get(m, m) for m in mechanism_targets]
             params["faultType"] = mechParams[0]
         params = {k: v for k, v in params.items() if v is not None}
         return params
@@ -229,11 +283,16 @@ class SearchCriteria(BaseModel):
             'max_pgv': self.max_pgv,
             'min_pgd': self.min_pgd,
             'max_pgd': self.max_pgd,
-            'mechanisms': self.mechanisms
+            'mechanisms': self.get_mechanism_targets()
         }
         
-        if self.mechanisms:
-            params["mechanisms"] = [get_mechanism_numeric(m) for m in self.mechanisms if m in REVERSE_MECHANISM_MAP]
+        mechanism_targets = self.get_mechanism_targets()
+        if mechanism_targets:
+            params["mechanisms"] = [
+                get_mechanism_numeric(m)
+                for m in mechanism_targets
+                if m in REVERSE_MECHANISM_MAP
+            ]
             
         return params
     
@@ -326,11 +385,10 @@ class SearchCriteria(BaseModel):
 
     @model_validator(mode='after')
     def check_mechanisms(self):
-        if self.mechanisms:
-            valid_mechanisms = set(MECHANISM_MAP.values())
-            for mechanism in self.mechanisms:
-                if mechanism not in valid_mechanisms:
-                    raise ValueError(f"Geçersiz mekanizma: {mechanism}. Geçerli mekanizmalar: {list(valid_mechanisms)}")
+        valid_mechanisms = set(MECHANISM_MAP.values())
+        for mechanism in self.get_mechanism_targets():
+            if mechanism not in valid_mechanisms:
+                raise ValueError(f"Geçersiz mekanizma: {mechanism}. Geçerli mekanizmalar: {list(valid_mechanisms)}")
         return self
 
     @model_validator(mode='after')
@@ -446,8 +504,16 @@ class BaseSelectionStrategy(ISelectionStrategy, ABC):
         DİNAMİK PUANLAMA MOTORU
         Config'deki tüm parametreleri tarar, kullanıcı ne girdiyse ona göre puanlar.
         """
+        score, _ = self._calculate_score_breakdown(record, criteria)
+        return score
+
+    def _calculate_score_breakdown(
+        self, record: pd.Series, criteria: SearchCriteria
+    ) -> Tuple[float, List[Dict[str, Any]]]:
+        """Return total score and criterion-level contribution details."""
         total_weighted_score = 0.0
         total_active_weight = 0.0
+        breakdown: List[Dict[str, Any]] = []
         
         # Config'deki tüm parametreler üzerinde dönüyoruz (Magnitude, Rjb, Rrup, Vs30...)
         for key, config in SCORING_MAP.items():
@@ -456,9 +522,10 @@ class BaseSelectionStrategy(ISelectionStrategy, ABC):
             # Kullanıcı target girmediyse veya min-max aralığı vermediyse bu parametreyi ELİMİNE ET.
             if key == 'mechanism':
                 # Mekanizma özel durumu: liste boşsa geç
-                if not criteria.mechanisms:
+                mechanism_targets = criteria.get_mechanism_targets()
+                if not mechanism_targets:
                     continue
-                target_val = criteria.mechanisms
+                target_val = mechanism_targets
             else:
                 target_val = criteria.get_effective_target(key)
                 if target_val is None:
@@ -468,15 +535,36 @@ class BaseSelectionStrategy(ISelectionStrategy, ABC):
             col_name = config['column']
             if col_name not in record or pd.isna(record[col_name]):
                 # Kullanıcı hedef istemiş ama veri setinde (örneğin PEER'de) bu kolon yoksa puanlamaya katma
+                breakdown.append({
+                    "criterion": key,
+                    "column": col_name,
+                    "status": "missing",
+                    "target": target_val,
+                    "value": None,
+                    "weight": criteria.weights.get_weight(key),
+                    "raw_score": 0.0,
+                    "weighted_score": 0.0,
+                })
                 continue
 
             # 3. Ağırlığı al
             weight = criteria.weights.get_weight(key)
             if weight <= 0:
+                breakdown.append({
+                    "criterion": key,
+                    "column": col_name,
+                    "status": "inactive_weight",
+                    "target": target_val,
+                    "value": record[col_name],
+                    "weight": weight,
+                    "raw_score": 0.0,
+                    "weighted_score": 0.0,
+                })
                 continue
 
             # 4. Puanı Hesapla
             score = 0.0
+            sigma = None
             if config['type'] == 'numeric':
                 sigma = criteria.get_sigma(key)
                 score = self._gaussian_score(record[col_name], target_val, sigma)
@@ -487,13 +575,24 @@ class BaseSelectionStrategy(ISelectionStrategy, ABC):
             # 5. Toplama Ekle
             total_weighted_score += score * weight
             total_active_weight += weight
+            breakdown.append({
+                "criterion": key,
+                "column": col_name,
+                "status": "active",
+                "target": target_val,
+                "value": record[col_name],
+                "weight": weight,
+                "sigma": sigma,
+                "raw_score": score,
+                "weighted_score": score * weight,
+            })
 
         # 6. Normalizasyon (0-100 arası)
         # Eğer hiçbir kriter girilmediyse 0 döndür
         if total_active_weight == 0:
-            return 0.0
+            return 0.0, breakdown
             
-        return (total_weighted_score / total_active_weight) * 100.0
+        return (total_weighted_score / total_active_weight) * 100.0, breakdown
     
     def select_and_score(self, df: pd.DataFrame, criteria: SearchCriteria) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """ Kayıtları puanla ve seç. 
@@ -512,40 +611,89 @@ class BaseSelectionStrategy(ISelectionStrategy, ABC):
         
         # Vektörize işlem yerine apply kullanıyoruz (karmaşık mantık için daha güvenli)
         # Performans gerekirse numpy ile vektörize edilebilir.
-        scored_df['SCORE'] = scored_df.apply(
-            lambda row: self._calculate_total_score(row, criteria), axis=1
+        score_results = scored_df.apply(
+            lambda row: self._calculate_score_breakdown(row, criteria), axis=1
         )
+        scored_df['SCORE'] = score_results.apply(lambda item: item[0])
+        scored_df['SCORE_BREAKDOWN'] = score_results.apply(lambda item: item[1])
         
-        selected_df = self._apply_selection_rules(scored_df)
+        selected_df, scored_df = self._apply_selection_rules_with_reasons(scored_df)
         return selected_df, scored_df
     
     def _apply_selection_rules(self, df_scored: pd.DataFrame) -> pd.DataFrame:
         """Seçim kurallarını uygula"""
+        selected, _ = self._apply_selection_rules_with_reasons(df_scored)
+        return selected
+
+    def _apply_selection_rules_with_reasons(
+        self, df_scored: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """Apply TBDY selection limits and annotate every record with a reason."""
+        df_scored = df_scored.copy()
+        df_scored["SELECTION_STATUS"] = "not_evaluated"
+        df_scored["SELECTION_REASON"] = ""
+
         filtered_df = df_scored[df_scored['SCORE'] >= self.config.min_score]
         if filtered_df.empty:
-            return pd.DataFrame()
+            df_scored.loc[:, "SELECTION_STATUS"] = "rejected"
+            df_scored.loc[:, "SELECTION_REASON"] = (
+                f"score_below_min_score:{self.config.min_score}"
+            )
+            return pd.DataFrame(), df_scored
+
+        below_min_mask = df_scored["SCORE"] < self.config.min_score
+        df_scored.loc[below_min_mask, "SELECTION_STATUS"] = "rejected"
+        df_scored.loc[below_min_mask, "SELECTION_REASON"] = (
+            f"score_below_min_score:{self.config.min_score}"
+        )
         
         sorted_df = filtered_df.sort_values('SCORE', ascending=False)
         selected_records = []
+        selected_indices = []
         station_counts = {}
         event_counts = {}
         
-        for _, record in sorted_df.iterrows():
+        for idx, record in sorted_df.iterrows():
             if len(selected_records) >= self.config.num_records:
+                df_scored.at[idx, "SELECTION_STATUS"] = "rejected"
+                df_scored.at[idx, "SELECTION_REASON"] = (
+                    f"num_records_limit:{self.config.num_records}"
+                )
                 break
             
             station = record.get('STATION', '')
             event = record.get('EVENT', '')
             
-            if (station_counts.get(station, 0) >= self.config.max_per_station or 
-                event_counts.get(event, 0) >= self.config.max_per_event):
+            if station_counts.get(station, 0) >= self.config.max_per_station:
+                df_scored.at[idx, "SELECTION_STATUS"] = "rejected"
+                df_scored.at[idx, "SELECTION_REASON"] = (
+                    f"max_per_station:{self.config.max_per_station}"
+                )
+                continue
+
+            if event_counts.get(event, 0) >= self.config.max_per_event:
+                df_scored.at[idx, "SELECTION_STATUS"] = "rejected"
+                df_scored.at[idx, "SELECTION_REASON"] = (
+                    f"max_per_event:{self.config.max_per_event}"
+                )
                 continue
             
             selected_records.append(record)
+            selected_indices.append(idx)
             station_counts[station] = station_counts.get(station, 0) + 1
             event_counts[event] = event_counts.get(event, 0) + 1
         
-        return pd.DataFrame(selected_records)
+        df_scored.loc[selected_indices, "SELECTION_STATUS"] = "selected"
+        df_scored.loc[selected_indices, "SELECTION_REASON"] = "selected"
+
+        remaining_mask = df_scored["SELECTION_STATUS"].eq("not_evaluated")
+        df_scored.loc[remaining_mask, "SELECTION_STATUS"] = "rejected"
+        df_scored.loc[remaining_mask, "SELECTION_REASON"] = (
+            f"num_records_limit:{self.config.num_records}"
+        )
+
+        selected_df = df_scored.loc[selected_indices].copy()
+        return selected_df, df_scored
         
     def get_name(self) -> str:
         return str(self.config.design_code.value)

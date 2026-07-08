@@ -21,7 +21,11 @@ from typing import Any, Dict, Type
 import numpy as np
 import pandas as pd
 
-from ..core.Config import convert_mechanism_to_text
+from ..core.Config import (
+    MECHANISM_MAP,
+    REVERSE_MECHANISM_MAP,
+    convert_mechanism_to_text,
+)
 from ..core.ErrorHandle import DataProcessingError, ProviderError
 from ..enums.Enums import ProviderName
 from ..processing.Mappers import IColumnMapper
@@ -143,15 +147,39 @@ class PeerWest2Provider(IDataFetcher):
                 filtered = self._apply_range(filtered, criteria, min_key, max_key, col)
 
             # --- Kategorik filtre ---
-            if criteria.get("mechanisms"):
+            mechanisms = self._mechanism_filter_values(filtered, criteria)
+            if mechanisms:
                 filtered = filtered[
-                    filtered["MECHANISM"].isin(criteria["mechanisms"])
+                    filtered["MECHANISM"].isin(mechanisms)
                 ]
 
             return filtered
 
         except Exception as e:
             raise DataProcessingError(self.name, e, "Filter application failed")
+
+    @staticmethod
+    def _mechanism_filter_values(
+        df: pd.DataFrame,
+        criteria: Dict[str, Any],
+    ) -> list[Any]:
+        """Return mechanism filter values compatible with the DataFrame dtype."""
+        values = list(criteria.get("mechanisms") or [])
+        fault_type = criteria.get("fault_type")
+        if fault_type is not None:
+            values.append(fault_type)
+        if not values or "MECHANISM" not in df.columns:
+            return []
+
+        normalized: list[Any] = []
+        for value in values:
+            normalized.append(value)
+            if isinstance(value, str) and value in REVERSE_MECHANISM_MAP:
+                normalized.append(REVERSE_MECHANISM_MAP[value])
+            elif isinstance(value, (int, float, np.integer, np.floating)):
+                normalized.append(MECHANISM_MAP.get(int(value), "Unknown"))
+
+        return list(dict.fromkeys(normalized))
 
     @staticmethod
     def _apply_range(

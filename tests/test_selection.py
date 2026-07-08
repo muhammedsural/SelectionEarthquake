@@ -263,3 +263,178 @@ class TestTBDYSelectionStrategy:
         # 10 kayıt verildi, num_records=22 — tamamı seçilebilir
         assert len(selected) <= basic_usage_config.num_records
         assert not selected.empty
+
+
+class TestTBDYSearchCombinations:
+
+    @pytest.mark.parametrize(
+        "criteria,expected_criteria",
+        [
+            (
+                SearchCriteria(
+                    start_date="2000-01-01",
+                    end_date="2025-09-05",
+                    target_magnitude=7.9,
+                    weights=ScoringWeights.from_preset("balanced"),
+                ),
+                {"magnitude"},
+            ),
+            (
+                SearchCriteria(
+                    start_date="2000-01-01",
+                    end_date="2025-09-05",
+                    min_Rjb=0.0,
+                    max_Rjb=100.0,
+                    min_Rrup=0.0,
+                    max_Rrup=120.0,
+                    min_vs30=330.0,
+                    max_vs30=370.0,
+                    weights=ScoringWeights.from_preset("tbdy_2018_record_selection"),
+                ),
+                {"rjb", "rrup", "vs30"},
+            ),
+            (
+                SearchCriteria(
+                    start_date="2000-01-01",
+                    end_date="2025-09-05",
+                    target_pga=120.0,
+                    target_pgv=15.0,
+                    target_t90=20.0,
+                    mechanisms=["StrikeSlip"],
+                    weights=ScoringWeights.from_preset("site_response"),
+                ),
+                {"pga", "pgv", "t90", "mechanism"},
+            ),
+            (
+                SearchCriteria(
+                    start_date="2000-01-01",
+                    end_date="2025-09-05",
+                    fault_type="StrikeSlip",
+                    weights=ScoringWeights.from_preset("balanced"),
+                ),
+                {"mechanism"},
+            ),
+        ],
+    )
+    def test_different_search_combinations_drive_score_breakdown(
+        self,
+        basic_usage_results,
+        criteria,
+        expected_criteria,
+    ):
+        config = SelectionConfig(
+            design_code=DesignCode.TBDY_2018,
+            num_records=5,
+            min_score=0.0,
+        )
+        strategy = TBDYSelectionStrategy(config=config)
+        selected, scored = strategy.select_and_score(basic_usage_results, criteria)
+
+        assert not selected.empty
+        first_breakdown = scored["SCORE_BREAKDOWN"].iloc[0]
+        active = {
+            item["criterion"]
+            for item in first_breakdown
+            if item["status"] == "active"
+        }
+        assert expected_criteria.issubset(active)
+        assert (scored["SCORE"] >= 0).all()
+        assert (scored["SCORE"] <= 100).all()
+
+    def test_no_active_scoring_criteria_rejects_all_when_min_score_positive(
+        self,
+        basic_usage_results,
+    ):
+        config = SelectionConfig(
+            design_code=DesignCode.TBDY_2018,
+            num_records=5,
+            min_score=1.0,
+        )
+        strategy = TBDYSelectionStrategy(config=config)
+        criteria = SearchCriteria(start_date="2000-01-01", end_date="2025-09-05")
+
+        selected, scored = strategy.select_and_score(basic_usage_results, criteria)
+
+        assert selected.empty
+        assert (scored["SCORE"] == 0).all()
+        assert (scored["SELECTION_STATUS"] == "rejected").all()
+        assert set(scored["SELECTION_REASON"]) == {"score_below_min_score:1.0"}
+
+    def test_combined_limits_explain_station_event_and_count_rejections(self):
+        rows = pd.DataFrame(
+            [
+                {
+                    "RSN": 1,
+                    "PROVIDER": "PEER",
+                    "EVENT": "EQ1",
+                    "YEAR": 2000,
+                    "MAGNITUDE": 7.0,
+                    "SSN": 1,
+                    "STATION": "S1",
+                    "VS30(m/s)": 350.0,
+                    "RJB(km)": 10.0,
+                    "RRUP(km)": 10.0,
+                    "MECHANISM": "StrikeSlip",
+                },
+                {
+                    "RSN": 2,
+                    "PROVIDER": "PEER",
+                    "EVENT": "EQ1",
+                    "YEAR": 2000,
+                    "MAGNITUDE": 7.0,
+                    "SSN": 2,
+                    "STATION": "S2",
+                    "VS30(m/s)": 350.0,
+                    "RJB(km)": 10.0,
+                    "RRUP(km)": 10.0,
+                    "MECHANISM": "StrikeSlip",
+                },
+                {
+                    "RSN": 3,
+                    "PROVIDER": "PEER",
+                    "EVENT": "EQ2",
+                    "YEAR": 2000,
+                    "MAGNITUDE": 7.0,
+                    "SSN": 3,
+                    "STATION": "S1",
+                    "VS30(m/s)": 350.0,
+                    "RJB(km)": 10.0,
+                    "RRUP(km)": 10.0,
+                    "MECHANISM": "StrikeSlip",
+                },
+                {
+                    "RSN": 4,
+                    "PROVIDER": "PEER",
+                    "EVENT": "EQ3",
+                    "YEAR": 2000,
+                    "MAGNITUDE": 7.0,
+                    "SSN": 4,
+                    "STATION": "S4",
+                    "VS30(m/s)": 350.0,
+                    "RJB(km)": 10.0,
+                    "RRUP(km)": 10.0,
+                    "MECHANISM": "StrikeSlip",
+                },
+            ]
+        )
+        config = SelectionConfig(
+            design_code=DesignCode.TBDY_2018,
+            num_records=2,
+            max_per_station=1,
+            max_per_event=1,
+            min_score=0.0,
+        )
+        criteria = SearchCriteria(
+            start_date="2000-01-01",
+            end_date="2025-09-05",
+            target_magnitude=7.0,
+        )
+        strategy = TBDYSelectionStrategy(config=config)
+
+        selected, scored = strategy.select_and_score(rows, criteria)
+
+        assert selected["RSN"].tolist() == [1, 4]
+        reasons_by_rsn = dict(zip(scored["RSN"], scored["SELECTION_REASON"]))
+        assert reasons_by_rsn[2] == "max_per_event:1"
+        assert reasons_by_rsn[3] == "max_per_station:1"
+        assert reasons_by_rsn[4] == "selected"
