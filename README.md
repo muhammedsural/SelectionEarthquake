@@ -4,6 +4,17 @@ Deprem kayitlarini AFAD ve PEER gibi veri saglayicilardan cekip ortak kolona
 normalize eden, arama kriterlerine gore puanlayan ve TBDY 2018 odakli kayit
 secimi yapan Python kutuphanesi.
 
+## Proje Metrikleri
+
+Son yerel dogrulama:
+
+- Surum: `1.2.1`
+- Test komutu: `python -m pytest`
+- Coverage komutu: `python -m pytest --cov=selection_service --cov-report=term-missing`
+- Test sonucu: `414 passed`
+- Toplam coverage: `81%`
+- Dogrulama ortami: Python `3.13.5`, pytest `8.4.2`, pytest-cov `7.0.0`
+
 ## Paket ve Import Adi
 
 Paket kurulum adi:
