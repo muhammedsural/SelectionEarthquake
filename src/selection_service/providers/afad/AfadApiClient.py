@@ -64,7 +64,22 @@ class AfadApiClient:
         try:
             response = requests.post(url, headers=self.headers, json=payload, timeout=50)
             response.raise_for_status()
-            return response.content
+            content = response.content or b""
+            if not content:
+                raise NetworkError("AFAD", Exception("Empty download response"))
+
+            # AFAD can return an HTML or JSON error body with HTTP 200.
+            # Reject those before they are saved as broken ZIP files.
+            leading = content.lstrip()[:1]
+            if leading in (b"<", b"{", b"["):
+                text = getattr(response, "text", "")
+                raise NetworkError(
+                    "AFAD",
+                    Exception(f"Unexpected download body: {text[:200]}"),
+                    "Download response was not a binary archive",
+                )
+
+            return content
         except Exception as e:
             raise NetworkError("AFAD", e, "Download request failed")
 

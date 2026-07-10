@@ -76,6 +76,10 @@ class WaveformDownloadService:
             )
 
         try:
+            attempted = 0
+            successful = 0
+            failures: list[str] = []
+
             for provider_name, group in result_df.groupby("PROVIDER"):
                 provider = self._registry.get(str(provider_name))
 
@@ -100,12 +104,25 @@ class WaveformDownloadService:
                     "%s için %d dosya toplu indirme başlıyor.",
                     provider_name, len(filenames),
                 )
-                provider.download_waveforms_batch(
+                attempted += 1
+                provider_result = provider.download_waveforms_batch(
                     filenames=filenames,
                     event_ids=event_ids,
                     **kwargs,
                 )
+                if self._provider_result_success(provider_result):
+                    successful += 1
+                else:
+                    failures.append(f"{provider_name}: {provider_result}")
 
+            if attempted > 0 and successful == 0:
+                return Result.fail(
+                    ProviderError(
+                        "DownloadService",
+                        RuntimeError("; ".join(failures) or "No provider download succeeded"),
+                        "Bulk download failed",
+                    )
+                )
             return Result.ok(True)
 
         except Exception as e:
@@ -160,15 +177,37 @@ class WaveformDownloadService:
             )
 
         try:
-            provider.download_single_waveforms(
+            provider_result = provider.download_single_waveforms(
                 filename=filename,
                 event_id=event_id,
                 station_code=station_code,
                 **kwargs,
             )
+            if not self._provider_result_success(provider_result):
+                return Result.fail(
+                    ProviderError(provider_name, RuntimeError(str(provider_result)), "Single waveform download failed")
+                )
             return Result.ok(True)
 
         except Exception as e:
             return Result.fail(
                 ProviderError(provider_name, e, "Single waveform download failed")
             )
+
+    def _provider_result_success(self, provider_result: Any) -> bool:
+        if isinstance(provider_result, Result):
+            if not provider_result.success:
+                return False
+            provider_result = provider_result.value
+
+        if isinstance(provider_result, dict):
+            downloaded = int(provider_result.get("downloaded", 0) or 0)
+            total = int(provider_result.get("total", 0) or 0)
+            failed_batches = [
+                batch
+                for batch in provider_result.get("batches", [])
+                if batch.get("success") is False and not batch.get("retry_recovered")
+            ]
+            return downloaded > 0 and (total == 0 or downloaded >= total or not failed_batches)
+
+        return provider_result is not False

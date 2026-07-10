@@ -15,6 +15,7 @@ from unittest.mock import MagicMock, patch
 
 from selection_service.providers.AfadProvider import AFADDataProvider
 from selection_service.core.ErrorHandle import ProviderError
+from selection_service.processing.ResultHandle import Result
 from selection_service.processing.Mappers import AFADColumnMapper
 from selection_service.processing.Selection import SearchCriteria
 
@@ -103,6 +104,20 @@ class TestAfadDataProvider:
             extracted=["/tmp/file1.mseed"],  # file2.mseed eksik
             event_id="456",
         )
+        assert recovered == 0
+
+    def test_handle_retry_result_fail_is_not_counted_as_recovered(self, afad_provider):
+        """Decorated single-download failures return Result.fail and must not be counted."""
+        afad_provider.download_single_waveforms = MagicMock(
+            return_value=Result.fail(ProviderError("AFAD", Exception("bad zip")))
+        )
+
+        recovered = afad_provider._handle_retry(
+            requested=["file1.mseed", "file2.mseed"],
+            extracted=["/tmp/file1.mseed"],
+            event_id="456",
+        )
+
         assert recovered == 0
 
     def test_handle_retry_no_missing(self, afad_provider):

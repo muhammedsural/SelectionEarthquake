@@ -57,6 +57,31 @@ def test_afad_file_manager_rejects_too_small_zip(tmp_path):
         raise AssertionError("ProviderError expected")
 
 
+def test_afad_file_manager_rejects_non_zip_error_page(tmp_path):
+    manager = AfadFileManager(base_dir=str(tmp_path))
+    zip_path = manager.save_zip(b"<html>not a zip</html>", event_id=1, filename="bad.zip")
+
+    try:
+        manager.extract_zip(zip_path)
+    except ProviderError as exc:
+        assert "Extraction failed" in str(exc)
+    else:
+        raise AssertionError("ProviderError expected")
+
+
+def test_afad_file_manager_rejects_unsafe_zip_member(tmp_path):
+    manager = AfadFileManager(base_dir=str(tmp_path))
+    content = _zip_bytes({"../escape.asc": b"1234567890" * 20})
+    zip_path = manager.save_zip(content, event_id=1, filename="unsafe.zip")
+
+    try:
+        manager.extract_zip(zip_path)
+    except ProviderError as exc:
+        assert "Extraction failed" in str(exc)
+    else:
+        raise AssertionError("ProviderError expected")
+
+
 def test_provider_registry_get_all_and_list_names():
     peer = MagicMock()
     peer.get_name.return_value = "PEER"
@@ -102,6 +127,47 @@ def test_waveform_download_batch_calls_supported_provider():
     provider.download_waveforms_batch.assert_called_once()
 
 
+def test_waveform_download_batch_fails_when_supported_provider_fails():
+    provider = MagicMock()
+    provider.download_waveforms_batch.return_value = Result.fail(
+        ProviderError("AFAD", Exception("broken zip"), "download failed")
+    )
+    registry = MagicMock()
+    registry.get.return_value = provider
+    df = pd.DataFrame({
+        "PROVIDER": ["AFAD"],
+        "FILE_NAME_H1": ["a.mseed"],
+        "EVENT": [1],
+    })
+
+    with patch("selection_service.services.WaveformDownloadService.supports_download", return_value=True):
+        result = WaveformDownloadService(registry).download_batch(df, export_type="mseed")
+
+    assert result.success is False
+    assert isinstance(result.error, ProviderError)
+
+
+def test_waveform_download_batch_fails_when_no_files_downloaded():
+    provider = MagicMock()
+    provider.download_waveforms_batch.return_value = {
+        "total": 1,
+        "downloaded": 0,
+        "batches": [{"batch": 1, "success": False, "error": "corrupt"}],
+    }
+    registry = MagicMock()
+    registry.get.return_value = provider
+    df = pd.DataFrame({
+        "PROVIDER": ["AFAD"],
+        "FILE_NAME_H1": ["a.mseed"],
+        "EVENT": [1],
+    })
+
+    with patch("selection_service.services.WaveformDownloadService.supports_download", return_value=True):
+        result = WaveformDownloadService(registry).download_batch(df, export_type="mseed")
+
+    assert result.success is False
+
+
 def test_waveform_download_batch_requires_provider_column():
     result = WaveformDownloadService(MagicMock()).download_batch(pd.DataFrame({"x": [1]}))
 
@@ -123,6 +189,21 @@ def test_waveform_download_single_success_and_not_supported():
     with patch("selection_service.services.WaveformDownloadService.supports_download", return_value=False):
         failed = service.download_single("a.mseed", "1", "AFAD.TK.KND")
     assert failed.success is False
+
+
+def test_waveform_download_single_fails_when_provider_returns_fail():
+    provider = MagicMock()
+    provider.download_single_waveforms.return_value = Result.fail(
+        ProviderError("AFAD", Exception("bad zip"), "download failed")
+    )
+    registry = MagicMock()
+    registry.get.return_value = provider
+    service = WaveformDownloadService(registry)
+
+    with patch("selection_service.services.WaveformDownloadService.supports_download", return_value=True):
+        result = service.download_single("a.mseed", "1", "AFAD.TK.KND")
+
+    assert result.success is False
 
 
 def test_earthquake_query_service_run_sync_and_reselection():

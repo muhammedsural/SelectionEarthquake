@@ -315,6 +315,35 @@ class TestDownloadWaveform:
             with pytest.raises(NetworkError):
                 client.download_waveform({})
 
+    def test_download_waveform_rejects_empty_body(self):
+        client = AfadApiClient()
+
+        with patch('requests.post') as mock_post:
+            mock_response = MagicMock()
+            mock_response.content = b""
+            mock_response.raise_for_status.return_value = None
+            mock_post.return_value = mock_response
+
+            with pytest.raises(NetworkError) as exc_info:
+                client.download_waveform({"filename": ["a.mseed"]})
+
+            assert "Download request failed" in str(exc_info.value)
+
+    def test_download_waveform_rejects_html_error_body(self):
+        client = AfadApiClient()
+
+        with patch('requests.post') as mock_post:
+            mock_response = MagicMock()
+            mock_response.content = b"<html>AFAD error</html>"
+            mock_response.text = "<html>AFAD error</html>"
+            mock_response.raise_for_status.return_value = None
+            mock_post.return_value = mock_response
+
+            with pytest.raises(NetworkError) as exc_info:
+                client.download_waveform({"filename": ["a.mseed"]})
+
+            assert "Download request failed" in str(exc_info.value)
+
     def test_download_waveform_large_file(self):
         """Test downloading large waveform file"""
         client = AfadApiClient()
