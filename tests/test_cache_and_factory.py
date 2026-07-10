@@ -10,6 +10,7 @@ from selection_service.providers.CacheManager import CacheManager
 from selection_service.providers.ProvidersFactory import CachedProviderProxy, ProviderFactory
 from selection_service.providers.AfadProvider import AFADDataProvider
 from selection_service.providers.PeerProvider import PeerWest2Provider
+from selection_service.providers.FdsnProvider import FDSNProvider
 
 
 def test_cache_manager_roundtrip(tmp_path):
@@ -101,9 +102,14 @@ def test_cached_provider_proxy_delegates_unknown_attributes():
 def test_provider_factory_creates_uncached_providers():
     afad = ProviderFactory.create_provider(ProviderName.AFAD, use_cache=False)
     peer = ProviderFactory.create_provider(ProviderName.PEER, use_cache=False)
+    fake_client = MagicMock()
+    fdsn = ProviderFactory.create_provider(
+        ProviderName.FDSN, use_cache=False, client=fake_client
+    )
 
     assert isinstance(afad, AFADDataProvider)
     assert isinstance(peer, PeerWest2Provider)
+    assert isinstance(fdsn, FDSNProvider)
 
 
 def test_provider_factory_wraps_cache_when_enabled():

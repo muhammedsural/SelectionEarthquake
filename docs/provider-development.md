@@ -86,5 +86,7 @@ icinde listelenmelidir.
 
 ## FDSN notu
 
-Depoda FDSN icin taslak provider ve mapper bulunur, ancak enum/factory
-entegrasyonu tamamlanmadigi surece public destek olarak dokumante edilmemelidir.
+FDSN event, istasyon ve waveform aramalari `ProviderName.FDSN` ile etkindir.
+Event katalogu varsayilan olarak USGS, istasyon/dataselect servisleri IRIS
+uzerinden HTTPS ile calisir. Ozel kurulumlar icin `base_url` ve
+`data_base_url` ayri ayri aktarilabilir.

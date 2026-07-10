@@ -140,6 +140,28 @@ class TestEarthquakeAPI:
         result = asyncio.run(api.run_async(criteria, "TBDY_2018_Gaussian"))
         assert result.success
 
+    def test_search_fdsn_stations_delegates_to_provider(self):
+        api = _build_api()
+        provider = MagicMock()
+        provider.fetch_stations_sync.return_value = Result.ok(pd.DataFrame())
+        api.registry.get.side_effect = None
+        api.registry.get.return_value = provider
+
+        result = api.search_fdsn_stations(network="TU", channel="HN?")
+
+        assert result.success
+        api.registry.get.assert_called_with(ProviderName.FDSN.value)
+        provider.fetch_stations_sync.assert_called_once_with(network="TU", channel="HN?")
+
+    def test_search_fdsn_waveforms_fails_when_provider_is_disabled(self):
+        api = _build_api()
+        api.registry.get.return_value = None
+
+        result = api.search_fdsn_waveforms(network="TU")
+
+        assert not result.success
+        assert "unavailable" in str(result.error)
+
     def test_download_waveforms_success(self):
         df = _make_selected_df()
         api = _build_api()

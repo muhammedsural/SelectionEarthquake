@@ -8,6 +8,29 @@ Mevcut provider'lar:
 
 - `ProviderName.PEER`: Paket icindeki NGA-West2 flatfile verisini kullanir.
 - `ProviderName.AFAD`: AFAD/TADAS API uzerinden veri ceker ve waveform indirir.
+- `ProviderName.FDSN`: ObsPy uyumlu FDSN servislerini sorgular. Varsayilan olarak
+  event katalogu icin HTTPS `USGS`, istasyon ve waveform icin HTTPS `IRIS`
+  kullanilir. `service`/`base_url` event servisini, `data_service`/
+  `data_base_url` ise istasyon ve waveform servisini degistirir.
+
+FDSN etkin bir `EarthquakeAPI` uzerinden istasyon ve waveform servisleri de
+kullanilabilir:
+
+```python
+stations = api.search_fdsn_stations(
+    network="TU", station="*", channel="HN?",
+    starttime="2023-02-06", endtime="2023-02-07",
+)
+
+stream = api.search_fdsn_waveforms(
+    network="TU", station="ANK", location="*", channel="HN?",
+    starttime="2023-02-06T01:16:00Z",
+    endtime="2023-02-06T01:17:00Z",
+)
+```
+
+Istasyon sonucu kanal basina bir DataFrame satiri, waveform sonucu ise ObsPy
+`Stream` nesnesidir. Ayni metotlar `_async` son ekiyle asenkron kullanilabilir.
 
 Provider'lar ortak `IDataFetcher` sozlesmesini uygular:
 

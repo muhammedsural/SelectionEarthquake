@@ -327,20 +327,26 @@ class SearchCriteria(BaseModel):
             filename: Any | None = None,
             **kwargs
         """
+        def fdsn_time(value: str, end_of_day: bool = False) -> str:
+            """Keep timestamps intact and expand date-only values to UTC days."""
+            if "T" in value:
+                return value
+            suffix = "T23:59:59.999Z" if end_of_day else "T00:00:00.000Z"
+            return f"{value}{suffix}"
+
         params = {
-            "starttime": f"{self.start_date}T00:00:00.000Z" if self.start_date else None,
-            "endtime": f"{self.end_date}T23:59:59.999Z" if self.end_date else None,
+            "starttime": fdsn_time(self.start_date),
+            "endtime": fdsn_time(self.end_date, end_of_day=True),
             "minmagnitude": self.min_magnitude,
             "maxmagnitude": self.max_magnitude,
-            "latitude": self.min_latitude,
-            "longitude": self.min_longitude,
-            # "maxradius": criteria.max_radius_deg,
+            "mindepth": self.min_depth,
+            "maxdepth": self.max_depth,
         }
         
         if self.bbox:
             params["minlatitude"], params["maxlatitude"], params["minlongitude"], params["maxlongitude"] = self.bbox
             
-        return params
+        return {key: value for key, value in params.items() if value is not None}
 
     @model_validator(mode='after')
     def check_magnitudes(self):

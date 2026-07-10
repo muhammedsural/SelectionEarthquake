@@ -383,6 +383,7 @@ class ColumnMapperFactory:
     _mappers: dict = {
         ProviderName.AFAD.value: AFADColumnMapper,
         ProviderName.PEER.value: PEERColumnMapper,
+        ProviderName.FDSN.value: FDSNColumnMapper,
     }
  
     @classmethod
@@ -413,6 +414,8 @@ class ColumnMapperFactory:
             return AFADColumnMapper(**kwargs)
         if provider_Name == ProviderName.PEER:
             return PEERColumnMapper(**kwargs)
+        if provider_Name == ProviderName.FDSN:
+            return FDSNColumnMapper(**kwargs)
         else:
             return BaseColumnMapper(column_mappings={}, **kwargs)
  

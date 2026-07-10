@@ -16,6 +16,7 @@ from .CacheManager import CacheManager
 from ..processing.ResultHandle import Result
 from ..providers.AfadProvider import AFADDataProvider
 from ..providers.PeerProvider import PeerWest2Provider
+from ..providers.FdsnProvider import FDSNProvider
 from ..providers.interfaces import IDataFetcher          # ← yeni
 from ..enums.Enums import ProviderName
 from ..processing.Mappers import ColumnMapperFactory
@@ -158,6 +159,8 @@ class ProviderFactory:
             provider: IDataFetcher = AFADDataProvider(column_mapper=mapper)
         elif provider_type == ProviderName.PEER:
             provider = PeerWest2Provider(column_mapper=mapper, **kwargs)
+        elif provider_type == ProviderName.FDSN:
+            provider = FDSNProvider(column_mapper=mapper, **kwargs)
         else:
             raise ValueError(f"Unknown provider: {provider_type}")
 

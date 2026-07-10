@@ -168,7 +168,7 @@ Pytest ayarlari tek kaynak olarak `pyproject.toml` icindedir.
 
 ## Yol Haritasi
 
-- FDSN provider entegrasyonunu tamamla veya v2 kapsaminda ayri tut.
+- FDSN waveform sonuclarini dosyaya aktarma ve secim akisiyla iliskilendirme.
 - Eurocode stratejisini gercek kurallarla doldur veya deneysel olarak etiketle.
 - Rapor ciktilarini HTML/PDF formatina genislet.
 

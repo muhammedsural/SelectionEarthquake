@@ -85,6 +85,58 @@ class EarthquakeAPI:
         """Pipeline'ı asenkron çalıştır."""
         return await self.query.run_async(criteria, strategy_name)
 
+    def search_fdsn_stations(self, **params: Any) -> Result:
+        """Search station/channel metadata on the configured FDSN service."""
+        provider = self.registry.get(ProviderName.FDSN.value)
+        if provider is None or not hasattr(provider, "fetch_stations_sync"):
+            return Result.fail(
+                ProviderError(
+                    ProviderName.FDSN.value,
+                    LookupError("FDSN provider is not enabled."),
+                    "FDSN station query is unavailable",
+                )
+            )
+        return provider.fetch_stations_sync(**params)
+
+    async def search_fdsn_stations_async(self, **params: Any) -> Result:
+        """Asynchronously search FDSN station/channel metadata."""
+        provider = self.registry.get(ProviderName.FDSN.value)
+        if provider is None or not hasattr(provider, "fetch_stations_async"):
+            return Result.fail(
+                ProviderError(
+                    ProviderName.FDSN.value,
+                    LookupError("FDSN provider is not enabled."),
+                    "FDSN station query is unavailable",
+                )
+            )
+        return await provider.fetch_stations_async(**params)
+
+    def search_fdsn_waveforms(self, **params: Any) -> Result:
+        """Fetch an ObsPy Stream from the configured FDSN dataselect service."""
+        provider = self.registry.get(ProviderName.FDSN.value)
+        if provider is None or not hasattr(provider, "fetch_waveforms_sync"):
+            return Result.fail(
+                ProviderError(
+                    ProviderName.FDSN.value,
+                    LookupError("FDSN provider is not enabled."),
+                    "FDSN waveform query is unavailable",
+                )
+            )
+        return provider.fetch_waveforms_sync(**params)
+
+    async def search_fdsn_waveforms_async(self, **params: Any) -> Result:
+        """Asynchronously fetch an ObsPy Stream from the FDSN service."""
+        provider = self.registry.get(ProviderName.FDSN.value)
+        if provider is None or not hasattr(provider, "fetch_waveforms_async"):
+            return Result.fail(
+                ProviderError(
+                    ProviderName.FDSN.value,
+                    LookupError("FDSN provider is not enabled."),
+                    "FDSN waveform query is unavailable",
+                )
+            )
+        return await provider.fetch_waveforms_async(**params)
+
     def run_sync(
         self,
         criteria: SearchCriteria,
