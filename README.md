@@ -4,13 +4,8 @@ Deprem kayitlarini AFAD ve PEER gibi veri saglayicilardan cekip ortak kolona
 normalize eden, arama kriterlerine gore puanlayan ve TBDY 2018 odakli kayit
 secimi yapan Python kutuphanesi.
 
-![Ziyaretçi Sayısı](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fmuhammedsural%2FSelectionEarthquake&count_bg=%23793F57&title_bg=%23555555&icon=&icon_color=%23ECECEC&title=Ziyaret%20Sayisi&edge_flat=false)
+![Ziyaretçi Sayısı](https://img.shields.io/github/search/muhammedsural/SelectionEarthquake/main?label=Arama%20%C4%B0ndeksi)
 
-![Ziyaretçi Sayısı](https://profile-counter.glitch.me/SelectionEarthquake/count.svg)
-
-![Ziyaretçi Sayısı](https://komarev.com/ghvc/?username=muhammedsural&repo=SelectionEarthquake&label=Ziyaret%20Sayisi&color=green&style=flat)
-
-![Ziyaretçi Sayısı](https://cbw-counter.vercel.app/muhammedsural/SelectionEarthquake)
 
 ## Proje Metrikleri
 
