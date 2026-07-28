@@ -1,11 +1,11 @@
 # CLI
 
-Kurulumdan sonra `earthquake-selection-example` komutu kullanilabilir.
+Kurulumdan sonra `quake-sel` komutu kullanilabilir.
 
 ## Lokal PEER secimi
 
 ```bash
-earthquake-selection-example --providers peer --num-records 11 --report-path selection_report.json --selected-csv selected_records.csv
+quake-sel --providers peer --num-records 11 --report-path selection_report.json --selected-csv selected_records.csv
 ```
 
 Bu komut:
@@ -18,7 +18,7 @@ Bu komut:
 ## Constraint-first secim
 
 ```bash
-earthquake-selection-example --providers peer --strategy constraint --num-records 11
+quake-sel --providers peer --strategy constraint --num-records 11
 ```
 
 Bu mod agirlikli puanlama yerine sert filtre, hata metrikleri ve cesitlilik
@@ -28,8 +28,8 @@ kontrollu secim uygular. JSON raporda `error_metrics`, CSV ciktisinda
 ## Pareto ve spectrum secimi
 
 ```bash
-earthquake-selection-example --providers peer --strategy pareto --num-records 11
-earthquake-selection-example --providers peer --strategy spectrum --num-records 11
+quake-sel --providers peer --strategy pareto --num-records 11
+quake-sel --providers peer --strategy spectrum --num-records 11
 ```
 
 `pareto`, cok kriterli hata metriklerinde nondominated kayitlari one alir.
@@ -38,7 +38,7 @@ earthquake-selection-example --providers peer --strategy spectrum --num-records 
 ## AFAD ile arama
 
 ```bash
-earthquake-selection-example --providers afad --start-date 2023-02-06 --end-date 2023-02-07 --min-magnitude 6.0
+quake-sel --providers afad --start-date 2023-02-06 --end-date 2023-02-07 --min-magnitude 6.0
 ```
 
 AFAD API ag erisimi gerektirir.
@@ -46,7 +46,7 @@ AFAD API ag erisimi gerektirir.
 ## Waveform indirme
 
 ```bash
-earthquake-selection-example --providers afad --download-waveforms --export-type mseed
+quake-sel --providers afad --download-waveforms --export-type mseed
 ```
 
 `--download-waveforms` sadece download destekleyen provider'larda calisir.

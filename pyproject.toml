@@ -56,7 +56,7 @@ dev = [
 ]
 
 [project.scripts]
-earthquake-selection-example = "selection_service.cli:main"
+quake-sel = "selection_service.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

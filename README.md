@@ -106,13 +106,13 @@ else:
 Kurulumdan sonra uc uca arama, secim, CSV ve JSON rapor uretimi:
 
 ```bash
-earthquake-selection-example --providers peer --num-records 11 --report-path selection_report.json --selected-csv selected_records.csv
+quake-sel --providers peer --num-records 11 --report-path selection_report.json --selected-csv selected_records.csv
 ```
 
 AFAD ile waveform indirme akisini da baslatmak icin:
 
 ```bash
-earthquake-selection-example --providers afad --download-waveforms --export-type mseed
+quake-sel --providers afad --download-waveforms --export-type mseed
 ```
 
 AFAD API ag baglantisi gerektirir. PEER veri seti lokal flatfile ile calisir ve
