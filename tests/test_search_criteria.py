@@ -467,6 +467,43 @@ class TestParamConversions:
         assert "minlatitude" in params
         assert "maxlatitude" in params
 
+    def test_to_fdsn_params_uses_shared_coordinate_fields(self):
+        """Ortak koordinat alanlarının FDSN sorgusuna aktarıldığını doğrular."""
+        criteria = SearchCriteria(
+            start_date="2023-02-06",
+            end_date="2023-02-07",
+            min_latitude=35.0,
+            max_latitude=40.0,
+            min_longitude=35.0,
+            max_longitude=42.0,
+        )
+
+        params = criteria.to_fdsn_params()
+
+        assert params["minlatitude"] == 35.0
+        assert params["maxlatitude"] == 40.0
+        assert params["minlongitude"] == 35.0
+        assert params["maxlongitude"] == 42.0
+
+    def test_to_fdsn_params_prefers_bbox_over_shared_coordinate_fields(self):
+        """bbox verildiğinde çelişkili ortak koordinatları ezdiğini doğrular."""
+        criteria = SearchCriteria(
+            start_date="2023-02-06",
+            end_date="2023-02-07",
+            min_latitude=1.0,
+            max_latitude=2.0,
+            min_longitude=3.0,
+            max_longitude=4.0,
+            bbox=(35.0, 40.0, 35.0, 42.0),
+        )
+
+        params = criteria.to_fdsn_params()
+
+        assert params["minlatitude"] == 35.0
+        assert params["maxlatitude"] == 40.0
+        assert params["minlongitude"] == 35.0
+        assert params["maxlongitude"] == 42.0
+
 
 class TestSearchCriteriaCombinations:
 

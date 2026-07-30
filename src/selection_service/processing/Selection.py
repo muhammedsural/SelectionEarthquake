@@ -344,7 +344,23 @@ class SearchCriteria(BaseModel):
         }
         
         if self.bbox:
-            params["minlatitude"], params["maxlatitude"], params["minlongitude"], params["maxlongitude"] = self.bbox
+            (
+                params["minlatitude"],
+                params["maxlatitude"],
+                params["minlongitude"],
+                params["maxlongitude"],
+            ) = self.bbox
+        else:
+            # Ortak koordinat alanları AFAD ile aynı arama bölgesini FDSN'e de
+            # taşır. bbox verilmişse tek ve açık bir öncelik kuralı uygulanır.
+            params.update(
+                {
+                    "minlatitude": self.min_latitude,
+                    "maxlatitude": self.max_latitude,
+                    "minlongitude": self.min_longitude,
+                    "maxlongitude": self.max_longitude,
+                }
+            )
             
         return {key: value for key, value in params.items() if value is not None}
 
