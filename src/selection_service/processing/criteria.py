@@ -115,7 +115,7 @@ class SearchCriteria(BaseModel):
     max_vs30: Optional[float] = None         # Maksimum Vs30 değeri
     mechanisms: Optional[List[str]] = Field(default_factory=list) # Fay mekanizması (ör: StrikeSlip, Normal, Reverse, Oblique)
     region: Optional[str] = None       # Bölge adı (örn: "Marmara", "Ege", "Doğu Anadolu" gibi AFAD'ın bölge tanımlarından biri)
-    bbox: Optional[Tuple[float, float, float, float]] = Field(default_factory=tuple) # BBox formatı: (min_lat, max_lat, min_lon, max_lon)
+    bbox: Optional[Tuple[float, float, float, float]] = None # BBox formatı: (min_lat, max_lat, min_lon, max_lon)
 
     # Kullanıcı boş bırakırsa, sistem (min+max)/2 formülünü kullanır.
     # Kullanıcı bunları girerse puanlamaya dahil olur, girmezse ELİMİNE olur.

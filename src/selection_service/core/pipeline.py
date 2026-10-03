@@ -16,6 +16,7 @@ import logging
 import pandas as pd
 
 from ..core.error_handle import NoDataError, PipelineError, ProviderError, StrategyError
+from ..processing.dedup import EVENT_GROUP_COLUMN, assign_event_groups, find_duplicate_records
 from ..processing.result_handle import Result, async_result_decorator, result_decorator
 from ..processing.criteria import SearchCriteria
 from ..processing.strategies import ISelectionStrategy
@@ -48,6 +49,7 @@ class PipelineContext:
     data            : Optional[List[pd.DataFrame]] = None
     combined_df     : Optional[pd.DataFrame]       = None
     strategy_input_df: Optional[pd.DataFrame]      = None
+    deduplication   : Dict[str, int]               = field(default_factory=dict)
     selected_df     : Optional[pd.DataFrame]       = None
     scored_df       : Optional[pd.DataFrame]       = None
     failed_providers: List[str]                    = field(default_factory=list)
@@ -89,6 +91,7 @@ class PipelineReporter:
             "score_breakdown": self._selected_score_breakdown(context.selected_df),
             "error_metrics": self._selected_error_metrics(context.selected_df),
             "compliance": self._compliance(context),
+            "deduplication": dict(context.deduplication),
         }
 
     def _compliance(self, context: PipelineContext) -> Dict[str, Any]:
@@ -336,7 +339,26 @@ class EarthquakePipeline:
         # Seçim algoritması eksik veriyi gerçek değer gibi puanlamasın diye
         # 0 doldurmadan önceki hali ayrıca saklanır; çıktılar yine 0 ile
         # doldurulur (aşağı akış hesaplamaları NaN ile hata veriyor).
-        context.strategy_input_df = self._mark_missing(combined)
+        strategy_input = self._mark_missing(combined)
+
+        # Birden fazla provider varsa aynı deprem/kayıt tekrarlarını tespit et.
+        if "PROVIDER" in combined.columns and combined["PROVIDER"].nunique() > 1:
+            groups = assign_event_groups(combined)
+            combined[EVENT_GROUP_COLUMN] = groups
+            strategy_input[EVENT_GROUP_COLUMN] = groups
+            duplicates = find_duplicate_records(strategy_input)
+            merged = int(groups[groups.str.fullmatch(r"G\d+")].nunique())
+            context.deduplication = {
+                "merged_event_groups": merged,
+                "duplicate_records_removed": int(duplicates.sum()),
+            }
+            if duplicates.any() or merged:
+                context.logs.append(
+                    f"Dedup: {merged} olay grubu birleştirildi, "
+                    f"{int(duplicates.sum())} tekrar kayıt seçim dışı bırakıldı."
+                )
+            strategy_input = strategy_input[~duplicates]
+        context.strategy_input_df = strategy_input
 
         # Sayısal kolonları 0 ile doldur
         num_cols = combined.select_dtypes(include=["number"]).columns

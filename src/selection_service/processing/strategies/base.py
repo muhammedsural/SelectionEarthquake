@@ -27,6 +27,18 @@ class BaseSelectionStrategy(ISelectionStrategy, ABC):
     def __init__(self, config: SelectionConfig):
         self.config = config
 
+    @staticmethod
+    def _event_key(record: pd.Series) -> Any:
+        """Olay başına kayıt sınırı için anahtar.
+
+        Birden fazla provider'dan gelen veride ``EVENT_GROUP`` aynı depremin
+        farklı adlarını tek olay sayar; yoksa ``EVENT`` kullanılır.
+        """
+        group = record.get("EVENT_GROUP")
+        if group is not None and not pd.isna(group) and str(group) != "":
+            return group
+        return record.get("EVENT", "")
+
     def _gaussian_score(self, value: float, target: float, sigma: float) -> float:
         """Çan Eğrisi (Gaussian) Puanlama Fonksiyonu. Hedef değere tam isabet = 1.0 puan. Uzaklaştıkça puan yumuşak bir şekilde düşer.
             Gaussian Formülü: e^(-(x-u)^2 / (2*sigma^2))
@@ -221,7 +233,7 @@ class BaseSelectionStrategy(ISelectionStrategy, ABC):
                 break
             
             station = record.get('STATION', '')
-            event = record.get('EVENT', '')
+            event = self._event_key(record)
             
             if station_counts.get(station, 0) >= self.config.max_per_station:
                 df_scored.at[idx, "SELECTION_STATUS"] = "rejected"

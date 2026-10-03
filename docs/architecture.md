@@ -23,6 +23,7 @@ selection_service/
     criteria.py           SearchCriteria, ScoringWeights, SelectionConfig
     strategies/           base, tbdy, eurocode
     mappers.py            Provider column mappers
+    dedup.py              Cross-provider event/record de-duplication
     result_handle.py      Result type and decorators
   utility/
     path_utils.py

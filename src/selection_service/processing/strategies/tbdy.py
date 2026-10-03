@@ -229,7 +229,7 @@ class TBDY2018ConstraintStrategy(BaseSelectionStrategy):
                 continue
 
             station = record.get("STATION", "")
-            event = record.get("EVENT", "")
+            event = self._event_key(record)
             if station_counts.get(station, 0) >= self.config.max_per_station:
                 scored_df.at[idx, "SELECTION_STATUS"] = "rejected"
                 scored_df.at[idx, "SELECTION_REASON"] = (

@@ -38,6 +38,8 @@ modul yollari degisti.
 - `IDataProvider` ve `providers.IProvider`: `IDataFetcher` ve `IWaveformDownloader`
   (`selection_service.providers.interfaces`) kullanin.
 
+- `ParetoSelectionStrategy` (`Pareto_Selection`), `PARETO_RANK` / `PARETO_FRONT` kolonlari ve
+  CLI'daki `--strategy pareto` secenegi.
 - `SpectrumMatchStrategy` (`Spectrum_Match`), `SPECTRUM_ERROR` kolonu ve CLI'daki
   `--strategy spectrum` secenegi: spektral eslestirme kutuphanenin kapsami disinda
   (kayit ararken sadece bolge ozelliklerine bakilir; spektral eslestirme
@@ -67,3 +69,23 @@ modul yollari degisti.
   TBDY icin her yon 11 kayit => 22), eksik sayisi (`shortfall`), ayni depremden en fazla
   secilen kayit sayisi ve `max_per_event` siniri, `warnings` ve `compliant`.
   Ayni uyarilar `PipelineResult.logs` icinde `[WARN]` olarak da yer alir.
+
+## Provider'lar arasi tekrar tespiti
+
+AFAD ve PEER ayni depremi farkli adlarla dondurebilir. Birden fazla provider
+kullanildiginda pipeline artik sezgisel bir eslestirme yapar
+(`selection_service.processing.dedup`):
+
+- **Olay grubu:** farkli provider'lardaki iki olay, ayni `YEAR`, buyukluk farki
+  `<= 0.5` ve episantr mesafesi `<= 50 km` ise ve birbirinin en yakin adayiysa ayni
+  depremdir. Provider ici olaylar (artci soklar) birlestirilmez. Sonuc
+  `EVENT_GROUP` kolonuna yazilir ve "ayni depremden en fazla 3 kayit" siniri
+  `EVENT` yerine bu kolona gore uygulanir.
+- **Tekrar kayit:** ayni olay grubunda, farkli provider'larda ve istasyon konumu
+  `<= 1 km` olan kayitlardan ilk provider'inki (provider listesindeki siraya gore)
+  korunur, digeri aday havuzundan cikarilir.
+- Gecersiz konumlar (`NaN`, `-999`, `(0, 0)`) eslestirmeye katilmaz.
+- Sonuclar `report["deduplication"]` ve `logs` icinde raporlanir.
+- Eslestirme sezgiseldir (ortak olay kimligi yoktur); yil siniri yil sonu/basi
+  olaylarinda eslesmeyi kacirabilir. Hatali birlestirmenin bedeli yalnizca olay
+  limitinin biraz daha siki uygulanmasidir.
