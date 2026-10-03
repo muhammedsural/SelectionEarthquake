@@ -11,6 +11,12 @@ Proje `pyproject.toml` icinde `Python >= 3.10` ister. Test matrisi Python
 pip install earthquake-selection
 ```
 
+FDSN provider'i (ObsPy tabanli) opsiyoneldir; kullanacaksaniz:
+
+```bash
+pip install "earthquake-selection[fdsn]"
+```
+
 Kurulumdan sonra import paketi `selection_service` olur:
 
 ```python

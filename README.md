@@ -26,6 +26,12 @@ Paket kurulum adi:
 pip install earthquake-selection
 ```
 
+FDSN provider'i (ObsPy tabanli) opsiyoneldir; kullanacaksaniz:
+
+```bash
+pip install "earthquake-selection[fdsn]"
+```
+
 Python import paketi:
 
 ```python

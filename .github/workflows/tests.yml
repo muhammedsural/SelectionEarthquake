@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
       - name: Checkout repository
@@ -27,6 +27,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install .[dev]
 
+      - name: Lint (flake8, yalnizca gercek hatalar)
+        run: |
+          flake8 src --count --select=E9,F63,F7,F82 --show-source --statistics
+
       - name: Run pytest
         run: |
-          pytest --cov=src/selection_service --cov-report=xml --cov-report=term-missing --disable-warnings
+          pytest --cov=src/selection_service --cov-report=xml --cov-report=term-missing --cov-fail-under=80 --disable-warnings
