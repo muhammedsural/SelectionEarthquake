@@ -341,23 +341,30 @@ class EarthquakePipeline:
         # doldurulur (aşağı akış hesaplamaları NaN ile hata veriyor).
         strategy_input = self._mark_missing(combined)
 
-        # Birden fazla provider varsa aynı deprem/kayıt tekrarlarını tespit et.
-        if "PROVIDER" in combined.columns and combined["PROVIDER"].nunique() > 1:
+        # EVENT_GROUP her çalıştırmada eklenir (çıktı şeması provider sayısından
+        # bağımsız olsun). Birden fazla provider varsa aynı deprem/kayıt
+        # tekrarları da tespit edilir.
+        context.deduplication = {
+            "merged_event_groups": 0,
+            "duplicate_records_removed": 0,
+        }
+        if {"PROVIDER", "EVENT"} <= set(combined.columns):
             groups = assign_event_groups(combined)
             combined[EVENT_GROUP_COLUMN] = groups
             strategy_input[EVENT_GROUP_COLUMN] = groups
-            duplicates = find_duplicate_records(strategy_input)
-            merged = int(groups[groups.str.fullmatch(r"G\d+")].nunique())
-            context.deduplication = {
-                "merged_event_groups": merged,
-                "duplicate_records_removed": int(duplicates.sum()),
-            }
-            if duplicates.any() or merged:
-                context.logs.append(
-                    f"Dedup: {merged} olay grubu birleştirildi, "
-                    f"{int(duplicates.sum())} tekrar kayıt seçim dışı bırakıldı."
-                )
-            strategy_input = strategy_input[~duplicates]
+            if combined["PROVIDER"].nunique() > 1:
+                duplicates = find_duplicate_records(strategy_input)
+                merged = int(groups[groups.str.fullmatch(r"G\d+")].nunique())
+                context.deduplication = {
+                    "merged_event_groups": merged,
+                    "duplicate_records_removed": int(duplicates.sum()),
+                }
+                if duplicates.any() or merged:
+                    context.logs.append(
+                        f"Dedup: {merged} olay grubu birleştirildi, "
+                        f"{int(duplicates.sum())} tekrar kayıt seçim dışı bırakıldı."
+                    )
+                strategy_input = strategy_input[~duplicates]
         context.strategy_input_df = strategy_input
 
         # Sayısal kolonları 0 ile doldur

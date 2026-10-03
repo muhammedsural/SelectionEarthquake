@@ -152,3 +152,79 @@ class TestPipelineIntegration:
         assert set(value.selected_df["PROVIDER"]) == {"PEER"}
         assert any("Dedup" in line for line in value.logs)
         assert len(value.scored_df) == 3  # tekrarlar aday havuzuna hiç girmez
+
+
+def _naive_duplicates(df, max_km=1.0):
+    """Eski O(n²) uygulamanın referans hâli (eşdeğerlik testi için)."""
+    dup = pd.Series(False, index=df.index)
+    order = {p: n for n, p in enumerate(df["PROVIDER"].astype(str).unique())}
+    for _, rows in df.groupby(EVENT_GROUP_COLUMN):
+        rows = rows.assign(_r=rows["PROVIDER"].map(order)).sort_values("_r", kind="stable")
+        kept = []
+        for idx, row in rows.iterrows():
+            is_dup = any(
+                other["_r"] != row["_r"]
+                and haversine_km(other["STATION_LAT"], other["STATION_LON"],
+                                 row["STATION_LAT"], row["STATION_LON"]) <= max_km
+                for other in kept
+            )
+            if is_dup:
+                dup.at[idx] = True
+            else:
+                kept.append(row)
+    return dup
+
+
+class TestDuplicateRecordsVectorized:
+    @pytest.mark.parametrize("seed", range(5))
+    def test_matches_naive_implementation(self, seed):
+        import numpy as np
+
+        rng = np.random.default_rng(seed)
+        frames = []
+        for provider in ("PEER", "AFAD", "FDSN"):
+            n = 40
+            frames.append(pd.DataFrame({
+                "PROVIDER": provider,
+                # küçük bir alan: 1 km eşiği altında çok sayıda yakın istasyon
+                "STATION_LAT": 40.0 + rng.random(n) * 0.05,
+                "STATION_LON": 29.0 + rng.random(n) * 0.05,
+            }))
+        df = pd.concat(frames, ignore_index=True)
+        df[EVENT_GROUP_COLUMN] = "G1"
+        assert find_duplicate_records(df).tolist() == _naive_duplicates(df).tolist()
+
+    def test_large_group_is_fast(self):
+        import time
+
+        import numpy as np
+
+        rng = np.random.default_rng(0)
+        n = 5000
+        df = pd.concat([
+            pd.DataFrame({"PROVIDER": p, "STATION_LAT": 40 + rng.random(n) * 3,
+                          "STATION_LON": 28 + rng.random(n) * 3})
+            for p in ("PEER", "AFAD")
+        ], ignore_index=True)
+        df[EVENT_GROUP_COLUMN] = "G1"
+        start = time.perf_counter()
+        find_duplicate_records(df)
+        assert time.perf_counter() - start < 5.0  # eski uygulama ~20 sn
+
+
+class TestEventGroupColumnAlwaysPresent:
+    def test_single_provider_run_has_event_group(self):
+        peer = _records("PEER", "Kocaeli, Turkey", 3, 40.75, 29.99, "P")
+        strategy = TBDY2018ConstraintStrategy(
+            SelectionConfig(design_code=DesignCode.TBDY_2018, num_records=5, min_score=0.0)
+        )
+        ctx = PipelineContext(
+            providers=[_provider("PEER", peer)],
+            strategy=strategy,
+            search_criteria=SearchCriteria(start_date="1990-01-01", end_date="2025-01-01"),
+        )
+        result = EarthquakePipeline().execute_sync(ctx)
+        assert set(result.value.selected_df[EVENT_GROUP_COLUMN]) == {"PEER|Kocaeli, Turkey"}
+        assert result.value.report["deduplication"] == {
+            "merged_event_groups": 0, "duplicate_records_removed": 0,
+        }

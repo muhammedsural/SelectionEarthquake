@@ -79,7 +79,8 @@ kullanildiginda pipeline artik sezgisel bir eslestirme yapar
 - **Olay grubu:** farkli provider'lardaki iki olay, ayni `YEAR`, buyukluk farki
   `<= 0.5` ve episantr mesafesi `<= 50 km` ise ve birbirinin en yakin adayiysa ayni
   depremdir. Provider ici olaylar (artci soklar) birlestirilmez. Sonuc
-  `EVENT_GROUP` kolonuna yazilir ve "ayni depremden en fazla 3 kayit" siniri
+  `EVENT_GROUP` kolonuna yazilir (kolon her calistirmada bulunur; tek provider'da
+  `<PROVIDER>|<EVENT>` degerini alir) ve "ayni depremden en fazla 3 kayit" siniri
   `EVENT` yerine bu kolona gore uygulanir.
 - **Tekrar kayit:** ayni olay grubunda, farkli provider'larda ve istasyon konumu
   `<= 1 km` olan kayitlardan ilk provider'inki (provider listesindeki siraya gore)

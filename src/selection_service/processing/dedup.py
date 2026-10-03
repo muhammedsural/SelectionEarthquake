@@ -21,6 +21,7 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
+from scipy.spatial import cKDTree
 
 EVENT_GROUP_COLUMN = "EVENT_GROUP"
 
@@ -139,6 +140,14 @@ def assign_event_groups(
     )
 
 
+def _unit_vectors(lat: np.ndarray, lon: np.ndarray) -> np.ndarray:
+    """Derece cinsinden koordinatları birim küre üzerindeki 3B noktalara çevir."""
+    lat, lon = np.radians(lat), np.radians(lon)
+    return np.column_stack(
+        (np.cos(lat) * np.cos(lon), np.cos(lat) * np.sin(lon), np.sin(lat))
+    )
+
+
 def find_duplicate_records(
     df: pd.DataFrame,
     group_col: str = EVENT_GROUP_COLUMN,
@@ -147,7 +156,9 @@ def find_duplicate_records(
     """Başka provider'daki bir kaydın tekrarı olan satırlar için True.
 
     Aynı olay grubunda ve istasyon konumu ``max_station_distance_km`` içindeki
-    kayıtlardan, DataFrame'de ilk görünen provider'ınki korunur.
+    kayıtlardan, DataFrame'de ilk görünen provider'ınki korunur. Provider'lar
+    sırayla işlenir; her biri, önceki provider'ların korunan kayıtlarından
+    kurulan bir KD-ağacında sorgulanır (grup başına O(n log n)).
     """
     duplicate = pd.Series(False, index=df.index)
     needed = {group_col, "PROVIDER", "STATION_LAT", "STATION_LON"}
@@ -156,24 +167,28 @@ def find_duplicate_records(
 
     valid = valid_coordinates(df["STATION_LAT"], df["STATION_LON"])
     order = {p: n for n, p in enumerate(df["PROVIDER"].astype(str).unique())}
-    for _, rows in df[valid].groupby(group_col):
+    # Birim küredeki kiriş uzunluğu: 2 * sin(açı / 2)
+    chord = 2 * np.sin(max_station_distance_km / _EARTH_RADIUS_KM / 2)
+
+    candidates = df[valid]
+    for _, rows in candidates.groupby(group_col):
         if rows["PROVIDER"].nunique() < 2:
             continue
-        rows = rows.assign(_rank=rows["PROVIDER"].astype(str).map(order))
-        rows = rows.sort_values("_rank", kind="stable")
-        lat = pd.to_numeric(rows["STATION_LAT"]).to_numpy()
-        lon = pd.to_numeric(rows["STATION_LON"]).to_numpy()
-        ranks = rows["_rank"].to_numpy()
-        idx = rows.index.to_list()
-        kept: List[int] = []
-        for pos in range(len(idx)):
-            is_dup = any(
-                ranks[k] != ranks[pos]
-                and haversine_km(lat[k], lon[k], lat[pos], lon[pos]) <= max_station_distance_km
-                for k in kept
-            )
-            if is_dup:
-                duplicate.at[idx[pos]] = True
+        rank = rows["PROVIDER"].astype(str).map(order).to_numpy()
+        points = _unit_vectors(
+            pd.to_numeric(rows["STATION_LAT"]).to_numpy(),
+            pd.to_numeric(rows["STATION_LON"]).to_numpy(),
+        )
+        index = rows.index.to_numpy()
+        kept = np.zeros(len(rows), dtype=bool)
+        for r in sorted(set(rank)):
+            current = rank == r
+            if kept.any():
+                tree = cKDTree(points[kept])
+                distance, _ = tree.query(points[current], distance_upper_bound=chord)
+                is_dup = np.isfinite(distance)
             else:
-                kept.append(pos)
+                is_dup = np.zeros(int(current.sum()), dtype=bool)
+            duplicate.loc[index[current][is_dup]] = True
+            kept[np.flatnonzero(current)[~is_dup]] = True
     return duplicate
