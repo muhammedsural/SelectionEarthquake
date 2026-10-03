@@ -117,7 +117,6 @@ Urettigi ek kolonlar:
 | `ERROR_TOTAL` | Aktif hata metriklerinin ortalama normalize hatasi |
 | `SCORE` | Geriye uyumluluk icin `100 / (1 + ERROR_TOTAL)` uygunluk skoru |
 | `PARETO_RANK` | Pareto stratejisinde nondominated front sirasi |
-| `SPECTRUM_ERROR` | Spectrum stratejisinde siddet/spektrum vekil hatasi |
 
 Secim mantigi:
 
@@ -134,7 +133,4 @@ Mevcut stratejiler:
 | `TBDY2018ConstraintStrategy` | `TBDY_2018_Constraint` | Sert filtre + hata metrikleri |
 | `ConstraintSelectionStrategy` | `TBDY_2018_Constraint` | Geriye uyumlu alias |
 | `ParetoSelectionStrategy` | `Pareto_Selection` | Nondominated adaylari one alir |
-| `SpectrumMatchStrategy` | `Spectrum_Match` | `PGA`, `PGV`, `PGD`, `Arias`, `T90` hedeflerine oncelik verir |
 
-`SpectrumMatchStrategy` gercek response spectrum kolonlari olmadiginda mevcut
-ortak kolonlari spektrum/yer hareketi vekili olarak kullanir.

@@ -18,8 +18,6 @@
 
 ::: selection_service.processing.strategies.ParetoSelectionStrategy
 
-::: selection_service.processing.strategies.SpectrumMatchStrategy
-
 ::: selection_service.processing.strategies.EurocodeSelectionStrategy
 
 ::: selection_service.processing.mappers

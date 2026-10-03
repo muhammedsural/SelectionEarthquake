@@ -65,8 +65,6 @@ Ek stratejiler:
   `TBDY2018ConstraintStrategy` alias'i olarak kalir.
 - `ParetoSelectionStrategy`: Cok kriterli hata metriklerinde nondominated
   kayitlari one alir.
-- `SpectrumMatchStrategy`: `PGA`, `PGV`, `PGD`, `Arias` ve `T90` hedeflerine
-  oncelik verir.
 
 Bu stratejiler `ERROR_METRICS`, `ERROR_TOTAL`, `HARD_FILTERS` ve
 `SELECTION_REASON` kolonlarini uretir. PEER ve AFAD mapper ciktilari ortak

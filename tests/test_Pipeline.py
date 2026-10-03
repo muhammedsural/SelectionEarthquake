@@ -473,3 +473,70 @@ class TestEndToEnd:
         c.start_time = 0.0
         r = EarthquakePipeline().execute_sync(c)
         assert r.value.execution_time < 10
+
+
+# ─── Eksik veri ve TBDY uygunluk ─────────────────────────────────────────────
+
+from selection_service.enums.enums import DesignCode
+from selection_service.processing.criteria import SearchCriteria, SelectionConfig
+from selection_service.processing.strategies import TBDY2018ConstraintStrategy
+
+
+def _real_ctx(df, num_records=3, max_per_event=3, **criteria_kwargs):
+    strategy = TBDY2018ConstraintStrategy(
+        SelectionConfig(
+            design_code=DesignCode.TBDY_2018,
+            num_records=num_records,
+            max_per_event=max_per_event,
+            min_score=0.0,
+        )
+    )
+    criteria = SearchCriteria(
+        start_date="2000-01-01", end_date="2025-01-01", **criteria_kwargs
+    )
+    return PipelineContext(
+        providers=[make_provider("PEER", df=df)],
+        strategy=strategy,
+        search_criteria=criteria,
+    )
+
+
+class TestMissingDataHandling:
+    def test_unknown_vs30_is_not_scored_as_real_zero(self):
+        """Vs30=0 (bilinmiyor) seçimde veri yok sayılır, çıktıda 0 kalır."""
+        df = make_df(3)
+        df.loc[0, "VS30(m/s)"] = 0.0
+        result = EarthquakePipeline().execute_sync(
+            _real_ctx(df, min_vs30=200.0, max_vs30=500.0)
+        )
+        assert result.success
+        scored = result.value.scored_df.set_index("RSN")
+        assert scored.loc[1, "SELECTION_STATUS"] == "rejected"
+        assert "missing:VS30(m/s)" in scored.loc[1, "SELECTION_REASON"]
+        assert scored.loc[1, "VS30(m/s)"] == 0  # çıktı sözleşmesi: 0 ile dolu
+
+    def test_outputs_have_no_numeric_nan(self):
+        df = make_df(3)
+        df.loc[1, "PGA(cm2/sec)"] = None
+        result = EarthquakePipeline().execute_sync(_real_ctx(df, target_magnitude=7.1))
+        value = result.value
+        for frame in (value.selected_df, value.scored_df):
+            assert not frame.select_dtypes(include=["number"]).isna().any().any()
+
+
+class TestComplianceReport:
+    def test_shortfall_is_reported(self):
+        result = EarthquakePipeline().execute_sync(_real_ctx(make_df(2), num_records=22))
+        compliance = result.value.report["compliance"]
+        assert compliance["required_count"] == 22
+        assert compliance["selected_count"] == 2
+        assert compliance["shortfall"] == 20
+        assert compliance["compliant"] is False
+        assert any("Yetersiz" in w for w in compliance["warnings"])
+        assert any("[WARN]" in line for line in result.value.logs)
+
+    def test_compliant_selection(self):
+        result = EarthquakePipeline().execute_sync(_real_ctx(make_df(5), num_records=5))
+        compliance = result.value.report["compliance"]
+        assert compliance["compliant"] is True
+        assert compliance["max_selected_per_event"] <= compliance["max_per_event_limit"]

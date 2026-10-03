@@ -22,7 +22,7 @@ from .providers.providers_factory import ProviderFactory
 
 # --- Processing ---
 from .processing.criteria import SelectionConfig, SearchCriteria
-from .processing.strategies import BaseSelectionStrategy, TBDYSelectionStrategy, TBDY2018ConstraintStrategy, ConstraintSelectionStrategy, ParetoSelectionStrategy, SpectrumMatchStrategy, EurocodeSelectionStrategy
+from .processing.strategies import BaseSelectionStrategy, TBDYSelectionStrategy, TBDY2018ConstraintStrategy, ConstraintSelectionStrategy, ParetoSelectionStrategy, EurocodeSelectionStrategy
 from .processing.mappers import ColumnMapperFactory
 
 __all__ = [
@@ -33,7 +33,7 @@ __all__ = [
     "ProviderFactory", "IDataFetcher", "IWaveformDownloader",
     "SelectionConfig", "SearchCriteria", "BaseSelectionStrategy",
     "TBDYSelectionStrategy", "TBDY2018ConstraintStrategy", "ConstraintSelectionStrategy",
-    "ParetoSelectionStrategy", "SpectrumMatchStrategy", "EurocodeSelectionStrategy",
+    "ParetoSelectionStrategy", "EurocodeSelectionStrategy",
     "ColumnMapperFactory"
 ]
 

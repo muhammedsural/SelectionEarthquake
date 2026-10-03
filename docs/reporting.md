@@ -62,6 +62,9 @@ Izlenebilirlik alanlari:
 
 - `selection_summary`
 - `score_breakdown`
+- `compliance`: secilen/istenen kayit sayisi, eksik kayit (`shortfall`), ayni
+  depremden secilen en fazla kayit ve `max_per_event` siniri, `warnings`,
+  `compliant` (TBDY: her yon 11 kayit => 22, ayni depremden en fazla 3)
 
 ## Selection summary
 

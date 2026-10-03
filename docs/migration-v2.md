@@ -38,6 +38,11 @@ modul yollari degisti.
 - `IDataProvider` ve `providers.IProvider`: `IDataFetcher` ve `IWaveformDownloader`
   (`selection_service.providers.interfaces`) kullanin.
 
+- `SpectrumMatchStrategy` (`Spectrum_Match`), `SPECTRUM_ERROR` kolonu ve CLI'daki
+  `--strategy spectrum` secenegi: spektral eslestirme kutuphanenin kapsami disinda
+  (kayit ararken sadece bolge ozelliklerine bakilir; spektral eslestirme
+  signalanalyzer tarafinda yapilir).
+
 ## Bagimliliklar
 
 - `obspy` artik opsiyonel: FDSN icin `pip install "earthquake-selection[fdsn]"`.
@@ -49,3 +54,16 @@ modul yollari degisti.
   ve daire aramasi artik sonuclari daraltiyor (hiposantr konumuna gore).
 - AFAD: `HYPO_DEPTH(km)` dolduruluyor (yanittaki derinlik alani, yoksa
   `sqrt(rhyp² - repi²)`).
+
+## Eksik veri ve TBDY uygunluk raporu
+
+- Cikti DataFrame'lerinde (`selected_df`, `scored_df`, `combined_df`) sayisal bosluklar
+  eskisi gibi `0` ile doludur.
+- Secim algoritmasi ise bosluklari gormeye devam eder: strateji girdisinde
+  bosluklar NaN kalir ve `VS30(m/s)` ile `MAGNITUDE` icin `0` "bilinmiyor" sayilir.
+  Boylece Vs30'u bilinmeyen AFAD istasyonu "Vs30 = 0 m/s" gibi puanlanmaz;
+  Vs30 araligi verildiyse `missing:VS30(m/s)` nedeniyle elenir.
+- Rapora `compliance` bolumu eklendi: secilen/istenen kayit sayisi (`num_records`,
+  TBDY icin her yon 11 kayit => 22), eksik sayisi (`shortfall`), ayni depremden en fazla
+  secilen kayit sayisi ve `max_per_event` siniri, `warnings` ve `compliant`.
+  Ayni uyarilar `PipelineResult.logs` icinde `[WARN]` olarak da yer alir.

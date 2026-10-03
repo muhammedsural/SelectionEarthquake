@@ -22,6 +22,10 @@ from ..processing.strategies import ISelectionStrategy
 from ..providers.interfaces import IDataFetcher              # ← yeni; ProviderFactory import kaldırıldı
 
 logger = logging.getLogger(__name__)
+
+# Bu kolonlarda 0 geçerli bir ölçüm değil, "veri yok" anlamına gelir
+# (ör. AFAD mapper'ı bilinmeyen istasyon Vs30'unu 0.0 yazar).
+ZERO_MEANS_MISSING = ("VS30(m/s)", "MAGNITUDE")
 # ──────────────────────────────────────────────────────────────────────────────
 # Veri yapıları
 # ──────────────────────────────────────────────────────────────────────────────
@@ -43,6 +47,7 @@ class PipelineContext:
     search_criteria : SearchCriteria
     data            : Optional[List[pd.DataFrame]] = None
     combined_df     : Optional[pd.DataFrame]       = None
+    strategy_input_df: Optional[pd.DataFrame]      = None
     selected_df     : Optional[pd.DataFrame]       = None
     scored_df       : Optional[pd.DataFrame]       = None
     failed_providers: List[str]                    = field(default_factory=list)
@@ -59,7 +64,11 @@ class PipelineReporter:
 
     def generate_report(self, context: PipelineContext) -> Dict[str, Any]:
         if context.selected_df is None or context.selected_df.empty:
-            return {"status": "warning", "message": "No records selected"}
+            return {
+                "status": "warning",
+                "message": "No records selected",
+                "compliance": self._compliance(context),
+            }
 
         return {
             "status": "success",
@@ -79,7 +88,48 @@ class PipelineReporter:
             "selection_summary": self._selection_summary(context.scored_df),
             "score_breakdown": self._selected_score_breakdown(context.selected_df),
             "error_metrics": self._selected_error_metrics(context.selected_df),
+            "compliance": self._compliance(context),
         }
+
+    def _compliance(self, context: PipelineContext) -> Dict[str, Any]:
+        """Seçim sayısı ve olay başına kayıt sınırı kontrolü.
+
+        TBDY 2018: her yön için 11 kayıt (11*2 = 22) ve aynı depremden en
+        fazla 3 kayıt/kayıt takımı. Sınırlar strateji yapılandırmasından
+        (``num_records``, ``max_per_event``) okunur.
+        """
+        config = getattr(context.strategy, "config", None)
+        selected = context.selected_df
+        count = 0 if selected is None else len(selected)
+        result: Dict[str, Any] = {"selected_count": count, "warnings": []}
+        required = getattr(config, "num_records", None)
+        limit = getattr(config, "max_per_event", None)
+        if not isinstance(required, int) or not isinstance(limit, int):
+            return result
+
+        per_event: Dict[str, int] = {}
+        if selected is not None and not selected.empty and "EVENT" in selected.columns:
+            per_event = selected["EVENT"].value_counts().to_dict()
+        max_per_event = max(per_event.values(), default=0)
+
+        result.update(
+            required_count=required,
+            shortfall=max(required - count, 0),
+            max_per_event_limit=limit,
+            max_selected_per_event=max_per_event,
+            max_per_event_ok=max_per_event <= limit,
+        )
+        if count < required:
+            result["warnings"].append(
+                f"Yetersiz kayıt: {count}/{required} seçilebildi. Arama "
+                "kriterlerini (büyüklük, uzaklık, Vs30, mekanizma) genişletin."
+            )
+        if max_per_event > limit:
+            result["warnings"].append(
+                f"Aynı depremden {max_per_event} kayıt seçildi (sınır {limit})."
+            )
+        result["compliant"] = not result["warnings"]
+        return result
 
     def _calculate_statistics(self, df: pd.DataFrame) -> Dict[str, Any]:
         stats: Dict[str, Any] = {
@@ -283,6 +333,11 @@ class EarthquakePipeline:
 
         combined = pd.concat(valid_dfs, ignore_index=True)
 
+        # Seçim algoritması eksik veriyi gerçek değer gibi puanlamasın diye
+        # 0 doldurmadan önceki hali ayrıca saklanır; çıktılar yine 0 ile
+        # doldurulur (aşağı akış hesaplamaları NaN ile hata veriyor).
+        context.strategy_input_df = self._mark_missing(combined)
+
         # Sayısal kolonları 0 ile doldur
         num_cols = combined.select_dtypes(include=["number"]).columns
         combined[num_cols] = combined[num_cols].fillna(0)
@@ -297,22 +352,50 @@ class EarthquakePipeline:
         context.logs.append(f"Combined total: {len(combined)} records")
         return context
 
+    @staticmethod
+    def _mark_missing(df: pd.DataFrame) -> pd.DataFrame:
+        """0 değeri "bilinmiyor" anlamına gelen kolonları NaN'a çevir."""
+        marked = df.copy()
+        for col in ZERO_MEANS_MISSING:
+            if col in marked.columns:
+                values = pd.to_numeric(marked[col], errors="coerce")
+                marked[col] = values.mask(values <= 0)
+        return marked
+
+    @staticmethod
+    def _fill_numeric_nulls(df: pd.DataFrame) -> pd.DataFrame:
+        """Seçimden sonra sayısal boşlukları 0 ile doldur (çıktı sözleşmesi)."""
+        if df is None or df.empty:
+            return df
+        filled = df.copy()
+        num_cols = filled.select_dtypes(include=["number"]).columns
+        filled[num_cols] = filled[num_cols].fillna(0)
+        return filled
+
     @result_decorator
     def _apply_strategy(self, context: PipelineContext) -> PipelineContext:
         """Adım 4: Seçim stratejisi uygula."""
         if context.combined_df.empty:
             raise NoDataError("Combined data is empty")
 
+        strategy_input = (
+            context.strategy_input_df
+            if context.strategy_input_df is not None
+            else context.combined_df
+        )
         selected, scored = context.strategy.select_and_score(
-            context.combined_df, context.search_criteria
+            strategy_input, context.search_criteria
         )
 
-        context.selected_df = selected
-        context.scored_df = scored
+        context.selected_df = self._fill_numeric_nulls(selected)
+        context.scored_df = self._fill_numeric_nulls(scored)
         context.logs.append(
             f"Strategy '{context.strategy.get_name()}' applied. "
             f"Selected: {len(selected)}"
         )
+        for warning in PipelineReporter()._compliance(context)["warnings"]:
+            context.logs.append(f"[WARN] {warning}")
+            logger.warning(warning)
         return context
 
     @result_decorator

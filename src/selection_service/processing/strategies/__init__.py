@@ -3,7 +3,6 @@
 from .base import BaseSelectionStrategy, ISelectionStrategy
 from .eurocode import EurocodeSelectionStrategy
 from .pareto import ParetoSelectionStrategy
-from .spectrum import SpectrumMatchStrategy
 from .tbdy import (
     ConstraintSelectionStrategy,
     TBDY2018ConstraintStrategy,
@@ -16,7 +15,6 @@ __all__ = [
     "EurocodeSelectionStrategy",
     "ISelectionStrategy",
     "ParetoSelectionStrategy",
-    "SpectrumMatchStrategy",
     "TBDY2018ConstraintStrategy",
     "TBDYSelectionStrategy",
 ]
