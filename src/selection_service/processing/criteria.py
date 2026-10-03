@@ -283,7 +283,25 @@ class SearchCriteria(BaseModel):
             'max_pgd': self.max_pgd,
             'mechanisms': self.get_mechanism_targets()
         }
-        
+
+        # Konum filtresi: bbox (min_lat, max_lat, min_lon, max_lon) tek ve açık
+        # öncelikle ayrı min/max alanlarının önüne geçer.
+        if self.bbox:
+            (
+                params["min_latitude"],
+                params["max_latitude"],
+                params["min_longitude"],
+                params["max_longitude"],
+            ) = self.bbox
+        else:
+            params["min_latitude"] = self.min_latitude
+            params["max_latitude"] = self.max_latitude
+            params["min_longitude"] = self.min_longitude
+            params["max_longitude"] = self.max_longitude
+        params["circleLatitude"] = self.circleLatitude
+        params["circleLongitude"] = self.circleLongitude
+        params["circleRadius"] = self.circleRadius
+
         mechanism_targets = self.get_mechanism_targets()
         if mechanism_targets:
             params["mechanisms"] = [

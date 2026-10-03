@@ -188,3 +188,50 @@ class TestPeerProvider:
         assert result.success
         assert result.value["RSN"].tolist() == [2]
         assert (result.value["PROVIDER"] == "PEER").all()
+
+
+class TestPeerYearAndLocationFilters:
+    """signalanalyzer: tarih ve konum kriterleri sonuçları daraltmalı."""
+
+    @pytest.fixture
+    def df(self):
+        return pd.DataFrame({
+            "RSN": [1, 2, 3, 4],
+            "YEAR": [1979, 1999, 2000, 2010],
+            "HYPO_LAT": [34.0, 37.0, 40.0, 41.0],
+            "HYPO_LON": [25.0, 30.0, 29.0, 29.5],
+            "MECHANISM": ["Normal"] * 4,
+        })
+
+    def test_year_start_excludes_older_records(self, peer_provider, df):
+        criteria = SearchCriteria(start_date="2000-01-01", end_date="2030-01-01")
+        result = peer_provider._apply_filters(df, criteria.to_peer_params())
+        assert result["RSN"].tolist() == [3, 4]
+
+    def test_year_end_excludes_newer_records(self, peer_provider, df):
+        criteria = SearchCriteria(start_date="1900-01-01", end_date="1999-12-31")
+        result = peer_provider._apply_filters(df, criteria.to_peer_params())
+        assert result["RSN"].tolist() == [1, 2]
+
+    def test_bbox_narrows_results(self, peer_provider, df):
+        criteria = SearchCriteria(
+            start_date="1900-01-01", end_date="2030-01-01", bbox=(36, 42, 28, 31)
+        )
+        result = peer_provider._apply_filters(df, criteria.to_peer_params())
+        assert result["RSN"].tolist() == [2, 3, 4]
+
+    def test_min_max_lat_lon_narrow_results(self, peer_provider, df):
+        criteria = SearchCriteria(
+            start_date="1900-01-01", end_date="2030-01-01",
+            min_latitude=39, max_latitude=42, min_longitude=29, max_longitude=30,
+        )
+        result = peer_provider._apply_filters(df, criteria.to_peer_params())
+        assert result["RSN"].tolist() == [3, 4]
+
+    def test_circle_search_narrows_results(self, peer_provider, df):
+        criteria = SearchCriteria(
+            start_date="1900-01-01", end_date="2030-01-01",
+            circleLatitude=40.0, circleLongitude=29.0, circleRadius=150,
+        )
+        result = peer_provider._apply_filters(df, criteria.to_peer_params())
+        assert result["RSN"].tolist() == [3, 4]

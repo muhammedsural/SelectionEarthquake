@@ -142,9 +142,14 @@ class PeerWest2Provider(IDataFetcher):
                 ("min_pga",        "max_pga",         "PGA(cm2/sec)"),
                 ("min_pgv",        "max_pgv",         "PGV(cm/sec)"),
                 ("min_pgd",        "max_pgd",         "PGD(cm)"),
+                ("year_start",     "year_end",        "YEAR"),
+                ("min_latitude",   "max_latitude",    "HYPO_LAT"),
+                ("min_longitude",  "max_longitude",   "HYPO_LON"),
             ]
             for min_key, max_key, col in numeric_filters:
                 filtered = self._apply_range(filtered, criteria, min_key, max_key, col)
+
+            filtered = self._apply_circle(filtered, criteria)
 
             # --- Kategorik filtre ---
             mechanisms = self._mechanism_filter_values(filtered, criteria)
@@ -180,6 +185,23 @@ class PeerWest2Provider(IDataFetcher):
                 normalized.append(MECHANISM_MAP.get(int(value), "Unknown"))
 
         return list(dict.fromkeys(normalized))
+
+    @staticmethod
+    def _apply_circle(df: pd.DataFrame, criteria: Dict[str, Any]) -> pd.DataFrame:
+        """Dairesel arama: hiposantr, (lat, lon) merkezine radius km içinde olmalı."""
+        lat0 = criteria.get("circleLatitude")
+        lon0 = criteria.get("circleLongitude")
+        radius = criteria.get("circleRadius")
+        if None in (lat0, lon0, radius) or not {"HYPO_LAT", "HYPO_LON"} <= set(df.columns):
+            return df
+        lat = np.radians(pd.to_numeric(df["HYPO_LAT"], errors="coerce"))
+        lon = np.radians(pd.to_numeric(df["HYPO_LON"], errors="coerce"))
+        a = (
+            np.sin((lat - np.radians(lat0)) / 2) ** 2
+            + np.cos(np.radians(lat0)) * np.cos(lat) * np.sin((lon - np.radians(lon0)) / 2) ** 2
+        )
+        distance_km = 2 * 6371.0088 * np.arcsin(np.sqrt(a))
+        return df[distance_km <= radius]
 
     @staticmethod
     def _apply_range(

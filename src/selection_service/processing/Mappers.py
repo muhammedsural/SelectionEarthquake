@@ -104,8 +104,35 @@ class AFADColumnMapper(BaseColumnMapper):
         df = self._handle_station_infos(df)
         df = self._handle_mechanisms(df)
         df = self._handle_t90_duration(df)
+        df = self._handle_depth(df)
         
         df = super().map_columns(df) #hali hazırdaki kolonların ismi değiştirilecek ve standart kolonlar sadece alınacak   
+        return df
+
+    # AFAD yanıtında derinliği taşıyabilecek alanlar (öncelik sırasıyla).
+    _DEPTH_FIELDS = (
+        "relatedEarthquakeDepth",
+        "eventDepth",
+        "hypocenterDepth",
+        "depth",
+    )
+
+    def _handle_depth(self, df: pd.DataFrame) -> pd.DataFrame:
+        """HYPO_DEPTH(km) değerini doldur.
+
+        1. Yanıttaki açık derinlik alanı (varsa),
+        2. yoksa rhyp ve repi'den: sqrt(rhyp² - repi²).
+        """
+        depth = pd.Series(float("nan"), index=df.index, dtype="float64")
+        for field in self._DEPTH_FIELDS:
+            if field in df.columns:
+                depth = depth.fillna(pd.to_numeric(df[field], errors="coerce"))
+        if "rhyp" in df.columns and "repi" in df.columns:
+            rhyp = pd.to_numeric(df["rhyp"], errors="coerce")
+            repi = pd.to_numeric(df["repi"], errors="coerce")
+            derived = (rhyp**2 - repi**2).clip(lower=0) ** 0.5
+            depth = depth.fillna(derived.where(rhyp.notna() & repi.notna()))
+        df["HYPO_DEPTH(km)"] = depth
         return df
 
     def _handle_record_filenames(self, df: pd.DataFrame) -> pd.DataFrame:
