@@ -16,8 +16,6 @@
 
 ::: selection_service.processing.strategies.ConstraintSelectionStrategy
 
-::: selection_service.processing.strategies.ParetoSelectionStrategy
-
 ::: selection_service.processing.strategies.EurocodeSelectionStrategy
 
 ::: selection_service.processing.mappers

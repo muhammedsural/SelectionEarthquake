@@ -21,7 +21,7 @@ selection_service/
     afad/
   processing/
     criteria.py           SearchCriteria, ScoringWeights, SelectionConfig
-    strategies/           base, tbdy, pareto, spectrum, eurocode
+    strategies/           base, tbdy, eurocode
     mappers.py            Provider column mappers
     result_handle.py      Result type and decorators
   utility/

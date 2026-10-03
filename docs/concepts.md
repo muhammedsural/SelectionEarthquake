@@ -63,8 +63,6 @@ Ek stratejiler:
   limitleriyle izlenebilir secim yapar.
 - `ConstraintSelectionStrategy`: Eski importlari bozmamak icin
   `TBDY2018ConstraintStrategy` alias'i olarak kalir.
-- `ParetoSelectionStrategy`: Cok kriterli hata metriklerinde nondominated
-  kayitlari one alir.
 
 Bu stratejiler `ERROR_METRICS`, `ERROR_TOTAL`, `HARD_FILTERS` ve
 `SELECTION_REASON` kolonlarini uretir. PEER ve AFAD mapper ciktilari ortak

@@ -116,7 +116,6 @@ Urettigi ek kolonlar:
 | `ERROR_METRICS` | Her hedef kriter icin mutlak ve normalize hata |
 | `ERROR_TOTAL` | Aktif hata metriklerinin ortalama normalize hatasi |
 | `SCORE` | Geriye uyumluluk icin `100 / (1 + ERROR_TOTAL)` uygunluk skoru |
-| `PARETO_RANK` | Pareto stratejisinde nondominated front sirasi |
 
 Secim mantigi:
 
@@ -132,5 +131,4 @@ Mevcut stratejiler:
 | `TBDYSelectionStrategy` | `TBDY_2018_Gaussian` | Agirlikli Gaussian skor |
 | `TBDY2018ConstraintStrategy` | `TBDY_2018_Constraint` | Sert filtre + hata metrikleri |
 | `ConstraintSelectionStrategy` | `TBDY_2018_Constraint` | Geriye uyumlu alias |
-| `ParetoSelectionStrategy` | `Pareto_Selection` | Nondominated adaylari one alir |
 
