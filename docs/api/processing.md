@@ -20,4 +20,6 @@
 
 ::: selection_service.processing.mappers
 
+::: selection_service.processing.dedup
+
 ::: selection_service.processing.result_handle

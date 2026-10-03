@@ -14,9 +14,9 @@ Son yerel dogrulama:
 - Surum: `2.0.0`
 - Test komutu: `python -m pytest`
 - Coverage komutu: `python -m pytest --cov=selection_service --cov-report=term-missing`
-- Test sonucu: `438 passed`
-- Toplam coverage: `81%`
-- Dogrulama ortami: Python `3.13.5`, pytest `8.4.2`, pytest-cov `7.0.0`
+- Test sonucu: `458 passed`
+- Toplam coverage: `84%`
+- Dogrulama ortami: Python `3.11.15`, pytest `9.1.1`, pytest-cov `7.1.0` (CI: Python 3.10-3.13)
 
 ## Paket ve Import Adi
 
@@ -53,6 +53,8 @@ pip install -e ".[dev]"
 - Pipeline tabanli sorgu, birlestirme, puanlama ve secim akisi
 - TBDY 2018 icin Gaussian tabanli secim stratejisi
 - Kriter bazli skor kirilimi: `SCORE_BREAKDOWN`
+- Provider'lar arasi ayni deprem/kayit tekrarinin tespiti: `EVENT_GROUP`
+- TBDY uygunluk raporu: kayit sayisi ve ayni depremden en fazla 3 kayit (`report["compliance"]`)
 - Her kayit icin secim/eleme aciklamasi: `SELECTION_STATUS`, `SELECTION_REASON`
 - CSV, JSON rapor ve Pandas DataFrame ciktilari
 - AFAD icin waveform indirme destegi

@@ -66,6 +66,17 @@ criteria = SearchCriteria(
 
 `circleLatitude`, `circleLongitude` ve `circleRadius` birlikte verilmelidir.
 
+`bbox` verilirse ayri `min_latitude`, `max_latitude`, `min_longitude` ve
+`max_longitude` alanlarinin onune gecer. `bbox` sirasi
+`(min_lat, max_lat, min_lon, max_lon)` seklindedir.
+
+### PEER ile tarih ve konum
+
+PEER flatfile'i yalnizca `YEAR` bilgisi tutar; bu nedenle `start_date` ve
+`end_date` PEER'de yil hassasiyetinde uygulanir (ornegin `start_date="2000-01-01"`
+ile 2000 oncesi kayit gelmez). Kutu ve daire aramalari hiposantr konumuna
+(`HYPO_LAT`, `HYPO_LON`) gore uygulanir ve sonuclari daraltir.
+
 ## Target alanlari
 
 Skorlamada hedef degerler su sirayla belirlenir:

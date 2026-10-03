@@ -5,7 +5,7 @@ semasina donusturmek ve pipeline'a `IDataFetcher` olarak sunmaktir.
 
 ## 1. Provider enum'una ekle
 
-`src/selection_service/enums/Enums.py`:
+`src/selection_service/enums/enums.py`:
 
 ```python
 class ProviderName(str, Enum):

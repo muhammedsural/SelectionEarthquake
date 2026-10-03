@@ -69,6 +69,28 @@ Bu stratejiler `ERROR_METRICS`, `ERROR_TOTAL`, `HARD_FILTERS` ve
 `STANDARD_COLUMNS` semasina geldigi icin iki provider icin ayni kolonlari
 uretmek mumkundur.
 
+## Eksik veri
+
+Cikti DataFrame'lerinde sayisal bosluklar `0` ile doludur. Secim algoritmasi ise
+bosluklari gorur: `VS30(m/s)` ve `MAGNITUDE` icin `0` "bilinmiyor" sayilir. Vs30
+araligi verildiyse Vs30'u bilinmeyen kayit `missing:VS30(m/s)` nedeniyle elenir.
+
+## Tekrar tespiti ve olay limiti
+
+Birden fazla provider kullanildiginda ayni deprem farkli adlarla gelebilir.
+Pipeline bunlari `EVENT_GROUP` altinda birlestirir (ayni yil, buyukluk farki
+`<= 0.5`, episantr mesafesi `<= 50 km`; provider ici artci soklar birlestirilmez)
+ve ayni istasyonun (`<= 1 km`) ikinci kopyasini aday havuzundan cikarir.
+"Ayni depremden en fazla `max_per_event` kayit" siniri `EVENT_GROUP`'a gore
+uygulanir. Ayrintilar icin [2.0 Gecis Rehberi](migration-v2.md).
+
+## TBDY uygunluk raporu
+
+`report["compliance"]`, secilen ve istenen kayit sayisini (`num_records`; TBDY icin
+her yon 11 kayit, 11 x 2 = 22), eksik kayit sayisini, ayni depremden secilen en
+fazla kayit sayisini ve `warnings` listesini icerir. Kayit takimi (H1 + H2) olarak
+sayiyorsaniz `num_records=11` verin.
+
 ## Pipeline
 
 Pipeline sirasi:

@@ -27,6 +27,9 @@ pipeline_result = result.value
 - `SCORE_BREAKDOWN`
 - `SELECTION_STATUS`
 - `SELECTION_REASON`
+- `EVENT_GROUP`: ayni depremin farkli provider'lardaki adlarini birlestiren olay
+  kimligi (tek provider'da `<PROVIDER>|<EVENT>`); "ayni depremden en fazla 3 kayit"
+  siniri bu kolona gore uygulanir.
 
 `SELECTION_STATUS`:
 
