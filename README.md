@@ -11,12 +11,12 @@ secimi yapan Python kutuphanesi.
 
 Son yerel dogrulama:
 
-- Surum: `1.2.1`
+- Surum: `2.0.0`
 - Test komutu: `python -m pytest`
 - Coverage komutu: `python -m pytest --cov=selection_service --cov-report=term-missing`
-- Test sonucu: `414 passed`
-- Toplam coverage: `81%`
-- Dogrulama ortami: Python `3.13.5`, pytest `8.4.2`, pytest-cov `7.0.0`
+- Test sonucu: `458 passed`
+- Toplam coverage: `84%`
+- Dogrulama ortami: Python `3.11.15`, pytest `9.1.1`, pytest-cov `7.1.0` (CI: Python 3.10-3.13)
 
 ## Paket ve Import Adi
 
@@ -24,6 +24,12 @@ Paket kurulum adi:
 
 ```bash
 pip install earthquake-selection
+```
+
+FDSN provider'i (ObsPy tabanli) opsiyoneldir; kullanacaksaniz:
+
+```bash
+pip install "earthquake-selection[fdsn]"
 ```
 
 Python import paketi:
@@ -47,6 +53,8 @@ pip install -e ".[dev]"
 - Pipeline tabanli sorgu, birlestirme, puanlama ve secim akisi
 - TBDY 2018 icin Gaussian tabanli secim stratejisi
 - Kriter bazli skor kirilimi: `SCORE_BREAKDOWN`
+- Provider'lar arasi ayni deprem/kayit tekrarinin tespiti: `EVENT_GROUP`
+- TBDY uygunluk raporu: kayit sayisi ve ayni depremden en fazla 3 kayit (`report["compliance"]`)
 - Her kayit icin secim/eleme aciklamasi: `SELECTION_STATUS`, `SELECTION_REASON`
 - CSV, JSON rapor ve Pandas DataFrame ciktilari
 - AFAD icin waveform indirme destegi
@@ -55,14 +63,10 @@ pip install -e ".[dev]"
 ## Hizli Baslangic
 
 ```python
-from selection_service.core.EarthquakeApi import EarthquakeAPI
-from selection_service.enums.Enums import DesignCode, ProviderName
-from selection_service.processing.Selection import (
-    ScoringWeights,
-    SearchCriteria,
-    SelectionConfig,
-    TBDYSelectionStrategy,
-)
+from selection_service.core.earthquake_api import EarthquakeAPI
+from selection_service.enums.enums import DesignCode, ProviderName
+from selection_service.processing.criteria import ScoringWeights, SearchCriteria, SelectionConfig
+from selection_service.processing.strategies import TBDYSelectionStrategy
 
 config = SelectionConfig(
     design_code=DesignCode.TBDY_2018,
@@ -129,7 +133,7 @@ Hazir agirlik setleri `ScoringWeights.from_preset(...)` ile secilir:
 Preset aciklamalari:
 
 ```python
-from selection_service.processing.Selection import ScoringWeights
+from selection_service.processing.criteria import ScoringWeights
 
 print(ScoringWeights.preset_descriptions())
 ```

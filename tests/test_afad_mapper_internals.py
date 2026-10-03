@@ -8,7 +8,7 @@ import pytest
 import pandas as pd
 from unittest.mock import patch, MagicMock
 
-from selection_service.processing.Mappers import AFADColumnMapper
+from selection_service.processing.mappers import AFADColumnMapper
 
 
 @pytest.fixture

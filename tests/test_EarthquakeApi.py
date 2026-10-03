@@ -10,11 +10,11 @@ import pytest
 import pandas as pd
 from unittest.mock import MagicMock, AsyncMock, patch
 
-from selection_service.core.EarthquakeApi import EarthquakeAPI
-from selection_service.core.Pipeline import PipelineResult
-from selection_service.core.ErrorHandle import PipelineError, ProviderError
-from selection_service.processing.ResultHandle import Result
-from selection_service.enums.Enums import ProviderName
+from selection_service.core.earthquake_api import EarthquakeAPI
+from selection_service.core.pipeline import PipelineResult
+from selection_service.core.error_handle import PipelineError, ProviderError
+from selection_service.processing.result_handle import Result
+from selection_service.enums.enums import ProviderName
 
 
 # ─── helpers ────────────────────────────────────────────────────────────────
@@ -82,9 +82,9 @@ def _build_api(query_svc=None, download_svc=None, registry=None):
     _query = query_svc or _make_query_service()
     _download = download_svc or _make_download_service()
 
-    with patch("selection_service.core.EarthquakeApi.ProviderRegistry") as MockReg, \
-         patch("selection_service.core.EarthquakeApi.EarthquakeQueryService") as MockQuery, \
-         patch("selection_service.core.EarthquakeApi.WaveformDownloadService") as MockDL:
+    with patch("selection_service.core.earthquake_api.ProviderRegistry") as MockReg, \
+         patch("selection_service.core.earthquake_api.EarthquakeQueryService") as MockQuery, \
+         patch("selection_service.core.earthquake_api.WaveformDownloadService") as MockDL:
         MockReg.build.return_value = _registry
         MockQuery.return_value = _query
         MockDL.return_value = _download
@@ -107,9 +107,9 @@ class TestEarthquakeAPI:
     def test_init(self):
         """EarthquakeAPI ProviderRegistry.build ile başlatılmalı."""
         strategy = MagicMock(); strategy.get_name.return_value = "TBDY_2018_Gaussian"
-        with patch("selection_service.core.EarthquakeApi.ProviderRegistry") as MockReg, \
-             patch("selection_service.core.EarthquakeApi.EarthquakeQueryService"), \
-             patch("selection_service.core.EarthquakeApi.WaveformDownloadService"):
+        with patch("selection_service.core.earthquake_api.ProviderRegistry") as MockReg, \
+             patch("selection_service.core.earthquake_api.EarthquakeQueryService"), \
+             patch("selection_service.core.earthquake_api.WaveformDownloadService"):
             MockReg.build.return_value = _make_registry()
             api = EarthquakeAPI(
                 provider_names=[ProviderName.AFAD],

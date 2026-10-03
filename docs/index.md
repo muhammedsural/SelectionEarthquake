@@ -39,14 +39,10 @@ namespace `selection_service` olarak kalir.
 ## En kisa ornek
 
 ```python
-from selection_service.core.EarthquakeApi import EarthquakeAPI
-from selection_service.enums.Enums import DesignCode, ProviderName
-from selection_service.processing.Selection import (
-    ScoringWeights,
-    SearchCriteria,
-    SelectionConfig,
-    TBDYSelectionStrategy,
-)
+from selection_service.core.earthquake_api import EarthquakeAPI
+from selection_service.enums.enums import DesignCode, ProviderName
+from selection_service.processing.criteria import ScoringWeights, SearchCriteria, SelectionConfig
+from selection_service.processing.strategies import TBDYSelectionStrategy
 
 strategy = TBDYSelectionStrategy(
     SelectionConfig(design_code=DesignCode.TBDY_2018, num_records=11, min_score=55)

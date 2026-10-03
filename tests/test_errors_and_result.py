@@ -5,8 +5,8 @@ ErrorHandle ve ResultHandle modülleri — %100 coverage hedefi.
 """
 
 import pytest
-from selection_service.processing.ResultHandle import Result, result_decorator, async_result_decorator
-from selection_service.core.ErrorHandle import (
+from selection_service.processing.result_handle import Result, result_decorator, async_result_decorator
+from selection_service.core.error_handle import (
     PipelineError, ValidationError, NoDataError, StrategyError,
     ProviderError, NetworkError, DataProcessingError,
 )

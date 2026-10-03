@@ -13,11 +13,11 @@ import pytest
 import pandas as pd
 from unittest.mock import MagicMock, patch
 
-from selection_service.providers.AfadProvider import AFADDataProvider
-from selection_service.core.ErrorHandle import ProviderError
-from selection_service.processing.ResultHandle import Result
-from selection_service.processing.Mappers import AFADColumnMapper
-from selection_service.processing.Selection import SearchCriteria
+from selection_service.providers.afad_provider import AFADDataProvider
+from selection_service.core.error_handle import ProviderError
+from selection_service.processing.result_handle import Result
+from selection_service.processing.mappers import AFADColumnMapper
+from selection_service.processing.criteria import SearchCriteria
 
 
 @pytest.fixture

@@ -16,19 +16,9 @@ import math
 import pytest
 import pandas as pd
 
-from selection_service.enums.Enums import DesignCode
-from selection_service.processing.Selection import (
-    SelectionConfig,
-    SearchCriteria,
-    ScoringWeights,
-    TBDYSelectionStrategy,
-    TBDY2018ConstraintStrategy,
-    ConstraintSelectionStrategy,
-    ParetoSelectionStrategy,
-    SpectrumMatchStrategy,
-    EurocodeSelectionStrategy,
-    BaseSelectionStrategy,
-)
+from selection_service.enums.enums import DesignCode
+from selection_service.processing.criteria import SelectionConfig, SearchCriteria, ScoringWeights
+from selection_service.processing.strategies import TBDYSelectionStrategy, TBDY2018ConstraintStrategy, ConstraintSelectionStrategy, EurocodeSelectionStrategy, BaseSelectionStrategy
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -162,7 +152,7 @@ class TestCalculateTotalScore:
         assert score == pytest.approx(0.0)
 
     def test_zero_weight_skipped(self, strategy, criteria):
-        from selection_service.processing.Selection import ScoringWeights
+        from selection_service.processing.criteria import ScoringWeights
         zero_weights = ScoringWeights(magnitude=0.0, rjb=0.0, rrup=0.0,
                                       repi=0.0, vs30=0.0, pga=0.0, pgv=0.0,
                                       pgd=0.0, t90=0.0, arias=0.0, depth=0.0,
@@ -457,90 +447,6 @@ class TestConstraintSelectionStrategy:
         for column in ("SCORE", "ERROR_TOTAL", "ERROR_METRICS", "HARD_FILTERS", "SELECTION_REASON"):
             assert column in scored.columns
 
-
-class TestParetoSelectionStrategy:
-
-    def test_get_name(self, config):
-        strategy = ParetoSelectionStrategy(config=config)
-        assert strategy.get_name() == "Pareto_Selection"
-
-    def test_pareto_front_is_selected_before_dominated_records(self):
-        config = SelectionConfig(
-            design_code=DesignCode.TBDY_2018,
-            num_records=2,
-            min_score=0.0,
-        )
-        criteria = SearchCriteria(
-            start_date="2000-01-01",
-            end_date="2025-01-01",
-            target_magnitude=7.5,
-            target_vs30=350.0,
-        )
-        df = make_df([
-            {"RSN": 1, "MAGNITUDE": 7.5, "VS30(m/s)": 380.0, "STATION": "S1", "EVENT": "E1"},
-            {"RSN": 2, "MAGNITUDE": 7.8, "VS30(m/s)": 350.0, "STATION": "S2", "EVENT": "E2"},
-            {"RSN": 3, "MAGNITUDE": 7.9, "VS30(m/s)": 390.0, "STATION": "S3", "EVENT": "E3"},
-        ])
-        strategy = ParetoSelectionStrategy(config=config)
-
-        selected, scored = strategy.select_and_score(df, criteria)
-
-        assert set(selected["RSN"]) == {1, 2}
-        ranks = dict(zip(scored["RSN"], scored["PARETO_RANK"]))
-        assert ranks[1] == 0
-        assert ranks[2] == 0
-        assert ranks[3] > 0
-        assert bool(scored.loc[scored["RSN"] == 1, "PARETO_FRONT"].iloc[0]) is True
-
-
-class TestSpectrumMatchStrategy:
-
-    def test_get_name(self, config):
-        strategy = SpectrumMatchStrategy(config=config)
-        assert strategy.get_name() == "Spectrum_Match"
-
-    def test_spectrum_metrics_drive_selection_before_context_metrics(self):
-        config = SelectionConfig(
-            design_code=DesignCode.TBDY_2018,
-            num_records=1,
-            min_score=0.0,
-        )
-        criteria = SearchCriteria(
-            start_date="2000-01-01",
-            end_date="2025-01-01",
-            target_magnitude=7.5,
-            target_pga=100.0,
-            target_pgv=20.0,
-        )
-        df = make_df([
-            {
-                "RSN": 1,
-                "MAGNITUDE": 7.5,
-                "PGA(cm2/sec)": 180.0,
-                "PGV(cm/sec)": 40.0,
-                "STATION": "S1",
-                "EVENT": "E1",
-            },
-            {
-                "RSN": 2,
-                "MAGNITUDE": 7.9,
-                "PGA(cm2/sec)": 100.0,
-                "PGV(cm/sec)": 20.0,
-                "STATION": "S2",
-                "EVENT": "E2",
-            },
-        ])
-        strategy = SpectrumMatchStrategy(config=config)
-
-        selected, scored = strategy.select_and_score(df, criteria)
-
-        assert selected["RSN"].tolist() == [2]
-        assert "SPECTRUM_ERROR" in scored.columns
-        assert scored.loc[scored["RSN"] == 2, "SPECTRUM_ERROR"].iloc[0] == pytest.approx(0.0)
-
-
-# BaseSelectionStrategy.get_name ve EurocodeSelectionStrategy
-# ─────────────────────────────────────────────────────────────────────────────
 
 class TestStrategyGetName:
 

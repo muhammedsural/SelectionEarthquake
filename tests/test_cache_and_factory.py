@@ -4,13 +4,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pandas as pd
 import pytest
 
-from selection_service.enums.Enums import ProviderName
-from selection_service.processing.ResultHandle import Result
-from selection_service.providers.CacheManager import CacheManager
-from selection_service.providers.ProvidersFactory import CachedProviderProxy, ProviderFactory
-from selection_service.providers.AfadProvider import AFADDataProvider
-from selection_service.providers.PeerProvider import PeerWest2Provider
-from selection_service.providers.FdsnProvider import FDSNProvider
+from selection_service.enums.enums import ProviderName
+from selection_service.processing.result_handle import Result
+from selection_service.providers.cache_manager import CacheManager
+from selection_service.providers.providers_factory import CachedProviderProxy, ProviderFactory
+from selection_service.providers.afad_provider import AFADDataProvider
+from selection_service.providers.peer_provider import PeerWest2Provider
+from selection_service.providers.fdsn_provider import FDSNProvider
 
 
 def test_cache_manager_roundtrip(tmp_path):
@@ -39,7 +39,7 @@ def test_cache_manager_expired_file_is_removed(tmp_path, monkeypatch):
     criteria = {"x": 1}
     cache.set("PEER", criteria, df)
 
-    monkeypatch.setattr("selection_service.providers.CacheManager.time.time", lambda: 9999999999)
+    monkeypatch.setattr("selection_service.providers.cache_manager.time.time", lambda: 9999999999)
 
     assert cache.get("PEER", criteria) is None
 
@@ -121,3 +121,4 @@ def test_provider_factory_wraps_cache_when_enabled():
 def test_provider_factory_unknown_provider_raises():
     with pytest.raises(ValueError, match="Unknown provider"):
         ProviderFactory.create_provider("UNKNOWN", use_cache=False)
+

@@ -7,7 +7,7 @@ SearchCriteria — tüm validator'lar ve parametre dönüşümleri için %100 co
 import pytest
 from pydantic import ValidationError
 
-from selection_service.processing.Selection import SearchCriteria, ScoringWeights
+from selection_service.processing.criteria import SearchCriteria, ScoringWeights
 
 
 # ─────────────────────────────────────────────────────────────────────────────

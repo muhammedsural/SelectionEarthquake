@@ -5,43 +5,35 @@ selection_service
 A Python library for earthquake ground motion selection and processing.
 """
 
-__version__ = "1.2.1"
+__version__ = "2.0.0"
 
 # --- Core API ---
-from .core.LoggingConfig import setup_logging
+from .core.logging_config import setup_logging
 
 # --- Enums ---
-from .enums.Enums import ProviderName, DesignCode
+from .enums.enums import ProviderName, DesignCode
 
-from .core.Pipeline import EarthquakePipeline
-from .core.EarthquakeApi import EarthquakeAPI
+from .core.pipeline import EarthquakePipeline
+from .core.earthquake_api import EarthquakeAPI
 
 # --- Providers ---
-from .providers.IProvider import IDataProvider
-from .providers.ProvidersFactory import ProviderFactory
+from .providers.interfaces import IDataFetcher, IWaveformDownloader
+from .providers.providers_factory import ProviderFactory
 
 # --- Processing ---
-from .processing.Selection import (
-    SelectionConfig,
-    SearchCriteria,
-    BaseSelectionStrategy,
-    TBDYSelectionStrategy,
-    TBDY2018ConstraintStrategy,
-    ConstraintSelectionStrategy,
-    ParetoSelectionStrategy,
-    SpectrumMatchStrategy,
-    EurocodeSelectionStrategy
-)
-from .processing.Mappers import ColumnMapperFactory
+from .processing.criteria import SelectionConfig, SearchCriteria
+from .processing.strategies import BaseSelectionStrategy, TBDYSelectionStrategy, TBDY2018ConstraintStrategy, ConstraintSelectionStrategy, EurocodeSelectionStrategy
+from .processing.mappers import ColumnMapperFactory
 
 __all__ = [
     "__version__",
     "EarthquakePipeline", "EarthquakeAPI",
     "setup_logging",
     "ProviderName", "DesignCode",
-    "ProviderFactory", "IDataProvider",
+    "ProviderFactory", "IDataFetcher", "IWaveformDownloader",
     "SelectionConfig", "SearchCriteria", "BaseSelectionStrategy",
     "TBDYSelectionStrategy", "TBDY2018ConstraintStrategy", "ConstraintSelectionStrategy",
-    "ParetoSelectionStrategy", "SpectrumMatchStrategy", "EurocodeSelectionStrategy",
+    "EurocodeSelectionStrategy",
     "ColumnMapperFactory"
 ]
+

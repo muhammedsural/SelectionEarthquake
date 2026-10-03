@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "earthquake-selection"
-version = "1.2.1"
+version = "2.0.0"
 description = "A library for earthquake selection"
 readme = "README.md"
 authors = [
@@ -32,17 +32,18 @@ dependencies = [
     "scipy>=1.15.3",
     "requests>=2.32.5",
     "aiohttp>=3.12.15",
-    "setuptools>=80.9.0",     
-    "obspy>=1.4.2",
     "openpyxl>=3.1.5",
-    "pyyaml>=6.0",        # Config dosyaları için
-    "tqdm>=4.65.0",       # Progress bar için
-    "pyarrow>=23.0.0",     # Parquet desteği için
-    "python-dateutil>=2.8.2", # Tarih işlemleri için
+    "pyarrow>=23.0.0",     # Parquet cache desteği için
     "pydantic>=2.11.9"      # Veri doğrulama için
 ]
 
 [project.optional-dependencies]
+fdsn = [
+    "obspy>=1.4.2",
+]
+all = [
+    "obspy>=1.4.2",
+]
 dev = [
     "pytest>=8.0.0",
     "pytest-cov>=4.1.0",
@@ -50,8 +51,7 @@ dev = [
     "black>=23.0.0",
     "flake8>=7.0.0",
     "isort>=5.12.0",
-    "sphinx>=7.0.0",
-    "sphinx-rtd-theme>=2.0.0",
+    "obspy>=1.4.2",
     "twine>=5.0.0"
 ]
 

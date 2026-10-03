@@ -1,15 +1,15 @@
 # Core API
 
-::: selection_service.core.EarthquakeApi.EarthquakeAPI
+::: selection_service.core.earthquake_api.EarthquakeAPI
 
-::: selection_service.core.Pipeline.PipelineResult
+::: selection_service.core.pipeline.PipelineResult
 
-::: selection_service.core.Pipeline.PipelineContext
+::: selection_service.core.pipeline.PipelineContext
 
-::: selection_service.core.Pipeline.PipelineReporter
+::: selection_service.core.pipeline.PipelineReporter
 
-::: selection_service.core.Pipeline.EarthquakePipeline
+::: selection_service.core.pipeline.EarthquakePipeline
 
-::: selection_service.core.Config
+::: selection_service.core.config
 
-::: selection_service.core.ErrorHandle
+::: selection_service.core.error_handle

@@ -34,7 +34,7 @@ Mekanizma gibi kategorik kriterler:
 ## Hazir presetler
 
 ```python
-from selection_service.processing.Selection import ScoringWeights
+from selection_service.processing.criteria import ScoringWeights
 
 weights = ScoringWeights.from_preset("tbdy_2018_record_selection")
 ```
@@ -56,7 +56,7 @@ ScoringWeights.preset_descriptions()
 ## Ozel agirliklar
 
 ```python
-from selection_service.processing.Selection import ScoringWeights
+from selection_service.processing.criteria import ScoringWeights
 
 weights = ScoringWeights(
     magnitude=6.0,
@@ -103,7 +103,7 @@ Ornek eleman:
 filtreleri uygular, sonra adaylari hata metriklerine gore siralar.
 
 ```python
-from selection_service.processing.Selection import TBDY2018ConstraintStrategy
+from selection_service.processing.strategies import TBDY2018ConstraintStrategy
 
 strategy = TBDY2018ConstraintStrategy(config)
 ```
@@ -116,8 +116,6 @@ Urettigi ek kolonlar:
 | `ERROR_METRICS` | Her hedef kriter icin mutlak ve normalize hata |
 | `ERROR_TOTAL` | Aktif hata metriklerinin ortalama normalize hatasi |
 | `SCORE` | Geriye uyumluluk icin `100 / (1 + ERROR_TOTAL)` uygunluk skoru |
-| `PARETO_RANK` | Pareto stratejisinde nondominated front sirasi |
-| `SPECTRUM_ERROR` | Spectrum stratejisinde siddet/spektrum vekil hatasi |
 
 Secim mantigi:
 
@@ -133,8 +131,4 @@ Mevcut stratejiler:
 | `TBDYSelectionStrategy` | `TBDY_2018_Gaussian` | Agirlikli Gaussian skor |
 | `TBDY2018ConstraintStrategy` | `TBDY_2018_Constraint` | Sert filtre + hata metrikleri |
 | `ConstraintSelectionStrategy` | `TBDY_2018_Constraint` | Geriye uyumlu alias |
-| `ParetoSelectionStrategy` | `Pareto_Selection` | Nondominated adaylari one alir |
-| `SpectrumMatchStrategy` | `Spectrum_Match` | `PGA`, `PGV`, `PGD`, `Arias`, `T90` hedeflerine oncelik verir |
 
-`SpectrumMatchStrategy` gercek response spectrum kolonlari olmadiginda mevcut
-ortak kolonlari spektrum/yer hareketi vekili olarak kullanir.

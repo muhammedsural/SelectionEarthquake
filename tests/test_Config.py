@@ -1,9 +1,9 @@
 import pytest
 import pandas as pd
-from selection_service.core.Config import convert_mechanism_to_text, MECHANISM_MAP
-from selection_service.core.Config import convert_mechanism_to_numeric, REVERSE_MECHANISM_MAP
-from selection_service.core.Config import get_mechanism_text, MECHANISM_MAP
-from selection_service.core.Config import get_mechanism_numeric, REVERSE_MECHANISM_MAP
+from selection_service.core.config import convert_mechanism_to_text, MECHANISM_MAP
+from selection_service.core.config import convert_mechanism_to_numeric, REVERSE_MECHANISM_MAP
+from selection_service.core.config import get_mechanism_text, MECHANISM_MAP
+from selection_service.core.config import get_mechanism_numeric, REVERSE_MECHANISM_MAP
 
 def test_convert_mechanism_to_text_basic():
     df = pd.DataFrame({'MECHANISM': [0, 1, 2, 3, 4, 5, -999]})

@@ -27,6 +27,9 @@ pipeline_result = result.value
 - `SCORE_BREAKDOWN`
 - `SELECTION_STATUS`
 - `SELECTION_REASON`
+- `EVENT_GROUP`: ayni depremin farkli provider'lardaki adlarini birlestiren olay
+  kimligi (tek provider'da `<PROVIDER>|<EVENT>`); "ayni depremden en fazla 3 kayit"
+  siniri bu kolona gore uygulanir.
 
 `SELECTION_STATUS`:
 
@@ -62,6 +65,10 @@ Izlenebilirlik alanlari:
 
 - `selection_summary`
 - `score_breakdown`
+- `deduplication`: birlestirilen olay gruplari ve cikarilan tekrar kayit sayisi
+- `compliance`: secilen/istenen kayit sayisi, eksik kayit (`shortfall`), ayni
+  depremden secilen en fazla kayit ve `max_per_event` siniri, `warnings`,
+  `compliant` (TBDY: her yon 11 kayit => 22, ayni depremden en fazla 3)
 
 ## Selection summary
 

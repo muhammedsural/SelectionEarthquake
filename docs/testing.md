@@ -21,6 +21,8 @@ Test paketi su davranislari kapsar:
 - scoring motoru
 - TBDY selection rules
 - `Result` ve hata hiyerarsisi
+- provider'lar arasi tekrar tespiti (`processing.dedup`)
+- eksik veri ve TBDY uygunluk raporu
 
 ## Yeni davranis eklerken
 
@@ -42,7 +44,8 @@ ortaminda `.pytest_cache` yazma uyarilarini onlemektir.
 
 ```bash
 python -m compileall src
-pytest
+flake8 src --select=E9,F63,F7,F82
+pytest --cov=src/selection_service --cov-fail-under=80
 ```
 
 Dokuman icin:

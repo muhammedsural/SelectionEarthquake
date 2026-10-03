@@ -5,24 +5,26 @@ Proje katmanlari sorumluluklara ayrilmistir.
 ```text
 selection_service/
   core/
-    EarthquakeApi.py      Public facade
-    Pipeline.py           Pipeline engine and report generation
-    Config.py             Standard columns, scoring map, presets
-    ErrorHandle.py        Domain error hierarchy
+    earthquake_api.py     Public facade
+    pipeline.py           Pipeline engine and report generation
+    config.py             Standard columns, scoring map, presets
+    error_handle.py       Domain error hierarchy
   services/
-    ProviderRegistry.py   Active provider registry
-    EarthquakeQueryService.py
-    WaveformDownloadService.py
+    provider_registry.py  Active provider registry
+    earthquake_query_service.py
+    waveform_download_service.py
   providers/
-    AfadProvider.py
-    PeerProvider.py
-    ProvidersFactory.py
+    afad_provider.py
+    peer_provider.py
+    providers_factory.py
     interfaces.py
     afad/
   processing/
-    Selection.py          SearchCriteria, scoring, selection strategies
-    Mappers.py            Provider column mappers
-    ResultHandle.py       Result type and decorators
+    criteria.py           SearchCriteria, ScoringWeights, SelectionConfig
+    strategies/           base, tbdy, eurocode
+    mappers.py            Provider column mappers
+    dedup.py              Cross-provider event/record de-duplication
+    result_handle.py      Result type and decorators
   utility/
     path_utils.py
   data/

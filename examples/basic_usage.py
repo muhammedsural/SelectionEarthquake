@@ -1,12 +1,8 @@
-from selection_service.core.EarthquakeApi import EarthquakeAPI
-from selection_service.core.LoggingConfig import setup_logging
-from selection_service.enums.Enums import DesignCode, ProviderName
-from selection_service.processing.Selection import (
-    ScoringWeights,
-    SearchCriteria,
-    SelectionConfig,
-    TBDYSelectionStrategy,
-)
+from selection_service.core.earthquake_api import EarthquakeAPI
+from selection_service.core.logging_config import setup_logging
+from selection_service.enums.enums import DesignCode, ProviderName
+from selection_service.processing.criteria import ScoringWeights, SearchCriteria, SelectionConfig
+from selection_service.processing.strategies import TBDYSelectionStrategy
 
 
 def example_usage():

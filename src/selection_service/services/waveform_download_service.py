@@ -18,10 +18,10 @@ from typing import Any
 
 import pandas as pd
 
-from ..core.ErrorHandle import ProviderError
-from ..processing.ResultHandle import Result
+from ..core.error_handle import ProviderError
+from ..processing.result_handle import Result
 from ..providers.interfaces import supports_download
-from ..services.ProviderRegistry import ProviderRegistry
+from ..services.provider_registry import ProviderRegistry
 
 logger = logging.getLogger(__name__)
 

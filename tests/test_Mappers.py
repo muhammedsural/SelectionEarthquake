@@ -16,14 +16,14 @@ import pandas as pd
 from unittest.mock import patch
 
 # ── Proje import'ları ─────────────────────────────────────────────────────────
-from selection_service.core.Config import STANDARD_COLUMNS
-from selection_service.processing.Mappers import (
+from selection_service.core.config import STANDARD_COLUMNS
+from selection_service.processing.mappers import (
     AFADColumnMapper,
     PEERColumnMapper,
     ColumnMapperFactory,
     BaseColumnMapper,
 )
-from selection_service.enums.Enums import ProviderName
+from selection_service.enums.enums import ProviderName
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -418,3 +418,27 @@ class TestMapperInteroperability:
         assert peer_rows["ENDPOINTSOURCE"].isna().all()
         # AFAD provider URL'yi _process_response_data'da ekler, mapper None döner
         assert afad_rows["ENDPOINTSOURCE"].isna().all()
+
+
+class TestAfadHypoDepth:
+    """AFAD sonuçlarında HYPO_DEPTH(km) dolu gelmeli."""
+
+    def test_depth_derived_from_rhyp_and_repi(self, afad_api_row):
+        result = AFADColumnMapper().map_columns(afad_api_row)
+        # rhyp=25, repi=16 -> sqrt(25^2 - 16^2) = sqrt(369)
+        assert result["HYPO_DEPTH(km)"].iloc[0] == pytest.approx(369 ** 0.5)
+
+    def test_explicit_depth_field_has_priority(self, afad_api_row):
+        afad_api_row["depth"] = 8.5
+        result = AFADColumnMapper().map_columns(afad_api_row)
+        assert result["HYPO_DEPTH(km)"].iloc[0] == 8.5
+
+    def test_related_depth_is_live_afad_field(self, afad_api_row):
+        # Canlı AFAD yanıtında derinlik "relatedDepth" alanında gelir.
+        afad_api_row["relatedDepth"] = 7.0
+        result = AFADColumnMapper().map_columns(afad_api_row)
+        assert result["HYPO_DEPTH(km)"].iloc[0] == 7.0
+
+    def test_missing_inputs_stay_null(self, afad_api_row):
+        result = AFADColumnMapper().map_columns(afad_api_row.drop(columns=["rhyp"]))
+        assert result["HYPO_DEPTH(km)"].isna().all()

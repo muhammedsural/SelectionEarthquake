@@ -6,15 +6,25 @@ import asyncio
 from typing import Any
 
 import pandas as pd
-from obspy import UTCDateTime
-from obspy.clients.fdsn import Client
 
-from ..core.ErrorHandle import ProviderError
-from ..enums.Enums import ProviderName
-from ..processing.Mappers import IColumnMapper
-from ..processing.ResultHandle import Result
-from ..processing.Selection import SearchCriteria
+from ..core.error_handle import ProviderError
+from ..enums.enums import ProviderName
+from ..processing.mappers import IColumnMapper
+from ..processing.result_handle import Result
+from ..processing.criteria import SearchCriteria
 from .interfaces import IDataFetcher
+
+
+def _import_obspy():
+    """ObsPy'yi gec yukle; opsiyonel ``fdsn`` extra'sinin kurulu olmasini ister."""
+    try:
+        from obspy import UTCDateTime
+        from obspy.clients.fdsn import Client
+    except ImportError as exc:  # pragma: no cover - ortama bagli
+        raise ImportError(
+            "FDSN provider icin obspy gerekir: pip install 'earthquake-selection[fdsn]'"
+        ) from exc
+    return UTCDateTime, Client
 
 
 class FDSNProvider(IDataFetcher):
@@ -51,9 +61,13 @@ class FDSNProvider(IDataFetcher):
         data_endpoint = data_base_url or known_urls.get(
             data_service.upper(), data_service
         )
-        self._client = client or Client(event_endpoint, timeout=timeout)
+        self._client = client
+        if self._client is None:
+            _, Client = _import_obspy()
+            self._client = Client(event_endpoint, timeout=timeout)
         shared_data_client = client or station_client or waveform_client
         if shared_data_client is None:
+            _, Client = _import_obspy()
             shared_data_client = Client(data_endpoint, timeout=timeout)
         self._station_client = station_client or shared_data_client
         self._waveform_client = waveform_client or shared_data_client
@@ -161,6 +175,7 @@ class FDSNProvider(IDataFetcher):
                 "Missing FDSN waveform parameters: " + ", ".join(missing)
             )
         query = {key: value for key, value in params.items() if value is not None}
+        UTCDateTime, _ = _import_obspy()
         for key in ("starttime", "endtime"):
             if not isinstance(query[key], UTCDateTime):
                 query[key] = UTCDateTime(query[key])

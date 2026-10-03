@@ -12,14 +12,14 @@ Değişiklikler (Adım 1 — ISP + LSP):
 import logging
 from typing import Any
 
-from .CacheManager import CacheManager
-from ..processing.ResultHandle import Result
-from ..providers.AfadProvider import AFADDataProvider
-from ..providers.PeerProvider import PeerWest2Provider
-from ..providers.FdsnProvider import FDSNProvider
+from .cache_manager import CacheManager
+from ..processing.result_handle import Result
+from ..providers.afad_provider import AFADDataProvider
+from ..providers.peer_provider import PeerWest2Provider
+from ..providers.fdsn_provider import FDSNProvider
 from ..providers.interfaces import IDataFetcher          # ← yeni
-from ..enums.Enums import ProviderName
-from ..processing.Mappers import ColumnMapperFactory
+from ..enums.enums import ProviderName
+from ..processing.mappers import ColumnMapperFactory
 
 logger = logging.getLogger(__name__)
 

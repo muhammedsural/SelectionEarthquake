@@ -3,10 +3,10 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
-from selection_service.enums.Enums import ProviderName
-from selection_service.processing.Mappers import FDSNColumnMapper
-from selection_service.processing.Selection import SearchCriteria
-from selection_service.providers.FdsnProvider import FDSNProvider
+from selection_service.enums.enums import ProviderName
+from selection_service.processing.mappers import FDSNColumnMapper
+from selection_service.processing.criteria import SearchCriteria
+from selection_service.providers.fdsn_provider import FDSNProvider
 
 
 class FakeEvent:
