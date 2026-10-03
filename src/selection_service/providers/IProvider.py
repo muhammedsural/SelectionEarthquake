@@ -1,8 +1,24 @@
+"""Kullanimdan kalkmis modul: yeni kod ``providers.interfaces`` kullanmalidir.
+
+``IDataProvider`` yerine ``IDataFetcher`` (veri cekme) ve
+``IWaveformDownloader`` (dalga formu indirme) kullanin. Bu modul v2.0'da
+kaldirilacaktir.
+"""
+
+import warnings
 from typing import Any, Dict, List, Protocol
 import pandas as pd
 from ..core.ErrorHandle import ProviderError
 from ..processing.ResultHandle import Result
 from ..processing.Selection import SearchCriteria
+
+warnings.warn(
+    "selection_service.providers.IProvider kullanimdan kalkti; "
+    "IDataFetcher / IWaveformDownloader (providers.interfaces) kullanin. "
+    "v2.0'da kaldirilacak.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 class IDataProvider(Protocol):

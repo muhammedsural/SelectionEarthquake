@@ -121,3 +121,15 @@ def test_provider_factory_wraps_cache_when_enabled():
 def test_provider_factory_unknown_provider_raises():
     with pytest.raises(ValueError, match="Unknown provider"):
         ProviderFactory.create_provider("UNKNOWN", use_cache=False)
+
+
+def test_legacy_idataprovider_emits_deprecation_warning():
+    import warnings
+
+    import selection_service
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        legacy = selection_service.IDataProvider
+    assert legacy is not None
+    assert any(issubclass(w.category, DeprecationWarning) for w in caught)
