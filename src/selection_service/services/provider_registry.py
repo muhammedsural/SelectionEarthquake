@@ -19,9 +19,9 @@ from __future__ import annotations
 import logging
 from typing import Any, List, Optional
 
-from ..enums.Enums import ProviderName
+from ..enums.enums import ProviderName
 from ..providers.interfaces import IDataFetcher
-from ..providers.ProvidersFactory import ProviderFactory
+from ..providers.providers_factory import ProviderFactory
 
 logger = logging.getLogger(__name__)
 

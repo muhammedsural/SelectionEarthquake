@@ -4,7 +4,7 @@ from abc import ABC
 import math
 from typing import Any, Dict, List, Protocol, Tuple
 import pandas as pd
-from ...core.Config import (
+from ...core.config import (
     SCORING_MAP,
 )
 from ..criteria import SearchCriteria, SelectionConfig

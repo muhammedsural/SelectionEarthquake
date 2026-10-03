@@ -19,7 +19,7 @@ class ProviderName(str, Enum):
 `BaseColumnMapper` sinifini kullanarak ham kolonlari standart kolonlara esle.
 
 ```python
-from selection_service.processing.Mappers import BaseColumnMapper
+from selection_service.processing.mappers import BaseColumnMapper
 
 class NewProviderColumnMapper(BaseColumnMapper):
     def __init__(self, **kwargs):
@@ -38,7 +38,7 @@ Provider `IDataFetcher` sozlesmesini karsilamalidir.
 
 ```python
 from selection_service.providers.interfaces import IDataFetcher
-from selection_service.processing.ResultHandle import Result
+from selection_service.processing.result_handle import Result
 
 class NewProvider(IDataFetcher):
     def get_name(self) -> str:

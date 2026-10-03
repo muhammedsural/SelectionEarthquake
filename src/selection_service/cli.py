@@ -7,18 +7,11 @@ import json
 from pathlib import Path
 from typing import Iterable
 
-from selection_service.core.EarthquakeApi import EarthquakeAPI
-from selection_service.core.LoggingConfig import setup_logging
-from selection_service.enums.Enums import DesignCode, ProviderName
-from selection_service.processing.Selection import (
-    ParetoSelectionStrategy,
-    ScoringWeights,
-    SearchCriteria,
-    SelectionConfig,
-    SpectrumMatchStrategy,
-    TBDY2018ConstraintStrategy,
-    TBDYSelectionStrategy,
-)
+from selection_service.core.earthquake_api import EarthquakeAPI
+from selection_service.core.logging_config import setup_logging
+from selection_service.enums.enums import DesignCode, ProviderName
+from selection_service.processing.criteria import ScoringWeights, SearchCriteria, SelectionConfig
+from selection_service.processing.strategies import ParetoSelectionStrategy, SpectrumMatchStrategy, TBDY2018ConstraintStrategy, TBDYSelectionStrategy
 
 
 def _provider_names(values: Iterable[str]) -> list[ProviderName]:

@@ -25,14 +25,15 @@ from typing import Any, List
 
 import pandas as pd
 
-from ..core.ErrorHandle import PipelineError, ProviderError
-from ..core.Pipeline import PipelineResult
-from ..enums.Enums import ProviderName
-from ..processing.ResultHandle import Result
-from ..processing.Selection import ISelectionStrategy, SearchCriteria
-from ..services.EarthquakeQueryService import EarthquakeQueryService
-from ..services.ProviderRegistry import ProviderRegistry
-from ..services.WaveformDownloadService import WaveformDownloadService
+from ..core.error_handle import PipelineError, ProviderError
+from ..core.pipeline import PipelineResult
+from ..enums.enums import ProviderName
+from ..processing.result_handle import Result
+from ..processing.criteria import SearchCriteria
+from ..processing.strategies import ISelectionStrategy
+from ..services.earthquake_query_service import EarthquakeQueryService
+from ..services.provider_registry import ProviderRegistry
+from ..services.waveform_download_service import WaveformDownloadService
 
 logger = logging.getLogger(__name__)
 

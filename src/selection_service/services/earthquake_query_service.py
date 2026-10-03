@@ -19,11 +19,12 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from ..core.ErrorHandle import PipelineError, StrategyError
-from ..core.Pipeline import EarthquakePipeline, PipelineContext, PipelineResult
-from ..processing.ResultHandle import Result
-from ..processing.Selection import ISelectionStrategy, SearchCriteria
-from ..services.ProviderRegistry import ProviderRegistry
+from ..core.error_handle import PipelineError, StrategyError
+from ..core.pipeline import EarthquakePipeline, PipelineContext, PipelineResult
+from ..processing.result_handle import Result
+from ..processing.criteria import SearchCriteria
+from ..processing.strategies import ISelectionStrategy
+from ..services.provider_registry import ProviderRegistry
 
 logger = logging.getLogger(__name__)
 

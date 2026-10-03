@@ -5,13 +5,13 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from selection_service.core.ErrorHandle import ProviderError
-from selection_service.core.Pipeline import PipelineResult
-from selection_service.processing.ResultHandle import Result
-from selection_service.providers.afad.AfadFileManager import AfadFileManager
-from selection_service.services.EarthquakeQueryService import EarthquakeQueryService
-from selection_service.services.ProviderRegistry import ProviderRegistry
-from selection_service.services.WaveformDownloadService import WaveformDownloadService
+from selection_service.core.error_handle import ProviderError
+from selection_service.core.pipeline import PipelineResult
+from selection_service.processing.result_handle import Result
+from selection_service.providers.afad.afad_file_manager import AfadFileManager
+from selection_service.services.earthquake_query_service import EarthquakeQueryService
+from selection_service.services.provider_registry import ProviderRegistry
+from selection_service.services.waveform_download_service import WaveformDownloadService
 
 
 def _zip_bytes(files: dict[str, bytes]) -> bytes:
@@ -100,7 +100,7 @@ def test_provider_registry_build_uses_factory():
     provider.get_name.return_value = "PEER"
 
     with patch(
-        "selection_service.services.ProviderRegistry.ProviderFactory.create_provider",
+        "selection_service.services.provider_registry.ProviderFactory.create_provider",
         return_value=provider,
     ) as create_provider:
         registry = ProviderRegistry.build(["PEER"], use_cache=False, data_dir="x")
@@ -120,7 +120,7 @@ def test_waveform_download_batch_calls_supported_provider():
         "EVENT": [1, 2],
     })
 
-    with patch("selection_service.services.WaveformDownloadService.supports_download", return_value=True):
+    with patch("selection_service.services.waveform_download_service.supports_download", return_value=True):
         result = WaveformDownloadService(registry).download_batch(df, export_type="mseed")
 
     assert result.success is True
@@ -140,7 +140,7 @@ def test_waveform_download_batch_fails_when_supported_provider_fails():
         "EVENT": [1],
     })
 
-    with patch("selection_service.services.WaveformDownloadService.supports_download", return_value=True):
+    with patch("selection_service.services.waveform_download_service.supports_download", return_value=True):
         result = WaveformDownloadService(registry).download_batch(df, export_type="mseed")
 
     assert result.success is False
@@ -162,7 +162,7 @@ def test_waveform_download_batch_fails_when_no_files_downloaded():
         "EVENT": [1],
     })
 
-    with patch("selection_service.services.WaveformDownloadService.supports_download", return_value=True):
+    with patch("selection_service.services.waveform_download_service.supports_download", return_value=True):
         result = WaveformDownloadService(registry).download_batch(df, export_type="mseed")
 
     assert result.success is False
@@ -181,12 +181,12 @@ def test_waveform_download_single_success_and_not_supported():
     registry.get.return_value = provider
     service = WaveformDownloadService(registry)
 
-    with patch("selection_service.services.WaveformDownloadService.supports_download", return_value=True):
+    with patch("selection_service.services.waveform_download_service.supports_download", return_value=True):
         ok = service.download_single("a.mseed", "1", "AFAD.TK.KND")
     assert ok.success is True
     provider.download_single_waveforms.assert_called_once()
 
-    with patch("selection_service.services.WaveformDownloadService.supports_download", return_value=False):
+    with patch("selection_service.services.waveform_download_service.supports_download", return_value=False):
         failed = service.download_single("a.mseed", "1", "AFAD.TK.KND")
     assert failed.success is False
 
@@ -200,7 +200,7 @@ def test_waveform_download_single_fails_when_provider_returns_fail():
     registry.get.return_value = provider
     service = WaveformDownloadService(registry)
 
-    with patch("selection_service.services.WaveformDownloadService.supports_download", return_value=True):
+    with patch("selection_service.services.waveform_download_service.supports_download", return_value=True):
         result = service.download_single("a.mseed", "1", "AFAD.TK.KND")
 
     assert result.success is False

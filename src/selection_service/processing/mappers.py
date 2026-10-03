@@ -5,8 +5,8 @@ import pandas as pd
 from functools import lru_cache
 
 from ..utility.path_utils import load_excel
-from ..enums.Enums import ProviderName
-from ..core.Config import STANDARD_COLUMNS, MECHANISM_MAP
+from ..enums.enums import ProviderName
+from ..core.config import STANDARD_COLUMNS, MECHANISM_MAP
 
 
 class IColumnMapper(Protocol):

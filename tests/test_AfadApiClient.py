@@ -5,8 +5,8 @@ import asyncio
 import aiohttp
 import requests
 from unittest.mock import MagicMock, patch, AsyncMock, Mock
-from selection_service.providers.afad.AfadApiClient import AfadApiClient
-from selection_service.core.ErrorHandle import NetworkError
+from selection_service.providers.afad.afad_api_client import AfadApiClient
+from selection_service.core.error_handle import NetworkError
 
 
 class TestAfadApiClientInit:

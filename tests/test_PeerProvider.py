@@ -17,10 +17,10 @@ import pytest
 import pandas as pd
 from unittest.mock import patch, MagicMock
 
-from selection_service.providers.PeerProvider import PeerWest2Provider
-from selection_service.core.ErrorHandle import ProviderError, DataProcessingError
-from selection_service.processing.Mappers import PEERColumnMapper
-from selection_service.processing.Selection import SearchCriteria
+from selection_service.providers.peer_provider import PeerWest2Provider
+from selection_service.core.error_handle import ProviderError, DataProcessingError
+from selection_service.processing.mappers import PEERColumnMapper
+from selection_service.processing.criteria import SearchCriteria
 
 
 @pytest.fixture
@@ -44,7 +44,7 @@ def peer_provider():
     })
 
     # PeerWest2Provider.__init__ load_csv() ile flatfile yükler — bunu patch'le
-    with patch("selection_service.providers.PeerProvider.load_csv",
+    with patch("selection_service.providers.peer_provider.load_csv",
                return_value=pd.DataFrame()):
         provider = PeerWest2Provider(column_mapper=mock_mapper)
         provider.flatfile_df = pd.DataFrame()

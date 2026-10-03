@@ -5,34 +5,25 @@ selection_service
 A Python library for earthquake ground motion selection and processing.
 """
 
-__version__ = "1.2.1"
+__version__ = "2.0.0"
 
 # --- Core API ---
-from .core.LoggingConfig import setup_logging
+from .core.logging_config import setup_logging
 
 # --- Enums ---
-from .enums.Enums import ProviderName, DesignCode
+from .enums.enums import ProviderName, DesignCode
 
-from .core.Pipeline import EarthquakePipeline
-from .core.EarthquakeApi import EarthquakeAPI
+from .core.pipeline import EarthquakePipeline
+from .core.earthquake_api import EarthquakeAPI
 
 # --- Providers ---
 from .providers.interfaces import IDataFetcher, IWaveformDownloader
-from .providers.ProvidersFactory import ProviderFactory
+from .providers.providers_factory import ProviderFactory
 
 # --- Processing ---
-from .processing.Selection import (
-    SelectionConfig,
-    SearchCriteria,
-    BaseSelectionStrategy,
-    TBDYSelectionStrategy,
-    TBDY2018ConstraintStrategy,
-    ConstraintSelectionStrategy,
-    ParetoSelectionStrategy,
-    SpectrumMatchStrategy,
-    EurocodeSelectionStrategy
-)
-from .processing.Mappers import ColumnMapperFactory
+from .processing.criteria import SelectionConfig, SearchCriteria
+from .processing.strategies import BaseSelectionStrategy, TBDYSelectionStrategy, TBDY2018ConstraintStrategy, ConstraintSelectionStrategy, ParetoSelectionStrategy, SpectrumMatchStrategy, EurocodeSelectionStrategy
+from .processing.mappers import ColumnMapperFactory
 
 __all__ = [
     "__version__",
@@ -46,19 +37,3 @@ __all__ = [
     "ColumnMapperFactory"
 ]
 
-
-def __getattr__(name):
-    # Geriye donuk uyumluluk: selection_service.IDataProvider hala calisir.
-    if name == "IDataProvider":
-        import warnings
-
-        warnings.warn(
-            "selection_service.IDataProvider kullanimdan kalkti; "
-            "IDataFetcher / IWaveformDownloader kullanin. v2.0'da kaldirilacak.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        from .providers.IProvider import IDataProvider
-
-        return IDataProvider
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

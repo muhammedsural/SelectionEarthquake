@@ -13,9 +13,7 @@ Bu ayrım iki SOLID ihlalini düzeltir:
   - LSP (Liskov Substitution): IDataFetcher bekleyen kod, download
     fırlatmayan PEER ile güvenle çalışır.
 
-Geriye dönük uyumluluk:
-  IDataProvider alias'ı korunmuştur; mevcut import'lar kırılmadan çalışır.
-  İlerleyen sürümlerde kaldırılabilir.
+Not: eski ``IDataProvider`` v2.0.0'da kaldırıldı.
 """
 
 from __future__ import annotations
@@ -24,9 +22,9 @@ from typing import Any, Dict, List, Protocol, runtime_checkable
 
 import pandas as pd
 
-from ..core.ErrorHandle import ProviderError
-from ..processing.ResultHandle import Result
-from ..processing.Selection import SearchCriteria
+from ..core.error_handle import ProviderError
+from ..processing.result_handle import Result
+from ..processing.criteria import SearchCriteria
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -171,17 +169,7 @@ class IWaveformDownloader(Protocol):
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# 3. GERİYE DÖNÜK UYUMLULUK ALIAS'I
-# ──────────────────────────────────────────────────────────────────────────────
-
-# Mevcut import'lar (from ..providers.IProvider import IDataProvider) kırılmasın diye.
-# Yeni kod IDataFetcher kullanmalıdır.
-# TODO: v2.0'da bu alias kaldırılacak.
-IDataProvider = IDataFetcher
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# 4. TYPE GUARD YARDIMCISI
+# 3. TYPE GUARD YARDIMCISI
 # ──────────────────────────────────────────────────────────────────────────────
 
 def supports_download(provider: IDataFetcher) -> bool:

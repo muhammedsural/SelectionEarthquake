@@ -7,11 +7,11 @@ from typing import Any
 
 import pandas as pd
 
-from ..core.ErrorHandle import ProviderError
-from ..enums.Enums import ProviderName
-from ..processing.Mappers import IColumnMapper
-from ..processing.ResultHandle import Result
-from ..processing.Selection import SearchCriteria
+from ..core.error_handle import ProviderError
+from ..enums.enums import ProviderName
+from ..processing.mappers import IColumnMapper
+from ..processing.result_handle import Result
+from ..processing.criteria import SearchCriteria
 from .interfaces import IDataFetcher
 
 

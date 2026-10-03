@@ -6,8 +6,9 @@ gosterir.
 ## 1. Strateji olustur
 
 ```python
-from selection_service.enums.Enums import DesignCode
-from selection_service.processing.Selection import SelectionConfig, TBDYSelectionStrategy
+from selection_service.enums.enums import DesignCode
+from selection_service.processing.criteria import SelectionConfig
+from selection_service.processing.strategies import TBDYSelectionStrategy
 
 config = SelectionConfig(
     design_code=DesignCode.TBDY_2018,
@@ -22,7 +23,7 @@ strategy = TBDYSelectionStrategy(config=config)
 ## 2. Arama kriterlerini tanimla
 
 ```python
-from selection_service.processing.Selection import ScoringWeights, SearchCriteria
+from selection_service.processing.criteria import ScoringWeights, SearchCriteria
 
 criteria = SearchCriteria(
     start_date="2000-01-01",
@@ -41,8 +42,8 @@ criteria = SearchCriteria(
 ## 3. API'yi calistir
 
 ```python
-from selection_service.core.EarthquakeApi import EarthquakeAPI
-from selection_service.enums.Enums import ProviderName
+from selection_service.core.earthquake_api import EarthquakeAPI
+from selection_service.enums.enums import ProviderName
 
 api = EarthquakeAPI(
     provider_names=[ProviderName.PEER],

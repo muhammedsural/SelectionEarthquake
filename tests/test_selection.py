@@ -15,13 +15,9 @@ import pytest
 import pandas as pd
 from pydantic import ValidationError
 
-from selection_service.enums.Enums import DesignCode
-from selection_service.processing.Selection import (
-    SelectionConfig,
-    SearchCriteria,
-    ScoringWeights,
-    TBDYSelectionStrategy,
-)
+from selection_service.enums.enums import DesignCode
+from selection_service.processing.criteria import SelectionConfig, SearchCriteria, ScoringWeights
+from selection_service.processing.strategies import TBDYSelectionStrategy
 
 
 # ─────────────────────────────────────────────────────────────────────────────

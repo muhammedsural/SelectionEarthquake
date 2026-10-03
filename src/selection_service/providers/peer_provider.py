@@ -21,16 +21,16 @@ from typing import Any, Dict, Type
 import numpy as np
 import pandas as pd
 
-from ..core.Config import (
+from ..core.config import (
     MECHANISM_MAP,
     REVERSE_MECHANISM_MAP,
     convert_mechanism_to_text,
 )
-from ..core.ErrorHandle import DataProcessingError, ProviderError
-from ..enums.Enums import ProviderName
-from ..processing.Mappers import IColumnMapper
-from ..processing.ResultHandle import async_result_decorator, result_decorator
-from ..processing.Selection import SearchCriteria
+from ..core.error_handle import DataProcessingError, ProviderError
+from ..enums.enums import ProviderName
+from ..processing.mappers import IColumnMapper
+from ..processing.result_handle import async_result_decorator, result_decorator
+from ..processing.criteria import SearchCriteria
 from ..providers.interfaces import IDataFetcher          # ← yeni interface
 from ..utility.path_utils import load_csv
 

@@ -4,12 +4,12 @@ import pytest
 import pandas as pd
 from unittest.mock import MagicMock, AsyncMock
 
-from selection_service.core.Pipeline import (
+from selection_service.core.pipeline import (
     EarthquakePipeline, PipelineContext, PipelineResult, PipelineReporter,
 )
-from selection_service.core.ErrorHandle import NoDataError, PipelineError
-from selection_service.processing.ResultHandle import Result
-from selection_service.core.Config import STANDARD_COLUMNS
+from selection_service.core.error_handle import NoDataError, PipelineError
+from selection_service.processing.result_handle import Result
+from selection_service.core.config import STANDARD_COLUMNS
 
 
 # ─── helpers ────────────────────────────────────────────────────────────────

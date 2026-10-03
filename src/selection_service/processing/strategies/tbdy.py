@@ -3,7 +3,7 @@
 import math
 from typing import Any, Dict, List, Tuple
 import pandas as pd
-from ...core.Config import (
+from ...core.config import (
     SCORING_MAP,
 )
 from ..criteria import SearchCriteria

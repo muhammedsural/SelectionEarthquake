@@ -16,14 +16,14 @@ import pandas as pd
 from unittest.mock import patch
 
 # ── Proje import'ları ─────────────────────────────────────────────────────────
-from selection_service.core.Config import STANDARD_COLUMNS
-from selection_service.processing.Mappers import (
+from selection_service.core.config import STANDARD_COLUMNS
+from selection_service.processing.mappers import (
     AFADColumnMapper,
     PEERColumnMapper,
     ColumnMapperFactory,
     BaseColumnMapper,
 )
-from selection_service.enums.Enums import ProviderName
+from selection_service.enums.enums import ProviderName
 
 
 # ─────────────────────────────────────────────────────────────────────────────

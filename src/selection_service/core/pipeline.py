@@ -15,9 +15,10 @@ from typing import Any, Callable, Dict, List, Optional
 import logging
 import pandas as pd
 
-from ..core.ErrorHandle import NoDataError, PipelineError, ProviderError, StrategyError
-from ..processing.ResultHandle import Result, async_result_decorator, result_decorator
-from ..processing.Selection import ISelectionStrategy, SearchCriteria
+from ..core.error_handle import NoDataError, PipelineError, ProviderError, StrategyError
+from ..processing.result_handle import Result, async_result_decorator, result_decorator
+from ..processing.criteria import SearchCriteria
+from ..processing.strategies import ISelectionStrategy
 from ..providers.interfaces import IDataFetcher              # ← yeni; ProviderFactory import kaldırıldı
 
 logger = logging.getLogger(__name__)

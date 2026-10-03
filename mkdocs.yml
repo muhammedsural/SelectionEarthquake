@@ -43,6 +43,7 @@ nav:
       - Kurulum: installation.md
       - Hizli Baslangic: quickstart.md
       - CLI: cli.md
+      - 2.0 Gecis Rehberi: migration-v2.md
   - Kullanici Rehberi:
       - Temel Kavramlar: concepts.md
       - Arama Kriterleri: search-criteria.md

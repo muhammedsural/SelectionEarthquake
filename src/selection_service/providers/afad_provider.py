@@ -17,13 +17,13 @@ from typing import Any, Dict, List, Type
 
 import pandas as pd
 
-from ..core.ErrorHandle import AfadEmptyResultError, AfadMappingError, ProviderError
-from ..enums.Enums import ProviderName
-from ..processing.Mappers import IColumnMapper
-from ..processing.ResultHandle import Result, async_result_decorator, result_decorator
-from ..processing.Selection import SearchCriteria
-from ..providers.afad.AfadApiClient import AfadApiClient
-from ..providers.afad.AfadFileManager import AfadFileManager
+from ..core.error_handle import AfadEmptyResultError, AfadMappingError, ProviderError
+from ..enums.enums import ProviderName
+from ..processing.mappers import IColumnMapper
+from ..processing.result_handle import Result, async_result_decorator, result_decorator
+from ..processing.criteria import SearchCriteria
+from ..providers.afad.afad_api_client import AfadApiClient
+from ..providers.afad.afad_file_manager import AfadFileManager
 from ..providers.interfaces import IDataFetcher, IWaveformDownloader  # ← yeni
 
 

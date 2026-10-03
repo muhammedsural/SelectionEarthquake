@@ -11,10 +11,10 @@ secimi yapan Python kutuphanesi.
 
 Son yerel dogrulama:
 
-- Surum: `1.2.1`
+- Surum: `2.0.0`
 - Test komutu: `python -m pytest`
 - Coverage komutu: `python -m pytest --cov=selection_service --cov-report=term-missing`
-- Test sonucu: `414 passed`
+- Test sonucu: `438 passed`
 - Toplam coverage: `81%`
 - Dogrulama ortami: Python `3.13.5`, pytest `8.4.2`, pytest-cov `7.0.0`
 
@@ -61,14 +61,10 @@ pip install -e ".[dev]"
 ## Hizli Baslangic
 
 ```python
-from selection_service.core.EarthquakeApi import EarthquakeAPI
-from selection_service.enums.Enums import DesignCode, ProviderName
-from selection_service.processing.Selection import (
-    ScoringWeights,
-    SearchCriteria,
-    SelectionConfig,
-    TBDYSelectionStrategy,
-)
+from selection_service.core.earthquake_api import EarthquakeAPI
+from selection_service.enums.enums import DesignCode, ProviderName
+from selection_service.processing.criteria import ScoringWeights, SearchCriteria, SelectionConfig
+from selection_service.processing.strategies import TBDYSelectionStrategy
 
 config = SelectionConfig(
     design_code=DesignCode.TBDY_2018,
@@ -135,7 +131,7 @@ Hazir agirlik setleri `ScoringWeights.from_preset(...)` ile secilir:
 Preset aciklamalari:
 
 ```python
-from selection_service.processing.Selection import ScoringWeights
+from selection_service.processing.criteria import ScoringWeights
 
 print(ScoringWeights.preset_descriptions())
 ```

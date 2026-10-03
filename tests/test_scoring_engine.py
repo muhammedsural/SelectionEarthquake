@@ -16,19 +16,9 @@ import math
 import pytest
 import pandas as pd
 
-from selection_service.enums.Enums import DesignCode
-from selection_service.processing.Selection import (
-    SelectionConfig,
-    SearchCriteria,
-    ScoringWeights,
-    TBDYSelectionStrategy,
-    TBDY2018ConstraintStrategy,
-    ConstraintSelectionStrategy,
-    ParetoSelectionStrategy,
-    SpectrumMatchStrategy,
-    EurocodeSelectionStrategy,
-    BaseSelectionStrategy,
-)
+from selection_service.enums.enums import DesignCode
+from selection_service.processing.criteria import SelectionConfig, SearchCriteria, ScoringWeights
+from selection_service.processing.strategies import TBDYSelectionStrategy, TBDY2018ConstraintStrategy, ConstraintSelectionStrategy, ParetoSelectionStrategy, SpectrumMatchStrategy, EurocodeSelectionStrategy, BaseSelectionStrategy
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -162,7 +152,7 @@ class TestCalculateTotalScore:
         assert score == pytest.approx(0.0)
 
     def test_zero_weight_skipped(self, strategy, criteria):
-        from selection_service.processing.Selection import ScoringWeights
+        from selection_service.processing.criteria import ScoringWeights
         zero_weights = ScoringWeights(magnitude=0.0, rjb=0.0, rrup=0.0,
                                       repi=0.0, vs30=0.0, pga=0.0, pgv=0.0,
                                       pgd=0.0, t90=0.0, arias=0.0, depth=0.0,

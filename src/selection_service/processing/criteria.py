@@ -3,8 +3,8 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 from pydantic import BaseModel, Field, model_validator
-from ..enums.Enums import DesignCode
-from ..core.Config import (
+from ..enums.enums import DesignCode
+from ..core.config import (
     MECHANISM_MAP,
     REVERSE_MECHANISM_MAP,
     SCORING_MAP,

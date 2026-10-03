@@ -34,7 +34,7 @@ Mekanizma gibi kategorik kriterler:
 ## Hazir presetler
 
 ```python
-from selection_service.processing.Selection import ScoringWeights
+from selection_service.processing.criteria import ScoringWeights
 
 weights = ScoringWeights.from_preset("tbdy_2018_record_selection")
 ```
@@ -56,7 +56,7 @@ ScoringWeights.preset_descriptions()
 ## Ozel agirliklar
 
 ```python
-from selection_service.processing.Selection import ScoringWeights
+from selection_service.processing.criteria import ScoringWeights
 
 weights = ScoringWeights(
     magnitude=6.0,
@@ -103,7 +103,7 @@ Ornek eleman:
 filtreleri uygular, sonra adaylari hata metriklerine gore siralar.
 
 ```python
-from selection_service.processing.Selection import TBDY2018ConstraintStrategy
+from selection_service.processing.strategies import TBDY2018ConstraintStrategy
 
 strategy = TBDY2018ConstraintStrategy(config)
 ```
