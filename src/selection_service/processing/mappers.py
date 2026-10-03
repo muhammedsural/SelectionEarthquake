@@ -111,6 +111,8 @@ class AFADColumnMapper(BaseColumnMapper):
 
     # AFAD yanıtında derinliği taşıyabilecek alanlar (öncelik sırasıyla).
     _DEPTH_FIELDS = (
+        "relatedDepth",  # canlı AFAD yanıtında doğrulandı
+        "earthquakeDepth",
         "relatedEarthquakeDepth",
         "eventDepth",
         "hypocenterDepth",

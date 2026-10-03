@@ -433,6 +433,12 @@ class TestAfadHypoDepth:
         result = AFADColumnMapper().map_columns(afad_api_row)
         assert result["HYPO_DEPTH(km)"].iloc[0] == 8.5
 
+    def test_related_depth_is_live_afad_field(self, afad_api_row):
+        # Canlı AFAD yanıtında derinlik "relatedDepth" alanında gelir.
+        afad_api_row["relatedDepth"] = 7.0
+        result = AFADColumnMapper().map_columns(afad_api_row)
+        assert result["HYPO_DEPTH(km)"].iloc[0] == 7.0
+
     def test_missing_inputs_stay_null(self, afad_api_row):
         result = AFADColumnMapper().map_columns(afad_api_row.drop(columns=["rhyp"]))
         assert result["HYPO_DEPTH(km)"].isna().all()

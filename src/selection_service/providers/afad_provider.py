@@ -184,6 +184,7 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
                     "count": count,
                     "missing": sorted(missing),
                     "success": not missing,
+                    "extracted_files": list(extracted),
                 })
                 logger.info("Batch %d tamamlandı: %d dosya.", idx, count)
 
