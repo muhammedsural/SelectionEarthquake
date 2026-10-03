@@ -3,7 +3,7 @@ import inspect
 import aiohttp
 import requests
 from typing import Dict, Any, Optional
-from selection_service.core.ErrorHandle import NetworkError
+from ...core.ErrorHandle import NetworkError
 
 class AfadApiClient:
     """AFAD API isteklerini yöneten istemci sınıfı"""

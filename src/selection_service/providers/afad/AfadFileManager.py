@@ -2,7 +2,7 @@
 import os
 import zipfile
 from typing import List
-from selection_service.core.ErrorHandle import ProviderError
+from ...core.ErrorHandle import ProviderError
 
 class AfadFileManager:
     """Dosya ve ZIP işlemlerini yöneten sınıf"""
