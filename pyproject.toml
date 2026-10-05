@@ -75,11 +75,11 @@ package-dir = {"" = "src"}
 include-package-data = true
 
 [project.urls]
-Homepage = "https://github.com/muhammedsural/SELECTIONEARTHQUAKE"
-Documentation = "https://muhammedsural.github.io/SELECTIONEARTHQUAKE"
-Repository = "https://github.com/muhammedsural/SELECTIONEARTHQUAKE"
-Issues = "https://github.com/muhammedsural/SELECTIONEARTHQUAKE/issues"
-Changelog = "https://github.com/muhammedsural/SELECTIONEARTHQUAKE/releases"
+Homepage = "https://github.com/muhammedsural/SelectionEarthquake"
+Documentation = "https://muhammedsural.github.io/SelectionEarthquake"
+Repository = "https://github.com/muhammedsural/SelectionEarthquake"
+Issues = "https://github.com/muhammedsural/SelectionEarthquake/issues"
+Changelog = "https://github.com/muhammedsural/SelectionEarthquake/releases"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

@@ -1,6 +1,6 @@
 site_name: SelectionEarthquake
 site_description: Earthquake record search, scoring, selection, and waveform download library.
-site_url: https://muhammedsural.github.io/SELECTIONEARTHQUAKE/
+site_url: https://muhammedsural.github.io/SelectionEarthquake/
 repo_url: https://github.com/muhammedsural/SelectionEarthquake
 repo_name: muhammedsural/SelectionEarthquake
 
@@ -36,6 +36,10 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
+
+exclude_docs: |
+  __pycache__/
+  generate_api.py
 
 nav:
   - Baslangic:
