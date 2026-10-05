@@ -4,7 +4,7 @@
 [![Python](https://img.shields.io/pypi/pyversions/earthquake-selection)](https://pypi.org/project/earthquake-selection/)
 [![Tests](https://img.shields.io/github/actions/workflow/status/muhammedsural/SelectionEarthquake/tests.yml?branch=main&label=tests)](https://github.com/muhammedsural/SelectionEarthquake/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Docs](https://img.shields.io/badge/docs-mkdocs-informational)](https://muhammedsural.github.io/SELECTIONEARTHQUAKE)
+[![Docs](https://img.shields.io/badge/docs-mkdocs-informational)](https://muhammedsural.github.io/SelectionEarthquake)
 
 Deprem kayitlarini AFAD, PEER NGA-West2 ve FDSN servislerinden cekip ortak
 kolon semasina normalize eden; arama kriterlerine gore puanlayan ve
@@ -455,7 +455,7 @@ Tum modul adlari `snake_case` oldu. Tam liste ve davranis duzeltmeleri:
 
 ## Dokumantasyon
 
-Tum dokumantasyon: <https://muhammedsural.github.io/SELECTIONEARTHQUAKE>
+Tum dokumantasyon: <https://muhammedsural.github.io/SelectionEarthquake>
 
 | Konu | Sayfa |
 | --- | --- |
