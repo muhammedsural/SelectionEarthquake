@@ -228,3 +228,99 @@ class TestEventGroupColumnAlwaysPresent:
         assert result.value.report["deduplication"] == {
             "merged_event_groups": 0, "duplicate_records_removed": 0,
         }
+
+
+# ─── DedupConfig: tercih edilen provider, eşikler, kapatma ───────────────────
+
+from pydantic import ValidationError
+
+from selection_service.enums.enums import ProviderName
+from selection_service.processing.criteria import DedupConfig
+
+
+class TestDedupConfig:
+    def test_defaults_match_module_constants(self):
+        cfg = DedupConfig()
+        assert (cfg.enabled, cfg.max_event_distance_km, cfg.max_mag_diff,
+                cfg.max_station_distance_km, cfg.prefer_provider) == (True, 50.0, 0.5, 1.0, None)
+
+    def test_prefer_provider_accepts_enum_and_normalizes_case(self):
+        assert DedupConfig(prefer_provider=ProviderName.AFAD).prefer_provider == "AFAD"
+        assert DedupConfig(prefer_provider=" afad ").prefer_provider == "AFAD"
+        assert DedupConfig(prefer_provider="").prefer_provider is None
+
+    @pytest.mark.parametrize("field", ["max_event_distance_km", "max_station_distance_km"])
+    def test_distances_must_be_positive(self, field):
+        with pytest.raises(ValidationError):
+            DedupConfig(**{field: 0})
+
+    def test_negative_magnitude_difference_rejected(self):
+        with pytest.raises(ValidationError):
+            DedupConfig(max_mag_diff=-0.1)
+
+    def test_selection_config_carries_default_dedup(self):
+        cfg = SelectionConfig(design_code=DesignCode.TBDY_2018)
+        assert isinstance(cfg.dedup, DedupConfig)
+
+
+class TestPreferProvider:
+    def _df(self):
+        df = frame(KOCAELI)  # PEER önce, AFAD sonra; aynı istasyon konumu
+        df[EVENT_GROUP_COLUMN] = assign_event_groups(df)
+        return df
+
+    def test_default_keeps_first_listed_provider(self):
+        assert find_duplicate_records(self._df()).tolist() == [False, True]
+
+    def test_preferred_provider_is_kept(self):
+        dup = find_duplicate_records(self._df(), prefer_provider="AFAD")
+        assert dup.tolist() == [True, False]
+
+    def test_unknown_preferred_provider_falls_back_to_order(self):
+        dup = find_duplicate_records(self._df(), prefer_provider="FDSN")
+        assert dup.tolist() == [False, True]
+
+
+class TestPipelineDedupConfig:
+    def _run(self, dedup=None, n=3):
+        peer = _records("PEER", "Kocaeli, Turkey", n, 40.75, 29.99, "P")
+        afad = _records("AFAD", "17-08-1999 Izmit", n, 40.70, 29.95, "A")
+        config = SelectionConfig(
+            design_code=DesignCode.TBDY_2018, num_records=10, max_per_event=3,
+            max_per_station=10, min_score=0.0,
+            **({"dedup": dedup} if dedup is not None else {}),
+        )
+        ctx = PipelineContext(
+            providers=[_provider("PEER", peer), _provider("AFAD", afad)],
+            strategy=TBDY2018ConstraintStrategy(config),
+            search_criteria=SearchCriteria(
+                start_date="1990-01-01", end_date="2025-01-01", target_magnitude=7.4
+            ),
+        )
+        return EarthquakePipeline().execute_sync(ctx).value
+
+    def test_prefer_provider_changes_which_copy_is_kept(self):
+        value = self._run(DedupConfig(prefer_provider=ProviderName.AFAD))
+        assert set(value.selected_df["PROVIDER"]) == {"AFAD"}
+
+    def test_tight_event_distance_prevents_merge(self):
+        # Episantrlar ~6 km arayla; 1 km eşiğinde aynı deprem sayılmaz.
+        value = self._run(DedupConfig(max_event_distance_km=1.0))
+        assert value.report["deduplication"]["merged_event_groups"] == 0
+        assert value.report["deduplication"]["duplicate_records_removed"] == 0
+        assert set(value.selected_df["PROVIDER"]) == {"PEER", "AFAD"}
+
+    def test_disabled_dedup_keeps_everything(self):
+        value = self._run(DedupConfig(enabled=False))
+        assert value.report["deduplication"] == {
+            "merged_event_groups": 0, "duplicate_records_removed": 0,
+        }
+        assert len(value.scored_df) == 6
+        assert set(value.scored_df[EVENT_GROUP_COLUMN]) == {
+            "PEER|Kocaeli, Turkey", "AFAD|17-08-1999 Izmit",
+        }
+
+    def test_station_threshold_is_configurable(self):
+        # İstasyonlar tam üst üste: çok küçük eşikte bile tekrar sayılır.
+        value = self._run(DedupConfig(max_station_distance_km=0.001))
+        assert value.report["deduplication"]["duplicate_records_removed"] == 3

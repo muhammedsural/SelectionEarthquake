@@ -17,7 +17,7 @@ aşmasıdır. Bu nedenle eşikler bilinçli olarak cömerttir.
 
 from __future__ import annotations
 
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -152,12 +152,13 @@ def find_duplicate_records(
     df: pd.DataFrame,
     group_col: str = EVENT_GROUP_COLUMN,
     max_station_distance_km: float = DEFAULT_MAX_STATION_DISTANCE_KM,
+    prefer_provider: Optional[str] = None,
 ) -> pd.Series:
     """Başka provider'daki bir kaydın tekrarı olan satırlar için True.
 
     Aynı olay grubunda ve istasyon konumu ``max_station_distance_km`` içindeki
-    kayıtlardan, DataFrame'de ilk görünen provider'ınki korunur. Provider'lar
-    sırayla işlenir; her biri, önceki provider'ların korunan kayıtlarından
+    kayıtlardan ``prefer_provider``'ınki, verilmediyse DataFrame'de ilk görünen
+    provider'ınki korunur. Provider'lar öncelik sırasıyla işlenir; her biri, önceki provider'ların korunan kayıtlarından
     kurulan bir KD-ağacında sorgulanır (grup başına O(n log n)).
     """
     duplicate = pd.Series(False, index=df.index)
@@ -166,7 +167,11 @@ def find_duplicate_records(
         return duplicate
 
     valid = valid_coordinates(df["STATION_LAT"], df["STATION_LON"])
-    order = {p: n for n, p in enumerate(df["PROVIDER"].astype(str).unique())}
+    providers = list(df["PROVIDER"].astype(str).unique())
+    if prefer_provider in providers:
+        providers.remove(prefer_provider)
+        providers.insert(0, prefer_provider)
+    order = {p: n for n, p in enumerate(providers)}
     # Birim küredeki kiriş uzunluğu: 2 * sin(açı / 2)
     chord = 2 * np.sin(max_station_distance_km / _EARTH_RADIUS_KM / 2)
 

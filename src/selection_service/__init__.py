@@ -21,7 +21,7 @@ from .providers.interfaces import IDataFetcher, IWaveformDownloader
 from .providers.providers_factory import ProviderFactory
 
 # --- Processing ---
-from .processing.criteria import SelectionConfig, SearchCriteria
+from .processing.criteria import SelectionConfig, SearchCriteria, DedupConfig
 from .processing.strategies import BaseSelectionStrategy, TBDYSelectionStrategy, TBDY2018ConstraintStrategy, ConstraintSelectionStrategy, EurocodeSelectionStrategy
 from .processing.mappers import ColumnMapperFactory
 
@@ -31,7 +31,7 @@ __all__ = [
     "setup_logging",
     "ProviderName", "DesignCode",
     "ProviderFactory", "IDataFetcher", "IWaveformDownloader",
-    "SelectionConfig", "SearchCriteria", "BaseSelectionStrategy",
+    "SelectionConfig", "SearchCriteria", "DedupConfig", "BaseSelectionStrategy",
     "TBDYSelectionStrategy", "TBDY2018ConstraintStrategy", "ConstraintSelectionStrategy",
     "EurocodeSelectionStrategy",
     "ColumnMapperFactory"

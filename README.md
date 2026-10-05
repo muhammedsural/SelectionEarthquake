@@ -14,8 +14,8 @@ Son yerel dogrulama:
 - Surum: `2.0.0`
 - Test komutu: `python -m pytest`
 - Coverage komutu: `python -m pytest --cov=selection_service --cov-report=term-missing`
-- Test sonucu: `458 passed`
-- Toplam coverage: `84%`
+- Test sonucu: `473 passed`
+- Toplam coverage: `86%`
 - Dogrulama ortami: Python `3.11.15`, pytest `9.1.1`, pytest-cov `7.1.0` (CI: Python 3.10-3.13)
 
 ## Paket ve Import Adi
