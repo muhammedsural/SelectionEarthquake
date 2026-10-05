@@ -22,6 +22,28 @@ class AfadFileManager:
             f.write(content)
         return path
 
+    def store_download(
+        self,
+        content: bytes,
+        event_id: int,
+        zip_name: str,
+        export_type: str = "asc2",
+        raw_filename: str | None = None,
+    ) -> List[str]:
+        """İndirilen içeriği kaydet; ZIP ise aç, değilse ham dosya olarak yaz.
+
+        AFAD tek dosyalık isteklerde (ör. mseed) içeriği ZIP'lemeden gönderir.
+        """
+        if content[:4] == b"PK\x03\x04":
+            zip_path = self.save_zip(content, event_id, zip_name)
+            return self.extract_zip(zip_path, export_type)
+        if not raw_filename:
+            raise ProviderError("AFAD", None, "Download is not a ZIP archive and no target filename given")
+        self._ensure_safe_member(raw_filename)
+        if not os.path.splitext(raw_filename)[1] and export_type:
+            raw_filename = f"{raw_filename}.{export_type}"
+        return [self.save_zip(content, event_id, raw_filename)]
+
     def extract_zip(self, zip_path: str, export_type: str = "asc2") -> List[str]:
         """Güvenli zip çıkarma ve iç içe zip kontrolü"""
         extracted_files = []

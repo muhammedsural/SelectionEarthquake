@@ -245,3 +245,15 @@ def test_earthquake_query_service_missing_strategy_and_async():
 
     async_failed = asyncio.run(service.run_async(MagicMock(), "missing"))
     assert async_failed.success is False
+
+
+def test_store_download_writes_raw_non_zip_content(tmp_path):
+    from selection_service.providers.afad.afad_file_manager import AfadFileManager
+
+    fm = AfadFileManager(base_dir=str(tmp_path))
+    files = fm.store_download(b"MSEED-BYTES", 1, "x.zip", "mseed", raw_filename="rec.mseed")
+
+    assert len(files) == 1
+    with open(files[0], "rb") as f:
+        assert f.read() == b"MSEED-BYTES"
+    assert files[0].endswith("rec.mseed")

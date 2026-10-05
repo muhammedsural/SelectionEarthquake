@@ -145,3 +145,28 @@ class TestAfadDataProvider:
             event_id="999",
         )
         assert recovered == 1
+
+
+def test_batch_failure_falls_back_to_single_downloads(tmp_path, monkeypatch):
+    from unittest.mock import MagicMock
+    from selection_service.providers.afad_provider import AFADDataProvider
+    from selection_service.providers.afad.afad_file_manager import AfadFileManager
+    from selection_service.processing.mappers import AFADColumnMapper
+
+    api = MagicMock()
+
+    def fake_download(payload):
+        if len(payload["filename"]) > 1 or payload["filename"] == ["bad"]:
+            raise RuntimeError('{"Result":101}')
+        return b"MSEED"
+
+    api.download_waveform.side_effect = fake_download
+    monkeypatch.setattr("selection_service.providers.afad_provider.time.sleep", lambda _: None)
+    p = AFADDataProvider(AFADColumnMapper(), api_client=api,
+                         file_manager=AfadFileManager(base_dir=str(tmp_path)))
+
+    result = p.download_waveforms_batch(["a", "b", "bad"], event_id=1)
+
+    assert result.success
+    assert result.value["downloaded"] == 2
+    assert result.value["batches"][0]["retry_recovered"] == 2

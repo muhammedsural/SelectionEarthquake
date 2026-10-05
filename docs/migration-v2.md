@@ -85,6 +85,10 @@ kullanildiginda pipeline artik sezgisel bir eslestirme yapar
 - **Tekrar kayit:** ayni olay grubunda, farkli provider'larda ve istasyon konumu
   `<= 1 km` olan kayitlardan ilk provider'inki (provider listesindeki siraya gore)
   korunur, digeri aday havuzundan cikarilir.
+- Esikler ve davranis `SelectionConfig.dedup` (`DedupConfig`) ile ayarlanir:
+  `enabled`, `max_event_distance_km`, `max_mag_diff`, `max_station_distance_km` ve
+  `prefer_provider` (ornegin `ProviderName.AFAD`; verilmezse provider listesinde
+  ilk siradaki korunur).
 - Gecersiz konumlar (`NaN`, `-999`, `(0, 0)`) eslestirmeye katilmaz.
 - Sonuclar `report["deduplication"]` ve `logs` icinde raporlanir.
 - Eslestirme sezgiseldir (ortak olay kimligi yoktur); yil siniri yil sonu/basi

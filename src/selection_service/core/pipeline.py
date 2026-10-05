@@ -18,7 +18,7 @@ import pandas as pd
 from ..core.error_handle import NoDataError, PipelineError, ProviderError, StrategyError
 from ..processing.dedup import EVENT_GROUP_COLUMN, assign_event_groups, find_duplicate_records
 from ..processing.result_handle import Result, async_result_decorator, result_decorator
-from ..processing.criteria import SearchCriteria
+from ..processing.criteria import DedupConfig, SearchCriteria
 from ..processing.strategies import ISelectionStrategy
 from ..providers.interfaces import IDataFetcher              # ← yeni; ProviderFactory import kaldırıldı
 
@@ -348,12 +348,24 @@ class EarthquakePipeline:
             "merged_event_groups": 0,
             "duplicate_records_removed": 0,
         }
+        dedup = self._dedup_config(context)
         if {"PROVIDER", "EVENT"} <= set(combined.columns):
-            groups = assign_event_groups(combined)
+            if dedup.enabled:
+                groups = assign_event_groups(
+                    combined,
+                    max_event_distance_km=dedup.max_event_distance_km,
+                    max_mag_diff=dedup.max_mag_diff,
+                )
+            else:
+                groups = combined["PROVIDER"].astype(str) + "|" + combined["EVENT"].astype(str)
             combined[EVENT_GROUP_COLUMN] = groups
             strategy_input[EVENT_GROUP_COLUMN] = groups
-            if combined["PROVIDER"].nunique() > 1:
-                duplicates = find_duplicate_records(strategy_input)
+            if dedup.enabled and combined["PROVIDER"].nunique() > 1:
+                duplicates = find_duplicate_records(
+                    strategy_input,
+                    max_station_distance_km=dedup.max_station_distance_km,
+                    prefer_provider=dedup.prefer_provider,
+                )
                 merged = int(groups[groups.str.fullmatch(r"G\d+")].nunique())
                 context.deduplication = {
                     "merged_event_groups": merged,
@@ -380,6 +392,13 @@ class EarthquakePipeline:
         context.combined_df = combined
         context.logs.append(f"Combined total: {len(combined)} records")
         return context
+
+    @staticmethod
+    def _dedup_config(context: PipelineContext) -> DedupConfig:
+        """Stratejinin ``config.dedup`` ayarı; yoksa varsayılanlar."""
+        config = getattr(context.strategy, "config", None)
+        dedup = getattr(config, "dedup", None)
+        return dedup if isinstance(dedup, DedupConfig) else DedupConfig()
 
     @staticmethod
     def _mark_missing(df: pd.DataFrame) -> pd.DataFrame:

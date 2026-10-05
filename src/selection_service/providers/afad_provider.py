@@ -119,8 +119,11 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
 
         content = self.api_client.download_waveform(payload)
         zip_name = f"waveforms_{event_id}_{station_code}.zip"
-        zip_path = self.file_manager.save_zip(content, event_id, zip_name)
-        extracted = self.file_manager.extract_zip(zip_path, kwargs.get("export_type", "asc2"))
+        extracted = self.file_manager.store_download(
+            content, event_id, zip_name,
+            kwargs.get("export_type", "mseed"),
+            raw_filename=filename,
+        )
         if not extracted:
             raise ProviderError("AFAD", None, f"No files extracted for {filename}")
         return True
@@ -147,6 +150,7 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
         batch_size = min(kwargs.get("batch_size", 10), 10)
         event_id = self._download_event_id(**kwargs)
         export_type = kwargs.get("export_type", "mseed")
+        retry_kwargs = {k: v for k, v in kwargs.items() if k not in ("event_id", "event_ids")}
 
         results: Dict[str, Any] = {
             "total": len(filenames),
@@ -169,10 +173,11 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
                 logger.debug("Batch %d indirildi, boyut: %d bytes", idx, len(content))
 
                 zip_name = f"part_{idx}.zip"
-                zip_path = self.file_manager.save_zip(content, event_id, zip_name)
-                logger.debug("Batch %d zip kaydedildi: %s", idx, zip_path)
-
-                extracted = self.file_manager.extract_zip(zip_path, export_type)
+                # Tek dosyalık partide AFAD içeriği ZIP'lemeden gönderebilir.
+                raw_name = batch_files[0] if len(batch_files) == 1 else None
+                extracted = self.file_manager.store_download(
+                    content, event_id, zip_name, export_type, raw_filename=raw_name
+                )
                 count = len(extracted)
                 missing = self._missing_files(batch_files, extracted)
                 logger.debug("Batch %d çıkarıldı, %d dosya bulundu.", idx, count)
@@ -190,7 +195,7 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
 
                 if missing:
                     retry_count = self._handle_retry(
-                        batch_files, extracted, event_id, **kwargs
+                        batch_files, extracted, event_id, **retry_kwargs
                     )
                     results["downloaded"] += retry_count
                     results["batches"][-1]["retry_recovered"] = retry_count
@@ -199,7 +204,17 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
 
             except Exception as e:
                 logger.error("Batch %d başarısız: %s", idx, e, exc_info=True)
-                results["batches"].append({"batch": idx, "success": False, "error": str(e)})
+                # Tek bir sorunlu kayıt (AFAD {"Result":101}) tüm partiyi düşürebilir;
+                # dosyaları tek tek deneyerek sağlam olanları kurtar.
+                recovered = self._handle_retry(batch_files, [], event_id, **retry_kwargs)
+                results["downloaded"] += recovered
+                results["batches"].append({
+                    "batch": idx,
+                    "requested": len(batch_files),
+                    "success": False,
+                    "error": str(e),
+                    "retry_recovered": recovered,
+                })
 
         return results
 
@@ -294,8 +309,12 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
         return int(time.time())
 
     def _missing_files(self, requested: List[str], extracted: List[str]) -> set[str]:
-        extracted_names = {os.path.basename(path) for path in extracted}
-        return {filename for filename in requested if filename and filename not in extracted_names}
+        # AFAD çıktı adları kayıt adına ek alır (ör. '<ad>_ap_Acc.mseed').
+        extracted_names = [os.path.basename(path) for path in extracted]
+        return {
+            filename for filename in requested
+            if filename and not any(name.startswith(filename) for name in extracted_names)
+        }
 
     def _handle_retry(
         self,
@@ -311,7 +330,7 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
 
         logger.warning("Eksik dosyalar, retry başlatılıyor: %s", missing)
         recovered = 0
-        for filename in missing:
+        for filename in sorted(missing):
             try:
                 result = self.download_single_waveforms(filename, event_id=event_id, **kwargs)
                 if isinstance(result, Result):

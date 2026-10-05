@@ -2,8 +2,13 @@
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from ..enums.enums import DesignCode
+from .dedup import (
+    DEFAULT_MAX_EVENT_DISTANCE_KM,
+    DEFAULT_MAX_MAG_DIFF,
+    DEFAULT_MAX_STATION_DISTANCE_KM,
+)
 from ..core.config import (
     MECHANISM_MAP,
     REVERSE_MECHANISM_MAP,
@@ -52,6 +57,34 @@ class ScoringWeights(BaseModel):
             name: preset["description"]
             for name, preset in SCORING_PRESETS.items()
         }
+class DedupConfig(BaseModel):
+    """Provider'lar arası tekrar tespiti ayarları (bkz. ``processing.dedup``).
+
+    Attributes:
+        enabled: False ise olay birleştirme ve tekrar kayıt elemesi yapılmaz;
+            ``EVENT_GROUP`` yine de ``<PROVIDER>|<EVENT>`` olarak yazılır.
+        max_event_distance_km: Aynı deprem sayılacak en büyük episantr mesafesi.
+        max_mag_diff: Aynı deprem sayılacak en büyük büyüklük farkı.
+        max_station_distance_km: Aynı kayıt sayılacak en büyük istasyon mesafesi.
+        prefer_provider: Tekrar kayıtlardan hangi provider'ınki korunsun
+            (``"AFAD"`` veya ``ProviderName.AFAD``). None ise provider listesinde
+            ilk sıradaki korunur.
+    """
+
+    enabled: bool = True
+    max_event_distance_km: float = Field(DEFAULT_MAX_EVENT_DISTANCE_KM, gt=0)
+    max_mag_diff: float = Field(DEFAULT_MAX_MAG_DIFF, ge=0)
+    max_station_distance_km: float = Field(DEFAULT_MAX_STATION_DISTANCE_KM, gt=0)
+    prefer_provider: Optional[str] = None
+
+    @field_validator("prefer_provider", mode="before")
+    @classmethod
+    def _normalize_provider(cls, value: Any) -> Optional[str]:
+        if value is None:
+            return None
+        return str(getattr(value, "value", value)).strip().upper() or None
+
+
 class SelectionConfig(BaseModel):
     """Seçim konfigürasyonu.
 
@@ -73,6 +106,7 @@ class SelectionConfig(BaseModel):
     max_per_event       : int       = 3
     min_score           : float     = 50.0
     required_components : List[str] = Field(default_factory=list)
+    dedup               : DedupConfig = Field(default_factory=DedupConfig)
 
 class SearchCriteria(BaseModel):
     """Arama kriterleri - Tüm sağlayıcılar için ortak kriterler"""

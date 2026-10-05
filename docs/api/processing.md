@@ -4,6 +4,8 @@
 
 ::: selection_service.processing.criteria.SelectionConfig
 
+::: selection_service.processing.criteria.DedupConfig
+
 ::: selection_service.processing.criteria.SearchCriteria
 
 ::: selection_service.processing.strategies.ISelectionStrategy

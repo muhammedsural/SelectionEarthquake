@@ -18,6 +18,7 @@ API_PAGES = {
     "processing.md": [
         "selection_service.processing.criteria.ScoringWeights",
         "selection_service.processing.criteria.SelectionConfig",
+        "selection_service.processing.criteria.DedupConfig",
         "selection_service.processing.criteria.SearchCriteria",
         "selection_service.processing.strategies.ISelectionStrategy",
         "selection_service.processing.strategies.BaseSelectionStrategy",

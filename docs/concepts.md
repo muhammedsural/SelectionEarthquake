@@ -82,7 +82,25 @@ Pipeline bunlari `EVENT_GROUP` altinda birlestirir (ayni yil, buyukluk farki
 `<= 0.5`, episantr mesafesi `<= 50 km`; provider ici artci soklar birlestirilmez)
 ve ayni istasyonun (`<= 1 km`) ikinci kopyasini aday havuzundan cikarir.
 "Ayni depremden en fazla `max_per_event` kayit" siniri `EVENT_GROUP`'a gore
-uygulanir. Ayrintilar icin [2.0 Gecis Rehberi](migration-v2.md).
+uygulanir. Esikler ve tercih edilen provider `SelectionConfig.dedup` ile ayarlanir:
+
+```python
+from selection_service.enums.enums import DesignCode, ProviderName
+from selection_service.processing.criteria import DedupConfig, SelectionConfig
+
+config = SelectionConfig(
+    design_code=DesignCode.TBDY_2018,
+    dedup=DedupConfig(
+        prefer_provider=ProviderName.AFAD,  # tekrar kayitlarda AFAD korunur
+        max_event_distance_km=50,
+        max_mag_diff=0.5,
+        max_station_distance_km=1.0,
+        # enabled=False -> olay birlestirme ve tekrar elemesi kapali
+    ),
+)
+```
+
+Ayrintilar icin [2.0 Gecis Rehberi](migration-v2.md).
 
 ## TBDY uygunluk raporu
 
