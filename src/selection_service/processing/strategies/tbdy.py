@@ -7,7 +7,7 @@ from ...core.config import (
     SCORING_MAP,
 )
 from ..criteria import SearchCriteria
-from .base import BaseSelectionStrategy
+from .base import BaseSelectionStrategy, order_candidates
 
 
 class TBDYSelectionStrategy(BaseSelectionStrategy):
@@ -67,8 +67,20 @@ class TBDY2018ConstraintStrategy(BaseSelectionStrategy):
         """Hook for strategy-specific ranking columns."""
 
     def _candidate_order(self, candidate_df: pd.DataFrame) -> pd.DataFrame:
-        """Return candidates in preferred selection order."""
-        return candidate_df.sort_values(["ERROR_TOTAL", "SCORE"], ascending=[True, False])
+        """Return candidates in preferred selection order.
+
+        Hedef varsa: ``ERROR_TOTAL`` artan, ``SCORE`` azalan (esitlikte buyuk
+        MAGNITUDE, sonra kucuk mesafe). Hicbir kriter icin hedef yoksa
+        (tum ``ERROR_TOTAL`` = inf, or. yalnizca ``min_magnitude``) varsayilan
+        duzen: buyuk MAGNITUDE once, sonra kucuk mesafe (Rjb > Rrup > Repi).
+        """
+        if candidate_df.empty:
+            return candidate_df
+        if candidate_df["ERROR_TOTAL"].apply(math.isinf).all():
+            return order_candidates(candidate_df)
+        return order_candidates(
+            candidate_df, [("ERROR_TOTAL", True), ("SCORE", False)]
+        )
 
     def _evaluate_record(
         self, record: pd.Series, criteria: SearchCriteria
@@ -199,6 +211,11 @@ class TBDY2018ConstraintStrategy(BaseSelectionStrategy):
     def _error_scale(
         self, criteria: SearchCriteria, key: str, target: float
     ) -> float:
+        """Hata olcegi: iki tarafli aralik varsa genisligi, yoksa hedefin %10'u.
+
+        ``target`` her zaman ``get_effective_target`` sonucudur (acik target_X
+        ya da aralik ortasi); tek tarafli sinir hedef olusturmaz.
+        """
         min_val = criteria._get_range_value("min", key)
         max_val = criteria._get_range_value("max", key)
         if min_val is not None and max_val is not None and max_val > min_val:

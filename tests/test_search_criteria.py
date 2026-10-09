@@ -319,15 +319,35 @@ class TestEffectiveTarget:
                            min_magnitude=6.0, max_magnitude=8.0)
         assert c.get_effective_target("magnitude") == pytest.approx(7.0)
 
-    def test_only_min_returns_min(self):
+    def test_only_min_is_filter_not_target(self):
+        """Tek tarafli sinir hedef olusturmaz (2.1.0 oncesi min degeri donerdi)."""
         c = SearchCriteria(start_date="2000-01-01", end_date="2025-01-01",
                            min_magnitude=6.0)
-        assert c.get_effective_target("magnitude") == pytest.approx(6.0)
+        assert c.get_effective_target("magnitude") is None
 
-    def test_only_max_returns_max(self):
+    def test_only_max_is_filter_not_target(self):
         c = SearchCriteria(start_date="2000-01-01", end_date="2025-01-01",
                            max_magnitude=8.0)
-        assert c.get_effective_target("magnitude") == pytest.approx(8.0)
+        assert c.get_effective_target("magnitude") is None
+
+    def test_only_min_distance_alias_is_filter_not_target(self):
+        c = SearchCriteria(start_date="2000-01-01", end_date="2025-01-01",
+                           max_Rjb=50.0)
+        assert c.get_effective_target("rjb") is None
+
+    def test_explicit_target_with_one_sided_bound(self):
+        c = SearchCriteria(start_date="2000-01-01", end_date="2025-01-01",
+                           min_magnitude=6.0, target_magnitude=6.8)
+        assert c.get_effective_target("magnitude") == pytest.approx(6.8)
+
+    def test_has_scoring_targets(self, base_criteria):
+        assert not base_criteria.has_scoring_targets()
+        only_min = base_criteria.model_copy(update={"min_magnitude": 5.0})
+        assert not only_min.has_scoring_targets()
+        ranged = only_min.model_copy(update={"max_magnitude": 7.0})
+        assert ranged.has_scoring_targets()
+        mech = base_criteria.model_copy(update={"mechanisms": ["Normal"]})
+        assert mech.has_scoring_targets()
 
     def test_no_value_returns_none(self, base_criteria):
         assert base_criteria.get_effective_target("magnitude") is None
@@ -365,10 +385,15 @@ class TestGetSigma:
 
     def test_sigma_fallback_from_target(self):
         c = SearchCriteria(start_date="2000-01-01", end_date="2025-01-01",
-                           min_magnitude=7.0)
+                           target_magnitude=7.0)
         sigma = c.get_sigma("magnitude")
         # target=7.0 → sigma=0.7 (7.0 * 0.1)
         assert sigma == pytest.approx(0.7)
+
+    def test_sigma_one_sided_bound_is_not_target(self):
+        c = SearchCriteria(start_date="2000-01-01", end_date="2025-01-01",
+                           min_magnitude=7.0)
+        assert c.get_sigma("magnitude") == pytest.approx(1.0)
 
     def test_sigma_zero_diff_returns_one(self):
         c = SearchCriteria(start_date="2000-01-01", end_date="2025-01-01",

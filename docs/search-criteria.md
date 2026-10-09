@@ -82,9 +82,37 @@ ile 2000 oncesi kayit gelmez). Kutu ve daire aramalari hiposantr konumuna
 Skorlamada hedef degerler su sirayla belirlenir:
 
 1. `target_*` alanlari.
-2. `min_*` ve `max_*` ortalamasi.
-3. Sadece `min_*` veya sadece `max_*` varsa o deger.
-4. Hicbiri yoksa kriter skorlamaya katilmaz.
+2. Hem `min_*` hem `max_*` verildiyse ortalamasi.
+3. Aksi halde (hicbiri yok **veya** yalnizca `min_*` / yalnizca `max_*` var)
+   kriter skorlamaya katilmaz.
+
+!!! note "Tek tarafli sinir = filtre (2.1.0)"
+    Yalnizca `min_magnitude=5.0` vermek "M >= 5.0" filtresidir, M5'e yakinlik
+    tercihi degildir. 2.0.x'te tek tarafli sinir hedef sayiliyordu ve secim
+    sinir degerine yigiliyordu; buyuk depremler elenebiliyordu.
+
+    Belirli bir degere yakin kayit istiyorsaniz `target_magnitude=...` veya
+    iki tarafli aralik (`min_magnitude` + `max_magnitude`) verin.
+
+Hicbir kriter icin hedef (ve mekanizma) yoksa stratejiler varsayilan
+siralamayi kullanir:
+
+1. Buyuk `MAGNITUDE` once.
+2. Esitlikte kucuk mesafe: `RJB(km)`, bos ise `RRUP(km)`, bos ise `REPI(km)`.
+3. Eksik buyukluk/mesafe en sona; tam esitlikte orijinal sira korunur.
+
+Bu durumda `TBDYSelectionStrategy` `min_score` esigini uygulamaz (tum skorlar
+0'dir). `max_per_station`, `max_per_event` ve `num_records` limitleri her
+durumda aynen uygulanir.
+
+```python
+# M >= 5.0, en buyuk depremler once
+SearchCriteria(start_date="2000-01-01", end_date="2025-09-05", min_magnitude=5.0)
+
+# M >= 5.0, M6.5'e yakin olanlar once
+SearchCriteria(start_date="2000-01-01", end_date="2025-09-05",
+               min_magnitude=5.0, target_magnitude=6.5)
+```
 
 Ornek:
 
