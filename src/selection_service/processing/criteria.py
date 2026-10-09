@@ -151,8 +151,9 @@ class SearchCriteria(BaseModel):
     region: Optional[str] = None       # Bölge adı (örn: "Marmara", "Ege", "Doğu Anadolu" gibi AFAD'ın bölge tanımlarından biri)
     bbox: Optional[Tuple[float, float, float, float]] = None # BBox formatı: (min_lat, max_lat, min_lon, max_lon)
 
-    # Kullanıcı boş bırakırsa, sistem (min+max)/2 formülünü kullanır.
-    # Kullanıcı bunları girerse puanlamaya dahil olur, girmezse ELİMİNE olur.
+    # Kullanıcı boş bırakırsa ve hem min hem max verdiyse sistem (min+max)/2
+    # formülünü kullanır. Yalnizca min veya yalnizca max verildiyse kriter
+    # sadece filtredir; hedef olusmaz ve puanlamaya katilmaz.
     target_magnitude: Optional[float] = None
     target_rjb: Optional[float] = None
     target_rrup: Optional[float] = None
@@ -187,25 +188,37 @@ class SearchCriteria(BaseModel):
 
     def get_effective_target(self, key: str) -> Optional[float]:
         """
-        Belirli bir parametre için hedef değeri döndürür.
-        1. target_X var mı? Varsa döndür.
-        2. Yoksa min_X ve max_X ortalamasını al.
-        3. O da yoksa None döndür (Puanlamadan düş)
+        Belirli bir parametre icin hedef degeri dondurur.
+
+        1. ``target_X`` verildiyse o deger.
+        2. Hem ``min_X`` hem ``max_X`` verildiyse aralik ortasi.
+        3. Aksi halde None (kriter puanlamaya/siralamaya katilmaz).
+
+        Tek tarafli sinir (yalnizca ``min_X`` veya yalnizca ``max_X``) bir
+        **filtredir**, hedef degildir. Aksi halde ornegin yalnizca
+        ``min_magnitude=5.0`` verildiginde secim M5 civarina yigilir ve daha
+        buyuk depremler elenir.
         """
-        # Explicit target kontrolü
         explicit = getattr(self, f"target_{key}", None)
         if explicit is not None:
             return explicit
-        
-        # Aralık ortalaması kontrolü
+
         min_val = self._get_range_value("min", key)
         max_val = self._get_range_value("max", key)
-        
-        # Sadece aralık verildiyse ve target yoksa, aralık ortasını hedef al
         if min_val is not None and max_val is not None:
             return (min_val + max_val) / 2.0
-            
-        return min_val if min_val is not None else max_val
+
+        return None
+
+    def has_scoring_targets(self) -> bool:
+        """En az bir kriter icin hedef (veya mekanizma) varsa True."""
+        if self.get_mechanism_targets():
+            return True
+        return any(
+            self.get_effective_target(key) is not None
+            for key, config in SCORING_MAP.items()
+            if config.get("type") == "numeric"
+        )
 
     def get_sigma(self, key: str) -> float:
         """Config dosyasından o parametre için belirlenen katılık (strictness) değerini kullanarak sigma hesaplar."""
@@ -220,7 +233,8 @@ class SearchCriteria(BaseModel):
             diff = max_val - min_val
             return diff / strictness if diff > 0 else 1.0
             
-        # Aralık yoksa, hedef değerin %10'u kadar bir sigma uydur (Fallback)
+        # Iki tarafli aralik yoksa yalnizca acik target_X'in %10'u kullanilir.
+        # Tek tarafli sinir (yalnizca min/max) hedef sayilmaz.
         target = self.get_effective_target(key)
         return (target * 0.1) if target else 1.0
 

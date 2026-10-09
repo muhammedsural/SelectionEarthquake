@@ -169,8 +169,17 @@ flowchart LR
 | Hedefler | `target_magnitude`, `target_rjb`, `target_rrup`, `target_repi`, `target_vs30`, `target_pga`, `target_pgv`, `target_pgd`, `target_t90`, `target_arias`, `target_depth` |
 | Agirliklar | `weights=ScoringWeights(...)` veya `ScoringWeights.from_preset(...)` |
 
-Hedef verilmezse `(min + max) / 2` kullanilir; hicbiri yoksa kriter
-puanlamaya katilmaz. Ayrintilar: [Arama Kriterleri](docs/search-criteria.md).
+Hedef sirasi: `target_*` verildiyse o deger; verilmediyse ve **hem min hem
+max** varsa `(min + max) / 2`; aksi halde kriter puanlamaya katilmaz.
+
+**Tek tarafli sinir yalnizca filtredir (2.1.0).** Yalnizca `min_magnitude=5.0`
+vermek "M >= 5.0 olan kayitlar" demektir, "M5'e yakin kayitlar" degil. Bu
+durumda hedef olusmaz; hicbir kriter icin hedef yoksa adaylar varsayilan
+duzende siralanir: **once buyuk `MAGNITUDE`, sonra kucuk mesafe** (Rjb, yoksa
+Rrup, yoksa Repi) ve `min_score` esigi uygulanmaz. Belirli bir buyukluge yakin
+kayit istiyorsaniz `target_magnitude=...` ya da iki tarafli aralik
+(`min_magnitude` + `max_magnitude`) verin. Ayrintilar:
+[Arama Kriterleri](docs/search-criteria.md).
 
 ## Secim stratejileri ve scoring
 
@@ -436,6 +445,16 @@ CI (GitHub Actions) Python 3.10 - 3.13 uzerinde testleri, lint'i ve coverage
 esigini calistirir. Katki icin: branch acin, davranis degisikligine test
 ekleyin, dokuman orneklerinin gercek API ile calistigini dogrulayin
 ([Test ve Kalite](docs/testing.md)).
+
+## 2.1.0 davranis degisikligi
+
+2.0.x'te tek tarafli sinir (yalnizca `min_X` veya yalnizca `max_X`) hedef
+gibi kullaniliyordu; ornegin yalnizca `min_magnitude=5.0` ile secim M5
+civarina yigiliyor, buyuk depremler `num_records_limit` ile eleniyordu. 2.1.0
+ile tek tarafli sinir yalnizca filtredir; hedef `target_X` ya da iki tarafli
+araligin ortasidir. Hedef yoksa siralama: buyuk `MAGNITUDE` once, sonra kucuk
+mesafe. Esit skor/hata durumunda da ayni duzen kullanilir. Eski davranisi
+istiyorsaniz `target_magnitude=5.0` gibi acik hedef verin.
 
 ## 1.x'ten 2.0'a gecis
 

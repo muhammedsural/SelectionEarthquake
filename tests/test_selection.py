@@ -337,10 +337,11 @@ class TestTBDYSearchCombinations:
         assert (scored["SCORE"] >= 0).all()
         assert (scored["SCORE"] <= 100).all()
 
-    def test_no_active_scoring_criteria_rejects_all_when_min_score_positive(
+    def test_no_active_scoring_criteria_uses_default_order(
         self,
         basic_usage_results,
     ):
+        """Hedef yoksa min_score uygulanmaz; buyuk MAGNITUDE once secilir (2.1.0)."""
         config = SelectionConfig(
             design_code=DesignCode.TBDY_2018,
             num_records=5,
@@ -351,10 +352,11 @@ class TestTBDYSearchCombinations:
 
         selected, scored = strategy.select_and_score(basic_usage_results, criteria)
 
-        assert selected.empty
+        assert len(selected) == 5
         assert (scored["SCORE"] == 0).all()
-        assert (scored["SELECTION_STATUS"] == "rejected").all()
-        assert set(scored["SELECTION_REASON"]) == {"score_below_min_score:1.0"}
+        assert "score_below_min_score:1.0" not in set(scored["SELECTION_REASON"])
+        mags = selected["MAGNITUDE"].tolist()
+        assert mags == sorted(mags, reverse=True)
 
     def test_combined_limits_explain_station_event_and_count_rejections(self):
         rows = pd.DataFrame(

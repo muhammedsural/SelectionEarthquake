@@ -1,7 +1,15 @@
 # Scoring ve Presetler
 
 Puanlama motoru kullanicinin aktif ettigi kriterlere gore calisir. Bir kriter
-icin hedef yoksa o kriter toplam skora katilmaz.
+icin hedef yoksa o kriter toplam skora katilmaz. Hedef `target_*` alanindan ya
+da iki tarafli `min_*`/`max_*` araliginin ortasindan gelir; tek tarafli sinir
+(yalnizca min veya yalnizca max) hedef olusturmaz, yalnizca filtredir
+(bkz. [Arama Kriterleri](search-criteria.md#target-alanlari)).
+
+Hicbir kriter icin hedef yoksa `TBDYSelectionStrategy` `min_score` esigini
+uygulamaz ve adaylari varsayilan duzende siralar: buyuk `MAGNITUDE` once,
+sonra kucuk mesafe (Rjb > Rrup > Repi). Esit `SCORE` durumunda da ayni duzen
+esitlik bozucu olarak kullanilir.
 
 ## Gaussian skor
 
@@ -119,8 +127,12 @@ Urettigi ek kolonlar:
 
 Secim mantigi:
 
-1. Aralik ve mekanizma kriterleri sert filtre olarak uygulanir.
-2. Gecen kayitlar `ERROR_TOTAL` dusukten yuksege siralanir.
+1. Aralik ve mekanizma kriterleri sert filtre olarak uygulanir (tek tarafli
+   sinirlar dahil).
+2. Gecen kayitlar `ERROR_TOTAL` dusukten yuksege siralanir (esitlikte buyuk
+   `MAGNITUDE`, sonra kucuk mesafe). Hicbir kriter icin hedef yoksa
+   (`ERROR_TOTAL` hepsi `inf`) varsayilan duzen kullanilir: buyuk `MAGNITUDE`
+   once, sonra kucuk mesafe (Rjb > Rrup > Repi).
 3. `max_per_station`, `max_per_event` ve `num_records` cesitlilik limitleri uygulanir.
 4. `SELECTION_REASON` her secim veya eleme nedenini yazar.
 

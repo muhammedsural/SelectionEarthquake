@@ -2,7 +2,7 @@
 
 from abc import ABC
 import math
-from typing import Any, Dict, List, Protocol, Tuple
+from typing import Any, Dict, List, Protocol, Sequence, Tuple
 import pandas as pd
 from ...core.config import (
     SCORING_MAP,
@@ -20,6 +20,57 @@ class ISelectionStrategy(Protocol):
     def get_name(self) -> str:
         """Strateji adı"""
         ...
+
+MAGNITUDE_COLUMN = SCORING_MAP["magnitude"]["column"]
+# Varsayilan siralamada kullanilan mesafe kolonlari (oncelik sirasiyla).
+# Bir kayitta ilk dolu olan kullanilir: Rjb, yoksa Rrup, yoksa Repi.
+DISTANCE_COLUMNS = (
+    SCORING_MAP["rjb"]["column"],
+    SCORING_MAP["rrup"]["column"],
+    SCORING_MAP["repi"]["column"],
+)
+
+
+def _distance_series(df: pd.DataFrame) -> pd.Series:
+    """Her kayit icin ilk dolu mesafe degeri (Rjb > Rrup > Repi); yoksa +inf."""
+    distance = pd.Series(float("nan"), index=df.index, dtype="float64")
+    for column in DISTANCE_COLUMNS:
+        if column in df.columns:
+            distance = distance.fillna(pd.to_numeric(df[column], errors="coerce"))
+    return distance.fillna(float("inf"))
+
+
+def order_candidates(
+    df: pd.DataFrame, primary: Sequence[Tuple[str, bool]] = ()
+) -> pd.DataFrame:
+    """Adaylari deterministik sirala.
+
+    ``primary`` verilen (kolon, artan_mi) anahtarlariyla siralar; esitlikler
+    (veya ``primary`` bossa tum siralama) varsayilan duzenle cozulur:
+    once buyuk ``MAGNITUDE``, sonra kucuk mesafe (Rjb > Rrup > Repi).
+    Eksik buyukluk/mesafe en sona duser; tum anahtarlar esitse orijinal
+    sira korunur.
+    """
+    if df.empty:
+        return df
+    mag_key = "__ORDER_MAG__"
+    dist_key = "__ORDER_DIST__"
+    pos_key = "__ORDER_POS__"
+    work = df.copy()
+    if MAGNITUDE_COLUMN in work.columns:
+        work[mag_key] = pd.to_numeric(work[MAGNITUDE_COLUMN], errors="coerce").fillna(
+            float("-inf")
+        )
+    else:
+        work[mag_key] = float("-inf")
+    work[dist_key] = _distance_series(work)
+    work[pos_key] = range(len(work))
+    columns = [col for col, _ in primary] + [mag_key, dist_key, pos_key]
+    ascending = [asc for _, asc in primary] + [False, True, True]
+    work = work.sort_values(columns, ascending=ascending)
+    # Konumsal secim: index tekrarli olsa bile dogru calisir.
+    return df.iloc[work[pos_key].to_numpy()]
+
 
 class BaseSelectionStrategy(ISelectionStrategy, ABC):
     """Temel seçim stratejisi"""
@@ -188,7 +239,12 @@ class BaseSelectionStrategy(ISelectionStrategy, ABC):
         scored_df['SCORE'] = score_results.apply(lambda item: item[0])
         scored_df['SCORE_BREAKDOWN'] = score_results.apply(lambda item: item[1])
         
-        selected_df, scored_df = self._apply_selection_rules_with_reasons(scored_df)
+        # Hicbir kriter icin hedef yoksa (or. yalnizca min_magnitude) skor
+        # anlamsizdir (hepsi 0): min_score uygulanmaz, varsayilan siralama
+        # (buyuk MAGNITUDE, sonra kucuk mesafe) kullanilir.
+        selected_df, scored_df = self._apply_selection_rules_with_reasons(
+            scored_df, has_targets=criteria.has_scoring_targets()
+        )
         return selected_df, scored_df
     
     def _apply_selection_rules(self, df_scored: pd.DataFrame) -> pd.DataFrame:
@@ -197,12 +253,19 @@ class BaseSelectionStrategy(ISelectionStrategy, ABC):
         return selected
 
     def _apply_selection_rules_with_reasons(
-        self, df_scored: pd.DataFrame
+        self, df_scored: pd.DataFrame, has_targets: bool = True
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """Apply TBDY selection limits and annotate every record with a reason."""
+        """Apply TBDY selection limits and annotate every record with a reason.
+
+        ``has_targets=False`` ise ``min_score`` esigi uygulanmaz ve adaylar
+        varsayilan duzende (buyuk MAGNITUDE, sonra kucuk mesafe) siralanir.
+        """
         df_scored = df_scored.copy()
         df_scored["SELECTION_STATUS"] = "not_evaluated"
         df_scored["SELECTION_REASON"] = ""
+
+        if not has_targets:
+            return self._select_in_order(order_candidates(df_scored), df_scored)
 
         filtered_df = df_scored[df_scored['SCORE'] >= self.config.min_score]
         if filtered_df.empty:
@@ -218,7 +281,13 @@ class BaseSelectionStrategy(ISelectionStrategy, ABC):
             f"score_below_min_score:{self.config.min_score}"
         )
         
-        sorted_df = filtered_df.sort_values('SCORE', ascending=False)
+        sorted_df = order_candidates(filtered_df, [("SCORE", False)])
+        return self._select_in_order(sorted_df, df_scored)
+
+    def _select_in_order(
+        self, sorted_df: pd.DataFrame, df_scored: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """Siralanmis adaylara num_records ve cesitlilik limitlerini uygula."""
         selected_records = []
         selected_indices = []
         station_counts = {}
