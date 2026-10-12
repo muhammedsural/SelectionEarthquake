@@ -622,6 +622,23 @@ class TestSearchCriteriaCombinations:
         assert params["province"] == "Kahramanmaras"
         assert params["faultType"] == "R"
 
+    def test_to_afad_params_omits_distance_bounds(self):
+        criteria = SearchCriteria(
+            start_date="2000-01-01", end_date="2026-10-12",
+            min_Repi=1, max_Repi=100, min_Rhyp=1, max_Rhyp=100,
+            min_Rjb=0, max_Rjb=20, min_Rrup=0, max_Rrup=30,
+        )
+        params = criteria.to_afad_params()
+        assert not {"fromRepi", "toRepi", "fromRhyp", "toRhyp",
+                    "fromRjb", "toRjb", "fromRrup", "toRrup"} & set(params)
+        assert criteria.afad_distance_bounds() == {
+            "repi": (1, 100), "rhyp": (1, 100), "rjb": (0, 20), "rrup": (0, 30),
+        }
+
+    def test_afad_distance_bounds_keeps_one_sided_limits_only(self):
+        criteria = SearchCriteria(start_date="2000-01-01", end_date="2026-10-12", max_Rrup=30)
+        assert criteria.afad_distance_bounds() == {"rrup": (None, 30)}
+
     def test_targets_and_preset_weights_can_be_combined(self):
         weights = ScoringWeights.from_preset("site_response")
         criteria = SearchCriteria(

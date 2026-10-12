@@ -446,6 +446,15 @@ esigini calistirir. Katki icin: branch acin, davranis degisikligine test
 ekleyin, dokuman orneklerinin gercek API ile calistigini dogrulayin
 ([Test ve Kalite](docs/testing.md)).
 
+## 2.1.1 duzeltmesi: AFAD mesafe filtreleri
+
+AFAD `GetWaveforms` servisi `fromRrup`/`toRrup` verildiginde (ornegin 0-30 km)
+her zaman bos liste donduruyor; bu yuzden Rrup araligi verilen her AFAD aramasi
+bos geliyordu. 2.1.1 ile mesafe sinirlari (`Repi`, `Rhyp`, `Rjb`, `Rrup`)
+AFAD'a gonderilmez, yanit geldikten sonra istemci tarafinda uygulanir (sinirlar
+dahil; sinir verilmis mesafesi bos olan kayit elenir). Vs30 filtresi AFAD'da
+dogru calistigi icin sunucuda kalir.
+
 ## 2.1.0 davranis degisikligi
 
 2.0.x'te tek tarafli sinir (yalnizca `min_X` veya yalnizca `max_X`) hedef

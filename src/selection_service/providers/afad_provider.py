@@ -29,6 +29,10 @@ from ..providers.interfaces import IDataFetcher, IWaveformDownloader  # ← yeni
 
 logger = logging.getLogger(__name__)
 
+# map_criteria ciktisinda AFAD'a gonderilmeyen, istemci tarafinda uygulanan
+# mesafe sinirlarini tasiyan anahtar (bkz. SearchCriteria.afad_distance_bounds).
+DISTANCE_BOUNDS_KEY = "_distance_bounds"
+
 
 class AFADDataProvider(IDataFetcher, IWaveformDownloader):
     """AFAD (Tadas) veri sağlayıcı.
@@ -63,7 +67,18 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
         return str(self.name)
 
     def map_criteria(self, criteria: SearchCriteria) -> Dict[str, Any]:
-        return criteria.to_afad_params()
+        params = criteria.to_afad_params()
+        bounds = criteria.afad_distance_bounds()
+        if bounds:
+            params[DISTANCE_BOUNDS_KEY] = bounds
+        return params
+
+    @staticmethod
+    def _split_request(criteria: Dict[str, Any]) -> tuple[Dict[str, Any], Dict[str, Any]]:
+        """AFAD istek govdesini ve istemci tarafi mesafe sinirlarini ayir."""
+        request = dict(criteria)
+        bounds = request.pop(DISTANCE_BOUNDS_KEY, None) or {}
+        return request, bounds
 
     @async_result_decorator
     async def fetch_data_async(self, criteria: Dict[str, Any]) -> pd.DataFrame:
@@ -73,8 +88,9 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
         diğer hatalar ProviderError'a sarılır.
         """
         try:
-            data = await self.api_client.search_waveforms_async(criteria)
-            return self._process_response_data(data)
+            request, bounds = self._split_request(criteria)
+            data = await self.api_client.search_waveforms_async(request)
+            return self._process_response_data(data, bounds)
         except (AfadEmptyResultError, AfadMappingError):
             raise
         except ProviderError:
@@ -94,8 +110,9 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
         Diğer beklenmedik hatalar ProviderError'a sarılır.
         """
         try:
-            data = self.api_client.search_waveforms_sync(criteria)
-            return self._process_response_data(data)
+            request, bounds = self._split_request(criteria)
+            data = self.api_client.search_waveforms_sync(request)
+            return self._process_response_data(data, bounds)
         except (AfadEmptyResultError, AfadMappingError):
             raise  # Zaten açıklayıcı — Pipeline'a olduğu gibi ilet
         except ProviderError:
@@ -237,15 +254,21 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
     # Private yardımcılar
     # ──────────────────────────────────────────────────────────────
 
-    def _process_response_data(self, data: List[Dict]) -> pd.DataFrame:
+    def _process_response_data(
+        self, data: List[Dict], distance_bounds: Dict[str, Any] | None = None
+    ) -> pd.DataFrame:
         """API yanıtını standart DataFrame'e çevir (DRY — async + sync ortak).
 
         Boş yanıt durumlarını sessizce geçmek yerine sebebi açıklayan
         özel hata fırlatır; çağıran katman (Pipeline) bu hataları
         kullanıcıya anlamlı mesaj olarak iletir.
 
+        ``distance_bounds`` verilirse (ham kolon -> (min, max)) mesafe
+        filtreleri burada uygulanır; değeri boş olan kayıt sınır varken elenir.
+
         Raises:
-            AfadEmptyResultError: API sıfır kayıt döndürdüğünde.
+            AfadEmptyResultError: API sıfır kayıt döndürdüğünde veya mesafe
+                filtresinden sonra kayıt kalmadığında.
             AfadMappingError: Mapper sonrası kayıt sayısı sıfıra düştüğünde.
         """
         raw_count = len(data) if data else 0
@@ -262,7 +285,16 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
                               "veya bbox/çember arama alanını büyütün.",
             )
 
-        self.response_df = pd.DataFrame(data)
+        self.response_df = self._apply_distance_bounds(pd.DataFrame(data), distance_bounds)
+        if self.response_df.empty:
+            logger.warning(
+                "AFAD %d kayıt döndürdü; mesafe filtresinden sonra kayıt kalmadı.",
+                raw_count,
+            )
+            raise AfadEmptyResultError(
+                "AFAD kayıtlarından hiçbiri mesafe sınırlarına uymuyor.",
+                criteria_hint="Repi/Rhyp/Rjb/Rrup aralığını genişletin.",
+            )
 
         self.mapped_df = self.column_mapper.map_columns(df=self.response_df)
         self.mapped_df["PROVIDER"] = str(self.name)
@@ -284,6 +316,25 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
 
         logger.info("AFAD'dan %d kayıt alındı (ham: %d).", mapped_count, raw_count)
         return self.mapped_df
+
+    @staticmethod
+    def _apply_distance_bounds(
+        df: pd.DataFrame, distance_bounds: Dict[str, Any] | None
+    ) -> pd.DataFrame:
+        """Mesafe sınırlarını (dahil) AFAD yanıtına uygula."""
+        if not distance_bounds or df.empty:
+            return df
+        mask = pd.Series(True, index=df.index)
+        for column, (min_val, max_val) in distance_bounds.items():
+            if column not in df.columns:
+                values = pd.Series(float("nan"), index=df.index)
+            else:
+                values = pd.to_numeric(df[column], errors="coerce")
+            if min_val is not None:
+                mask &= values >= min_val
+            if max_val is not None:
+                mask &= values <= max_val
+        return df[mask].reset_index(drop=True)
 
     def _prepare_download_payload(
         self, filenames: List[str], **kwargs: Any
