@@ -40,6 +40,11 @@ criteria = SearchCriteria(
 Alan adlarinda mevcut API ile uyum icin `Rjb`, `Rrup`, `Repi`, `Rhyp` yazimi
 korunur.
 
+!!! note "AFAD'da mesafe filtresi istemcide uygulanir (2.1.1)"
+    AFAD servisi `fromRrup`/`toRrup` ile bos liste dondurdugu icin mesafe
+    sinirlari AFAD'a gonderilmez; yanit geldikten sonra uygulanir. Sinir
+    verilmis mesafesi bos olan AFAD kaydi elenir.
+
 ## Konum aramasi
 
 Kutu aramasi:

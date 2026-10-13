@@ -267,14 +267,9 @@ class SearchCriteria(BaseModel):
             
             "from_depth"    : self.min_depth,  
             "to_depth"      : self.max_depth, 
-            "fromRepi"      : self.min_Repi,
-            "toRepi"        : self.max_Repi,
-            "fromRhyp"      : self.min_Rhyp,
-            "toRhyp"        : self.max_Rhyp,
-            "fromRjb"       : self.min_Rjb,
-            "toRjb"         : self.max_Rjb,
-            "fromRrup"      : self.min_Rrup,
-            "toRrup"        : self.max_Rrup,
+            # Mesafe sinirlari (Repi/Rhyp/Rjb/Rrup) AFAD'a gonderilmez; AFAD
+            # fromRrup/toRrup ile her zaman bos liste donduruyor. Bunlar yanit
+            # geldikten sonra istemci tarafinda uygulanir (afad_distance_bounds).
             "fromVs30"      : self.min_vs30,
             "toVs30"        : self.max_vs30,
             "fromPGA"       : self.min_pga,
@@ -308,6 +303,24 @@ class SearchCriteria(BaseModel):
         params = {k: v for k, v in params.items() if v is not None}
         return params
     
+    def afad_distance_bounds(self) -> Dict[str, Tuple[Optional[float], Optional[float]]]:
+        """AFAD yanitina istemci tarafinda uygulanacak mesafe sinirlari.
+
+        Anahtar AFAD yanitindaki ham kolon adidir (``repi``, ``rhyp``, ``rjb``,
+        ``rrup``); deger (min, max) ciftidir. Yalnizca en az bir siniri
+        verilmis mesafeler dondurulur.
+        """
+        bounds = {
+            "repi": (self.min_Repi, self.max_Repi),
+            "rhyp": (self.min_Rhyp, self.max_Rhyp),
+            "rjb": (self.min_Rjb, self.max_Rjb),
+            "rrup": (self.min_Rrup, self.max_Rrup),
+        }
+        return {
+            column: limits for column, limits in bounds.items()
+            if limits[0] is not None or limits[1] is not None
+        }
+
     def to_peer_params(self) -> Dict[str, Any]:
         """PEER veritabanına özel parametre dönüşümü"""
         params = {

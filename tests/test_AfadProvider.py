@@ -170,3 +170,64 @@ def test_batch_failure_falls_back_to_single_downloads(tmp_path, monkeypatch):
     assert result.success
     assert result.value["downloaded"] == 2
     assert result.value["batches"][0]["retry_recovered"] == 2
+
+
+class TestAfadDistanceFilters:
+    """AFAD fromRrup/toRrup ile her zaman bos liste donduruyor (2026-10 canli
+    test): mesafe sinirlari sunucuya gonderilmez, yanita istemcide uygulanir."""
+
+    @staticmethod
+    def _criteria(**kwargs):
+        return SearchCriteria(
+            start_date="2000-01-01", end_date="2026-10-12",
+            min_magnitude=7.0, max_magnitude=8.1,
+            min_vs30=760, max_vs30=1500, **kwargs,
+        )
+
+    def test_distance_bounds_not_sent_to_afad(self, afad_provider):
+        params = afad_provider.map_criteria(self._criteria(min_Rrup=0, max_Rrup=30))
+        afad_provider.api_client.search_waveforms_sync.return_value = [
+            {"waveformId": 1, "rrup": 5.0},
+        ]
+        afad_provider.column_mapper.map_columns.side_effect = lambda df: df.copy()
+
+        result = afad_provider.fetch_data_sync(params)
+
+        sent = afad_provider.api_client.search_waveforms_sync.call_args.args[0]
+        assert result.success
+        assert not any(key.lower().endswith(("rrup", "rjb", "repi", "rhyp")) for key in sent)
+        assert sent["fromVs30"] == 760  # Vs30 AFAD'da calisiyor, sunucuda kalir
+        assert "_distance_bounds" not in sent
+
+    def test_distance_bounds_applied_to_response(self, afad_provider):
+        params = afad_provider.map_criteria(self._criteria(min_Rrup=0, max_Rrup=30, max_Rjb=20))
+        afad_provider.api_client.search_waveforms_sync.return_value = [
+            {"waveformId": 1, "rrup": 1.76, "rjb": 1.76},
+            {"waveformId": 2, "rrup": 30.0, "rjb": 0.0},
+            {"waveformId": 3, "rrup": 45.0, "rjb": 10.0},   # Rrup disinda
+            {"waveformId": 4, "rrup": 12.0, "rjb": 25.0},   # Rjb disinda
+            {"waveformId": 5, "rrup": None, "rjb": 3.0},    # Rrup bos
+        ]
+        afad_provider.column_mapper.map_columns.side_effect = lambda df: df.copy()
+
+        result = afad_provider.fetch_data_sync(params)
+
+        assert result.success
+        assert result.value["waveformId"].tolist() == [1, 2]
+
+    def test_empty_after_distance_filter_is_empty_result(self, afad_provider):
+        from selection_service.core.error_handle import AfadEmptyResultError
+
+        params = afad_provider.map_criteria(self._criteria(max_Rrup=10))
+        afad_provider.api_client.search_waveforms_sync.return_value = [
+            {"waveformId": 1, "rrup": 50.0},
+        ]
+
+        result = afad_provider.fetch_data_sync(params)
+
+        assert not result.success
+        assert isinstance(result.error, AfadEmptyResultError)
+
+    def test_no_distance_bounds_keeps_request_unchanged(self, afad_provider):
+        params = afad_provider.map_criteria(self._criteria())
+        assert "_distance_bounds" not in params
