@@ -441,6 +441,55 @@ class SearchCriteria(BaseModel):
             
         return {key: value for key, value in params.items() if value is not None}
 
+    def to_esm_params(self) -> Dict[str, Any]:
+        """ESM flatfile servisinin sunucu tarafinda uyguladigi filtreler."""
+        params: Dict[str, Any] = {
+            "starttime": self.start_date,
+            "endtime": self.end_date if "T" in self.end_date else f"{self.end_date}T23:59:59",
+            "min-magnitude": self.min_magnitude,
+            "max-magnitude": self.max_magnitude,
+            "min-event-depth": self.min_depth,
+            "max-event-depth": self.max_depth,
+            "min-vs30": self.min_vs30,
+            "max-vs30": self.max_vs30,
+            "min-joynerboore-distance": self.min_Rjb,
+            "max-joynerboore-distance": self.max_Rjb,
+            "network": self.network,
+            "station": self.station_code,
+        }
+        box = self.bbox or (self.min_latitude, self.max_latitude, self.min_longitude, self.max_longitude)
+        for key, value in zip(
+            ("min-event-latitude", "max-event-latitude", "min-event-longitude", "max-event-longitude"), box
+        ):
+            params[key] = value
+        mechanisms = self.get_mechanism_targets()
+        codes = {"Normal": "NF", "Reverse": "TF", "StrikeSlip": "SS"}
+        # Yalniz hepsi ESM koduna denk geliyorsa sunucuya gonderilir; yoksa istemcide suzulur.
+        if mechanisms and all(m in codes for m in mechanisms):
+            params["style-of-faulting"] = ",".join(codes[m] for m in mechanisms)
+        if self.station_code or self.network:
+            params["contains-string"] = "False"
+        return {key: value for key, value in params.items() if value is not None}
+
+    def esm_client_filters(self) -> Dict[str, Any]:
+        """ESM yanitina istemci tarafinda uygulanacak sinirlar (bkz. ESMProvider)."""
+        filters: Dict[str, Any] = {
+            "min_magnitude": self.min_magnitude, "max_magnitude": self.max_magnitude,
+            "min_depth": self.min_depth, "max_depth": self.max_depth,
+            "min_vs30": self.min_vs30, "max_vs30": self.max_vs30,
+            "min_Rjb": self.min_Rjb, "max_Rjb": self.max_Rjb,
+            "min_Rrup": self.min_Rrup, "max_Rrup": self.max_Rrup,
+            "min_Repi": self.min_Repi, "max_Repi": self.max_Repi,
+            "min_Rhyp": self.min_Rhyp, "max_Rhyp": self.max_Rhyp,
+            "min_pga": self.min_pga, "max_pga": self.max_pga,
+            "min_pgv": self.min_pgv, "max_pgv": self.max_pgv,
+            "min_pgd": self.min_pgd, "max_pgd": self.max_pgd,
+            "mechanisms": self.get_mechanism_targets() or None,
+        }
+        if self.circleLatitude is not None and self.circleRadius is not None:
+            filters["circle"] = [self.circleLatitude, self.circleLongitude, self.circleRadius]
+        return {key: value for key, value in filters.items() if value is not None}
+
     @model_validator(mode='after')
     def check_magnitudes(self):
         if self.min_magnitude is not None and self.max_magnitude is not None:

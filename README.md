@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/docs-mkdocs-informational)](https://muhammedsural.github.io/SelectionEarthquake)
 
-Deprem kayitlarini AFAD, PEER NGA-West2 ve FDSN servislerinden cekip ortak
+Deprem kayitlarini AFAD, PEER NGA-West2, ESM ve FDSN servislerinden cekip ortak
 kolon semasina normalize eden; arama kriterlerine gore puanlayan ve
 **TBDY 2018'e uygun, bolge ozelliklerine (buyukluk, uzaklik, mekanizma, zemin)
 benzeyen deprem kayitlarini seçen** Python kutuphanesi.
@@ -123,6 +123,7 @@ pip install -e ".[dev]"
 | `ProviderName.PEER` | Paketle gelen NGA-West2 flatfile (~21.5 bin kayit) | Gerekmez | Yok | Tarih filtresi yil hassasiyetindedir; konum filtreleri hiposantre gore uygulanir |
 | `ProviderName.AFAD` | AFAD TADAS API | Gerekir | Var (`mseed`, `asc2`, `asd`) | `HYPO_DEPTH(km)` yanittaki `relatedDepth` alanindan, yoksa `rhyp`/`repi`'den doldurulur |
 | `ProviderName.FDSN` | ObsPy uyumlu FDSN servisleri (USGS, IRIS ...) | Gerekir | Waveform arama (`Stream`) | Istasyon ve waveform servisleri icin `[fdsn]` extra'si gerekir |
+| `ProviderName.ESM` | Engineering Strong-Motion database (esm-db.eu; Avrupa, Turkiye, Orta Dogu) | Gerekir | Var (`ascii`, `mseed`, `sac`; islenmis veya ham) | Herkese acik veri, anahtar gerekmez. Rjb/Rrup bos ise Repi/Rhyp kullanilir; PGA/PGV/PGD RotD50 |
 
 Birden fazla provider ayni anda kullanilabilir; sonuclar ortak kolon
 semasinda birlesir. Yeni provider eklemek icin
@@ -445,6 +446,22 @@ CI (GitHub Actions) Python 3.10 - 3.13 uzerinde testleri, lint'i ve coverage
 esigini calistirir. Katki icin: branch acin, davranis degisikligine test
 ekleyin, dokuman orneklerinin gercek API ile calistigini dogrulayin
 ([Test ve Kalite](docs/testing.md)).
+
+## 2.2.0: ESM saglayicisi
+
+`ProviderName.ESM` Engineering Strong-Motion veritabanini (esm-db.eu,
+ORFEUS/INGV) ekler. Arama `esmws/flatfile/1` servisinden kayit basina bir
+satir alir: tarih, buyukluk, derinlik, deprem kutusu, Vs30, Rjb, ag/istasyon
+ve faylanma turu sunucuda; Rrup, Repi, Rhyp, PGA/PGV/PGD, daire ve secilen
+buyukluk turu (oncelik Mw) istemcide uygulanir. Indirme `esmws/eventdata/1`
+ile yapilir: `FILE_NAME_H1` `AG.ISTASYON.KONUM.KANAL` bicimindedir, uc bilesen
+birlikte iner; AFAD tarzi `file_status` (`RawAcc` -> CV, `Acc`/`Vel`/`Disp` ->
+elle islenmis MP) ve `export_type` (`asc2` -> ascii, `mseed`) karsiliklari
+desteklenir. Yalniz herkese acik veri desteklenir (kisitli veri token ister).
+
+```python
+api = EarthquakeAPI(provider_names=[ProviderName.ESM, ProviderName.AFAD], strategies=[strategy])
+```
 
 ## 2.1.1 duzeltmesi: AFAD mesafe filtreleri
 

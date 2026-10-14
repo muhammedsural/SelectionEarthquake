@@ -1,7 +1,11 @@
 # Waveform Indirme
 
-Waveform indirme provider yetenegine baglidir. Mevcut durumda AFAD download
+Waveform indirme provider yetenegine baglidir. AFAD ve ESM (2.2.0) download
 destekler, PEER desteklemez.
+
+ESM `eventdata` servisini kullanir: `station_code="ESM.IT.NRC"`, `filename`
+aramadaki `FILE_NAME_H1` (`IT.NRC..HG`, uc bilesen birlikte iner), `event_id`
+ESM deprem kimligidir (`EVENT`).
 
 ## Toplu indirme
 

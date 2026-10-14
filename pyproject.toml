@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "earthquake-selection"
-version = "2.1.1"
+version = "2.2.0"
 description = "A library for earthquake selection"
 readme = "README.md"
 authors = [
@@ -12,7 +12,7 @@ authors = [
 ]
 license = {file = "LICENSE"}
 requires-python = ">=3.10"
-keywords = ["earthquake", "seismology", "data-processing", "selection", "peer", "nga","afad"]
+keywords = ["earthquake", "seismology", "data-processing", "selection", "peer", "nga","afad", "esm"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
