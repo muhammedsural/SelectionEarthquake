@@ -10,6 +10,10 @@
 
 ::: selection_service.providers.afad_provider.AFADDataProvider
 
+::: selection_service.providers.esm_provider.ESMProvider
+
+::: selection_service.providers.fdsn_provider.FDSNProvider
+
 ::: selection_service.providers.afad.afad_api_client.AfadApiClient
 
 ::: selection_service.providers.afad.afad_file_manager.AfadFileManager

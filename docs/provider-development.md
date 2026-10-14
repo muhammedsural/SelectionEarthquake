@@ -11,6 +11,8 @@ semasina donusturmek ve pipeline'a `IDataFetcher` olarak sunmaktir.
 class ProviderName(str, Enum):
     AFAD = "AFAD"
     PEER = "PEER"
+    FDSN = "FDSN"
+    ESM = "ESM"
     NEW_PROVIDER = "NEW_PROVIDER"
 ```
 
@@ -83,6 +85,20 @@ Yeni provider:
 - API referans sayfalari
 
 icinde listelenmelidir.
+
+## Ornek: ESM provider'i
+
+`providers/esm_provider.py` (2.2.0) bu adimlarin tam bir ornegidir:
+
+- `ESMColumnMapper` ham flatfile kolonlarindan `STANDARD_COLUMNS` uretir;
+  birim donusumleri (Arias cm/s -> m/s) ve eksik deger yedekleri (Rjb bos ise
+  Repi) mapper'dadir.
+- `map_criteria` sunucuya gidecek sorguyu (`query`) ve yanita uygulanacak
+  filtreleri (`filters`) ayri dondurur; servisin desteklemedigi kriterler
+  boylece kaybolmaz.
+- HTTP oturumu (`session`) ve dosya yoneticisi disaridan verilebilir; testler
+  ag olmadan sahte oturumla calisir (`tests/test_EsmProvider.py`).
+- Download destegi icin `IWaveformDownloader` da uygulanir.
 
 ## FDSN notu
 

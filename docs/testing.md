@@ -15,6 +15,7 @@ Test paketi su davranislari kapsar:
 - AFAD API client hata yonetimi
 - AFAD provider retry ve download akislari
 - PEER filtreleme
+- ESM flatfile ayristirma, istemci filtreleri ve eventdata indirme (ag olmadan)
 - kolon mapper'lari
 - pipeline adimlari
 - `SearchCriteria` validasyonlari

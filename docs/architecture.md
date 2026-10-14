@@ -80,6 +80,10 @@ Ornek:
 - `PEERColumnMapper`: PEER kolonlarini `STANDARD_COLUMNS` ile hizalar.
 - `AFADDataProvider`: AFAD API'den veri ceker.
 - `AFADColumnMapper`: AFAD API yanitini standart kolona cevirir.
+- `ESMProvider`: ESM flatfile servisini sorgular, desteklenmeyen filtreleri
+  yanita uygular.
+- `ESMColumnMapper`: ESM flatfile kolonlarini (RotD50 PGA/PGV/PGD, Mw oncelikli
+  buyukluk) standart kolona cevirir.
 
 ## Download yetenegi
 

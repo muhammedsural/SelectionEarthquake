@@ -40,6 +40,15 @@ criteria = SearchCriteria(
 Alan adlarinda mevcut API ile uyum icin `Rjb`, `Rrup`, `Repi`, `Rhyp` yazimi
 korunur.
 
+!!! note "ESM'de hangi filtre nerede uygulanir (2.2.0)"
+    Tarih, buyukluk, derinlik, deprem kutusu (`bbox` veya min/max enlem-boylam),
+    Vs30, Rjb, `network`/`station_code` ve faylanma turu (yalniz StrikeSlip,
+    Normal, Reverse) ESM sunucusunda uygulanir. Rrup, Repi, Rhyp, PGA/PGV/PGD,
+    dairesel arama ve diger mekanizmalar yanit geldikten sonra uygulanir.
+    ESM buyukluk sinirini herhangi bir buyukluk turune uyguladigi icin sinir,
+    secilen `MAGNITUDE` (oncelik Mw) uzerinden yeniden uygulanir. Rjb/Rrup bos
+    olan (nokta kaynak) kayitlarda Repi/Rhyp kullanilir.
+
 !!! note "AFAD'da mesafe filtresi istemcide uygulanir (2.1.1)"
     AFAD servisi `fromRrup`/`toRrup` ile bos liste dondurdugu icin mesafe
     sinirlari AFAD'a gonderilmez; yanit geldikten sonra uygulanir. Sinir

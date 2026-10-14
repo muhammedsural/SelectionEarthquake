@@ -458,6 +458,7 @@ ile yapilir: `FILE_NAME_H1` `AG.ISTASYON.KONUM.KANAL` bicimindedir, uc bilesen
 birlikte iner; AFAD tarzi `file_status` (`RawAcc` -> CV, `Acc`/`Vel`/`Disp` ->
 elle islenmis MP) ve `export_type` (`asc2` -> ascii, `mseed`) karsiliklari
 desteklenir. Yalniz herkese acik veri desteklenir (kisitli veri token ister).
+Ayrintilar: [ESM Saglayicisi](docs/esm.md).
 
 ```python
 api = EarthquakeAPI(provider_names=[ProviderName.ESM, ProviderName.AFAD], strategies=[strategy])
