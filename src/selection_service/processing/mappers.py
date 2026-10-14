@@ -1,6 +1,7 @@
 from abc import ABC
 from math import atan2, cos, radians, sin, sqrt
 from typing import Dict, Protocol, Type
+import numpy as np
 import pandas as pd
 from functools import lru_cache
 
@@ -404,6 +405,89 @@ class FDSNColumnMapper(BaseColumnMapper):
         super().__init__(mappings)
 
 
+class ESMColumnMapper(BaseColumnMapper):
+    """ESM flatfile (esm-db.eu) kolon esleyici.
+
+    - Buyukluk: Mw, yoksa EMEC Mw, Ms, Ml, Mb (MAGNITUDE_TYPE ile birlikte).
+    - PGA/PGV/PGD: RotD50, yoksa iki yatay bilesenin geometrik ortalamasi
+      (PGA cm/s², PGV cm/s, PGD cm). T90 ve Arias iki yatay bilesenin ortalamasi;
+      Arias cm/s -> m/s.
+    - Rjb/Rrup: sonlu fay mesafesi; bos ise (kucuk depremler, nokta kaynak)
+      Repi/Rhyp kullanilir.
+    - FILE_NAME_H1 indirme anahtari ``AG.ISTASYON.KONUM.KANAL``; EVENT ESM deprem
+      kimligidir, SSN ``AG.ISTASYON``.
+    """
+
+    MAGNITUDES = (("mw", "Mw"), ("emec_mw", "Mw"), ("ms", "Ms"), ("ml", "Ml"), ("mb", "Mb"))
+    MECHANISMS = {"NF": "Normal", "TF": "Reverse", "SS": "StrikeSlip", "O": "Oblique", "U": "Unknown"}
+
+    def __init__(self, **kwargs):
+        super().__init__(column_mappings={})
+
+    @staticmethod
+    def _num(df: pd.DataFrame, column: str) -> pd.Series:
+        if column not in df.columns:
+            return pd.Series(np.nan, index=df.index, dtype=float)
+        return pd.to_numeric(df[column], errors="coerce")
+
+    @classmethod
+    def _horizontal(cls, df: pd.DataFrame, rotd50: str, u: str, v: str) -> pd.Series:
+        geomean = np.sqrt(cls._num(df, u).abs() * cls._num(df, v).abs())
+        return cls._num(df, rotd50).fillna(geomean)
+
+    @staticmethod
+    def _text(df: pd.DataFrame, column: str) -> pd.Series:
+        if column not in df.columns:
+            return pd.Series("", index=df.index)
+        return df[column].fillna("").astype(str).str.strip()
+
+    def map_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+        out = pd.DataFrame(index=df.index)
+        out["PROVIDER"] = ProviderName.ESM.value
+        network, station = self._text(df, "network_code"), self._text(df, "station_code")
+        location, channel = self._text(df, "location_code"), self._text(df, "channel_code")
+        out["EVENT"] = self._text(df, "esm_event_id")
+        out["SSN"] = network + "." + station
+        out["STATION"] = station
+        out["STATION_ID"] = out["SSN"]
+        out["FILE_NAME_H1"] = network + "." + station + "." + location + "." + channel
+        out["RSN"] = out["EVENT"] + "|" + out["FILE_NAME_H1"]
+        out["YEAR"] = pd.to_numeric(self._text(df, "event_time").str[:4], errors="coerce").astype("Int64")
+
+        magnitude = pd.Series(np.nan, index=df.index, dtype=float)
+        magnitude_type = pd.Series(None, index=df.index, dtype=object)
+        for column, label in self.MAGNITUDES:
+            values = self._num(df, column)
+            take = magnitude.isna() & values.notna()
+            magnitude[take] = values[take]
+            magnitude_type[take] = label
+        out["MAGNITUDE"] = magnitude
+        out["MAGNITUDE_TYPE"] = magnitude_type
+
+        out["HYPO_LAT"] = self._num(df, "ev_latitude")
+        out["HYPO_LON"] = self._num(df, "ev_longitude")
+        out["HYPO_DEPTH(km)"] = self._num(df, "ev_depth_km")
+        out["STATION_LAT"] = self._num(df, "st_latitude")
+        out["STATION_LON"] = self._num(df, "st_longitude")
+        out["VS30(m/s)"] = self._num(df, "preferred_vs30_m_s")
+        out["RJB(km)"] = self._num(df, "jb_dist").fillna(self._num(df, "epi_dist"))
+        out["RRUP(km)"] = self._num(df, "rup_dist").fillna(self._num(df, "hyp_dist"))
+        out["STRIKE1"] = self._num(df, "es_strike")
+        out["DIP1"] = self._num(df, "es_dip")
+        out["RAKE1"] = self._num(df, "es_rake")
+        out["MECHANISM"] = self._text(df, "fm_type_code").str.upper().map(self.MECHANISMS).fillna("Unknown")
+        out["PGA(cm2/sec)"] = self._horizontal(df, "rotd50_pga", "u_pga", "v_pga")
+        out["PGV(cm/sec)"] = self._horizontal(df, "rotd50_pgv", "u_pgv", "v_pgv")
+        out["PGD(cm)"] = self._horizontal(df, "rotd50_pgd", "u_pgd", "v_pgd")
+        out["T90_avg(sec)"] = pd.concat([self._num(df, "u_t90"), self._num(df, "v_t90")], axis=1).mean(axis=1)
+        out["ARIAS_INTENSITY(m/sec)"] = pd.concat(
+            [self._num(df, "u_ia"), self._num(df, "v_ia")], axis=1).mean(axis=1) / 100.0
+        out["LOWFREQ(Hz)"] = pd.concat([self._num(df, "u_hp"), self._num(df, "v_hp")], axis=1).max(axis=1)
+        out["ENDPOINTSOURCE"] = "https://esm-db.eu/#/event/" + out["EVENT"]
+        return self._ensure_standard_columns(out)
+
+
 class ColumnMapperFactory:
     """Kolon eşleyici factory sınıfı"""
  
@@ -413,6 +497,7 @@ class ColumnMapperFactory:
         ProviderName.AFAD.value: AFADColumnMapper,
         ProviderName.PEER.value: PEERColumnMapper,
         ProviderName.FDSN.value: FDSNColumnMapper,
+        ProviderName.ESM.value: ESMColumnMapper,
     }
  
     @classmethod
@@ -445,6 +530,8 @@ class ColumnMapperFactory:
             return PEERColumnMapper(**kwargs)
         if provider_Name == ProviderName.FDSN:
             return FDSNColumnMapper(**kwargs)
+        if provider_Name == ProviderName.ESM:
+            return ESMColumnMapper(**kwargs)
         else:
             return BaseColumnMapper(column_mappings={}, **kwargs)
  
