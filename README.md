@@ -464,7 +464,7 @@ katalogun kisa kimligidir (ornegin `us6000jllz`). FDSN satirlari (`FDSN_USGS`
 gibi etiketler) indirme servisinde `FDSN` provider'ina yonlendirilir.
 Ayrintilar: [FDSN Saglayicisi](docs/fdsn.md).
 
-## 2.2.1 duzeltmesi: ESM arama ve indirme
+## ESM arama ve indirme duzeltmesi (2.3.0)
 
 2.2.0'da ESM flatfile sorgusu servisin tanimadigi `u_ia`/`v_ia` alanlarini
 istedigi icin her arama HTTP 400 ("try_funct has failed") ile dusuyordu;
