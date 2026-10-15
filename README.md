@@ -447,6 +447,15 @@ esigini calistirir. Katki icin: branch acin, davranis degisikligine test
 ekleyin, dokuman orneklerinin gercek API ile calistigini dogrulayin
 ([Test ve Kalite](docs/testing.md)).
 
+## 2.2.1 duzeltmesi: ESM arama ve indirme
+
+2.2.0'da ESM flatfile sorgusu servisin tanimadigi `u_ia`/`v_ia` alanlarini
+istedigi icin her arama HTTP 400 ("try_funct has failed") ile dusuyordu;
+`rotD50_*` ve `u_T90` adlari da buyuk harf yuzunden eslesmiyordu. Alanlar artik
+ESM'deki kucuk harfli adlarla istenir ve Arias siddeti `rotd50_ai` alanindan
+okunur. Indirmede bos konum kodu `location=--` olarak gidip yine HTTP 400
+aliyordu; konum bossa parametre gonderilmez.
+
 ## 2.2.0: ESM saglayicisi
 
 `ProviderName.ESM` Engineering Strong-Motion veritabanini (esm-db.eu,
