@@ -257,3 +257,20 @@ def test_store_download_writes_raw_non_zip_content(tmp_path):
     with open(files[0], "rb") as f:
         assert f.read() == b"MSEED-BYTES"
     assert files[0].endswith("rec.mseed")
+
+
+def test_waveform_download_resolves_fdsn_node_labels():
+    provider = MagicMock()
+    provider.download_single_waveforms.return_value = Result.ok(True)
+    registry = MagicMock()
+    registry.get.return_value = provider
+
+    with patch(
+        "selection_service.services.waveform_download_service.supports_download",
+        return_value=True,
+    ):
+        result = WaveformDownloadService(registry).download_single(
+            "TK.4614..HN", "us6000jllz", "FDSN_USGS.TK.4614")
+
+    assert result.success is True
+    registry.get.assert_called_with("FDSN")

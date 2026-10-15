@@ -73,7 +73,7 @@ Birden fazla provider secildiginde ayni deprem ve istasyon cifti
 | `VS30(m/s)` | `preferred_vs30_m_s` |
 | `PGA(cm2/sec)`, `PGV(cm/sec)`, `PGD(cm)` | RotD50; yoksa iki yatay bilesenin geometrik ortalamasi |
 | `T90_avg(sec)` | Iki yatay bilesenin T90 ortalamasi |
-| `ARIAS_INTENSITY(m/sec)` | Iki yatay bilesenin Arias ortalamasi, cm/s -> m/s |
+| `ARIAS_INTENSITY(m/sec)` | `rotd50_ai` (RotD50 Arias), cm/s -> m/s |
 | `LOWFREQ(Hz)` | Yatay bilesenlerin yuksek geciren kesme frekansinin en buyugu |
 
 ## Indirme

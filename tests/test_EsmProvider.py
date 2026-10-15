@@ -24,18 +24,18 @@ HEADER = (
     "esm_event_id;event_time;ev_latitude;ev_longitude;ev_depth_km;fm_type_code;mw;emec_mw;ms;ml;mb;"
     "es_strike;es_dip;es_rake;network_code;station_code;location_code;channel_code;st_latitude;st_longitude;"
     "preferred_vs30_m_s;epi_dist;hyp_dist;jb_dist;rup_dist;u_hp;v_hp;rotd50_pga;u_pga;v_pga;rotd50_pgv;u_pgv;v_pgv;"
-    "rotd50_pgd;u_pgd;v_pgd;u_t90;v_t90;u_ia;v_ia"
+    "rotd50_pgd;u_pgd;v_pgd;u_t90;v_t90;rotd50_ai"
 )
 ROWS = [
     # Norcia Mw 6.6: sonlu fay mesafeleri ve RotD50 dolu.
     "EMSC-20161030_0000029;2016-10-30T06:40:18;42.8379;13.1232;6.2;NF;6.6;;;6.1;;151;47;-89;IT;NRC;;HG;42.7925;13.0964;"
-    "498;5.6;8.4;0.2;4.1;0.05;0.06;734.8;700;760;48.2;45;50;12.1;11;13;6.5;7.5;250;350",
+    "498;5.6;8.4;0.2;4.1;0.05;0.06;734.8;700;760;48.2;45;50;12.1;11;13;6.5;7.5;300",
     # Kucuk deprem: Mw yok (Ml), Rjb/Rrup bos -> Repi/Rhyp; RotD50 bos -> geometrik ortalama.
     "INT-20220209_0000149;2022-02-09T10:00:00;43.0;13.0;10;;;;;4.2;;;;;IT;NVL;00;HN;43.1;13.1;;20;22.4;;;0.1;0.2;"
-    ";40;90;;;;;;;;;;",
+    ";40;90;;;;;;;;;",
     # Turkiye: ters faylanma, Rjb 60 km.
     "TK-2023-0001;2023-02-06T01:17:34;37.17;37.08;10;TF;7.8;;;;;;;;TK;4614;;HN;37.5;37.9;360;80;80.6;60;60.5;;;"
-    "300;;;;;;;;;;;;",
+    "300;;;;;;;;;;;",
 ]
 
 
@@ -182,7 +182,7 @@ def test_waveform_download_requests_eventdata_and_extracts(tmp_path):
     url, params, timeout = session.calls[0]
     assert url == "https://esm-db.eu/esmws/eventdata/1/query" and timeout == 120
     assert params == {
-        "eventid": "EMSC-20161030_0000029", "network": "IT", "station": "NRC", "location": "--",
+        "eventid": "EMSC-20161030_0000029", "network": "IT", "station": "NRC",
         "channel": "HG?", "format": "ascii", "processing-type": "MP", "data-type": "ACC",
     }
     extracted = sorted(p.name for p in tmp_path.rglob("*.ASC"))
@@ -199,6 +199,13 @@ def test_eventdata_params_map_afad_style_options(status, expected):
     assert params["format"] == "mseed" and params["location"] == "00" and params["channel"] == "HN?"
     assert ESMProvider.eventdata_params("TK.4614", "E", export_type="asd")["format"] == "ascii"
     assert ESMProvider.eventdata_params("TK.4614", "E")["channel"] == "*"
+    assert "location" not in ESMProvider.eventdata_params("TK.4614..HN", "E")
+
+
+def test_flatfile_fields_use_esm_names():
+    # ESM bilinmeyen alana HTTP 400 doner ve adlar kucuk harflidir.
+    assert all(field == field.lower() for field in FLATFILE_FIELDS)
+    assert not {"u_ia", "v_ia"} & set(FLATFILE_FIELDS)
 
 
 def test_download_errors(tmp_path):

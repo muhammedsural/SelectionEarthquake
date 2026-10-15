@@ -102,9 +102,8 @@ def test_cached_provider_proxy_delegates_unknown_attributes():
 def test_provider_factory_creates_uncached_providers():
     afad = ProviderFactory.create_provider(ProviderName.AFAD, use_cache=False)
     peer = ProviderFactory.create_provider(ProviderName.PEER, use_cache=False)
-    fake_client = MagicMock()
     fdsn = ProviderFactory.create_provider(
-        ProviderName.FDSN, use_cache=False, client=fake_client
+        ProviderName.FDSN, use_cache=False, session=MagicMock()
     )
 
     assert isinstance(afad, AFADDataProvider)

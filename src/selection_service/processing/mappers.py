@@ -481,8 +481,7 @@ class ESMColumnMapper(BaseColumnMapper):
         out["PGV(cm/sec)"] = self._horizontal(df, "rotd50_pgv", "u_pgv", "v_pgv")
         out["PGD(cm)"] = self._horizontal(df, "rotd50_pgd", "u_pgd", "v_pgd")
         out["T90_avg(sec)"] = pd.concat([self._num(df, "u_t90"), self._num(df, "v_t90")], axis=1).mean(axis=1)
-        out["ARIAS_INTENSITY(m/sec)"] = pd.concat(
-            [self._num(df, "u_ia"), self._num(df, "v_ia")], axis=1).mean(axis=1) / 100.0
+        out["ARIAS_INTENSITY(m/sec)"] = self._num(df, "rotd50_ai") / 100.0
         out["LOWFREQ(Hz)"] = pd.concat([self._num(df, "u_hp"), self._num(df, "v_hp")], axis=1).max(axis=1)
         out["ENDPOINTSOURCE"] = "https://esm-db.eu/#/event/" + out["EVENT"]
         return self._ensure_standard_columns(out)

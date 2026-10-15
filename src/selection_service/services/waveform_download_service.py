@@ -19,6 +19,7 @@ from typing import Any
 import pandas as pd
 
 from ..core.error_handle import ProviderError
+from ..enums.enums import ProviderName
 from ..processing.result_handle import Result
 from ..providers.interfaces import supports_download
 from ..services.provider_registry import ProviderRegistry
@@ -81,7 +82,7 @@ class WaveformDownloadService:
             failures: list[str] = []
 
             for provider_name, group in result_df.groupby("PROVIDER"):
-                provider = self._registry.get(str(provider_name))
+                provider = self._provider(str(provider_name))
 
                 if provider is None:
                     logger.warning(
@@ -154,7 +155,7 @@ class WaveformDownloadService:
                                veya ağ / dosya sistemi hatası.
         """
         provider_name = station_code.split(".")[0]
-        provider = self._registry.get(provider_name)
+        provider = self._provider(provider_name)
 
         if provider is None:
             return Result.fail(
@@ -193,6 +194,16 @@ class WaveformDownloadService:
             return Result.fail(
                 ProviderError(provider_name, e, "Single waveform download failed")
             )
+
+    def _provider(self, name: str) -> Any:
+        """Satirdaki PROVIDER adindan kayit defterindeki provider'i bulur.
+
+        FDSN satirlari dugumle etiketlenir (``FDSN_USGS``); kayit defterinde tek
+        ``FDSN`` provider'i vardir.
+        """
+        if name.upper().startswith("FDSN_"):
+            name = ProviderName.FDSN.value
+        return self._registry.get(name)
 
     def _provider_result_success(self, provider_result: Any) -> bool:
         if isinstance(provider_result, Result):

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "earthquake-selection"
-version = "2.2.0"
+version = "2.3.0"
 description = "A library for earthquake selection"
 readme = "README.md"
 authors = [
@@ -38,12 +38,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-fdsn = [
-    "obspy>=1.4.2",
-]
-all = [
-    "obspy>=1.4.2",
-]
+# 2.3.0'dan itibaren FDSN icin ek paket gerekmez; eski kurulum komutlari icin bos birakildi.
+fdsn = []
+all = []
 dev = [
     "pytest>=8.0.0",
     "pytest-cov>=4.1.0",
@@ -51,7 +48,6 @@ dev = [
     "black>=23.0.0",
     "flake8>=7.0.0",
     "isort>=5.12.0",
-    "obspy>=1.4.2",
     "twine>=5.0.0"
 ]
 

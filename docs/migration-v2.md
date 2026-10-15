@@ -48,6 +48,7 @@ modul yollari degisti.
 ## Bagimliliklar
 
 - `obspy` artik opsiyonel: FDSN icin `pip install "earthquake-selection[fdsn]"`.
+  2.3.0'dan itibaren hic gerekmez.
 - Kullanilmayan `pyyaml`, `tqdm`, `python-dateutil`, `setuptools` bagimliliklari kaldirildi.
 
 ## Davranis duzeltmeleri

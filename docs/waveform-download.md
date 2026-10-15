@@ -1,7 +1,12 @@
 # Waveform Indirme
 
-Waveform indirme provider yetenegine baglidir. AFAD ve ESM (2.2.0) download
-destekler, PEER desteklemez.
+Waveform indirme provider yetenegine baglidir. AFAD, ESM (2.2.0) ve FDSN
+(2.3.0, `record_search=True` ile) download destekler, PEER desteklemez.
+
+FDSN `dataselect` servisini kullanir: `filename` aramadaki `FILE_NAME_H1`
+(`TK.4614..HN`), `event_id` katalog kimligidir (`us6000jllz`). `asc2` kanal
+duyarliligiyla cm/s^2'ye cevrilmis ASCII, `mseed` ham sayim yazar. Ayrintilar:
+[FDSN Saglayicisi](fdsn.md).
 
 ESM `eventdata` servisini kullanir: `station_code="ESM.IT.NRC"`, `filename`
 aramadaki `FILE_NAME_H1` (`IT.NRC..HG`, uc bilesen birlikte iner), `event_id`

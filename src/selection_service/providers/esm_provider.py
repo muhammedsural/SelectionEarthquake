@@ -43,8 +43,9 @@ ESM_BASE_URL = "https://esm-db.eu"
 FLATFILE_PATH = "/esmws/flatfile/1/query"
 EVENTDATA_PATH = "/esmws/eventdata/1/query"
 
-# Flatfile'dan istenen alanlar; servis bir alani tanimazsa butun alanlari
-# dondurebilir, ayristirma iki durumda da ayni calisir.
+# Flatfile'dan istenen alanlar, ESM'deki gibi kucuk harfle. Servis bilinmeyen
+# bir alana HTTP 400 doner; bazen de butun alanlari dondurur, ayristirma iki
+# durumda da ayni calisir.
 FLATFILE_FIELDS = (
     "esm_event_id", "event_time", "ev_latitude", "ev_longitude", "ev_depth_km",
     "fm_type_code", "mw", "emec_mw", "ms", "ml", "mb",
@@ -53,10 +54,10 @@ FLATFILE_FIELDS = (
     "st_latitude", "st_longitude", "preferred_vs30_m_s",
     "epi_dist", "hyp_dist", "jb_dist", "rup_dist",
     "u_hp", "v_hp",
-    "rotD50_pga", "u_pga", "v_pga",
-    "rotD50_pgv", "u_pgv", "v_pgv",
-    "rotD50_pgd", "u_pgd", "v_pgd",
-    "u_T90", "v_T90", "u_ia", "v_ia",
+    "rotd50_pga", "u_pga", "v_pga",
+    "rotd50_pgv", "u_pgv", "v_pgv",
+    "rotd50_pgd", "u_pgd", "v_pgd",
+    "u_t90", "v_t90", "rotd50_ai",
 )
 
 # Uygulamalarin AFAD'a gore verdigi indirme secenekleri -> ESM eventdata.
@@ -224,16 +225,19 @@ class ESMProvider(IDataFetcher, IWaveformDownloader):
         export_type = str(kwargs.get("export_type") or "ascii").lower()
         status = str(kwargs.get("file_status") or "Acc")
         processing, data_type = FILE_STATUS.get(status, FILE_STATUS["Acc"])
-        return {
+        params = {
             "eventid": event_id,
             "network": network,
             "station": station,
-            "location": location or "--",
             "channel": f"{channel[:2]}?" if channel else "*",
             "format": EXPORT_FORMATS.get(export_type, "ascii"),
             "processing-type": kwargs.get("processing_type") or processing,
             "data-type": kwargs.get("data_type") or data_type,
         }
+        # Bos konum gonderilmez: "--" degerini servis bir secenek sanip HTTP 400 doner.
+        if location:
+            params["location"] = location
+        return params
 
 
 def _number(series: pd.Series | None) -> pd.Series:
