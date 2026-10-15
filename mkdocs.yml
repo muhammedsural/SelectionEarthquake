@@ -54,6 +54,7 @@ nav:
       - Scoring ve Presetler: scoring.md
       - Raporlama: reporting.md
       - Waveform Indirme: waveform-download.md
+      - ESM Saglayicisi: esm.md
   - Gelistirme:
       - Mimari: architecture.md
       - Provider Gelistirme: provider-development.md

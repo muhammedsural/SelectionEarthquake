@@ -8,6 +8,10 @@ Mevcut provider'lar:
 
 - `ProviderName.PEER`: Paket icindeki NGA-West2 flatfile verisini kullanir.
 - `ProviderName.AFAD`: AFAD/TADAS API uzerinden veri ceker ve waveform indirir.
+- `ProviderName.ESM`: Engineering Strong-Motion veritabanindan (esm-db.eu;
+  Avrupa, Turkiye, Orta Dogu) islenmis kayitlari arar ve waveform indirir
+  (2.2.0). Herkese acik veri icin anahtar gerekmez. Ayrintilar:
+  [ESM saglayicisi](esm.md).
 - `ProviderName.FDSN`: ObsPy uyumlu FDSN servislerini sorgular. Varsayilan olarak
   event katalogu icin HTTPS `USGS`, istasyon ve waveform icin HTTPS `IRIS`
   kullanilir. `service`/`base_url` event servisini, `data_service`/
@@ -44,7 +48,7 @@ Download destekleyen provider'lar ek olarak `IWaveformDownloader` uygular.
 ## Mapper
 
 Her provider kendi ham kolonlarini `STANDARD_COLUMNS` semasina donusturur.
-Bu sayede AFAD ve PEER verileri ayni pipeline icinde birlestirilebilir.
+Bu sayede AFAD, PEER ve ESM verileri ayni pipeline icinde birlestirilebilir.
 
 ## SearchCriteria
 

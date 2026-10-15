@@ -39,10 +39,19 @@ Kriterleri genislet:
 criteria = criteria.model_copy(update={"min_magnitude": 5.0})
 ```
 
+## ESM aramasi bos veya hata donuyor
+
+- ESM `204`/`404` ile "veri yok" dondurur; provider bunu bos sonuc sayar.
+  Kriterleri genisletin (ozellikle tarih ve buyukluk).
+- Yalniz herkese acik veri desteklenir; kisitli/ambargolu kayitlar ESM'in
+  imzali token ile POST istegini ister ve aramada gorunmez.
+- Kurumsal agda `esm-db.eu` erisimi engelli olabilir; `ProviderError` mesajinda
+  baglanti hatasi gorursunuz.
+
 ## PEER download calismiyor
 
 PEER provider download desteklemez. Download sadece destekleyen provider'larda
-calisir. Mevcut durumda AFAD desteklenir.
+calisir. Mevcut durumda AFAD ve ESM desteklenir.
 
 ## `Strategy '...' not found`
 

@@ -76,3 +76,30 @@ AFAD tarafinda karsilasilabilecek yaygin nedenler:
 - Batch icindeki bazi `FILE_NAME_H1` kayitlari AFAD tarafinda artik
   indirilebilir degildir.
 - `export_type`, `file_type` veya `file_status` AFAD kaydi icin uygun degildir.
+
+## ESM download parametreleri
+
+ESM, `esmws/eventdata/1` servisini kullanir. `filename` aramadaki
+`FILE_NAME_H1` degeridir (`AG.ISTASYON.KONUM.KANAL`, ornek `IT.NRC..HG`);
+kanal iki harfe indirilir ve uc bilesen birlikte iner. `event_id` ESM deprem
+kimligidir (`EVENT`).
+
+```python
+download = api.download_single_waveform(
+    filename="IT.NRC..HG",
+    event_id="EMSC-20161030_0000029",
+    station_code="ESM.IT.NRC",
+    export_type="asc2",
+    file_status="Acc",
+)
+```
+
+| Parametre | Varsayilan | ESM karsiligi |
+| --- | --- | --- |
+| `export_type` | `ascii` | `asc2`/`ascii`/`asd` -> `ascii`, `mseed`, `sac` (ZIP) |
+| `file_status` | `Acc` | `RawAcc` -> CV (cm/s² donusturulmus), `Acc`/`Vel`/`Disp` -> MP + ACC/VEL/DIS, `ResSpecAcc` -> SA, `ResSpecDisp` -> SD, `FFT` -> FAS |
+| `processing_type` | - | Dogrudan ESM degeri (CV, MP, AP, MB); `file_status`'u ezer |
+| `data_type` | - | Dogrudan ESM degeri (ACC, VEL, DIS, SA, SD, FAS) |
+
+ESM ASCII dosyalarinda yon basligi (`DIRECTION`) yoktur; bilesen `STREAM`
+kanal kodunun son harfidir (HGE, HGN, HGZ).
