@@ -105,7 +105,6 @@ Paket adi `earthquake-selection`, import adi `selection_service`'dir.
 | Ihtiyac | Komut |
 | --- | --- |
 | Temel kurulum (AFAD + PEER) | `pip install earthquake-selection` |
-| FDSN provider'i (ObsPy tabanli) | `pip install "earthquake-selection[fdsn]"` |
 | Gelistirme (test, lint) | `pip install -e ".[dev]"` |
 
 Python 3.10 - 3.13 desteklenir. Yerel gelistirme:
@@ -122,7 +121,7 @@ pip install -e ".[dev]"
 | --- | --- | --- | --- | --- |
 | `ProviderName.PEER` | Paketle gelen NGA-West2 flatfile (~21.5 bin kayit) | Gerekmez | Yok | Tarih filtresi yil hassasiyetindedir; konum filtreleri hiposantre gore uygulanir |
 | `ProviderName.AFAD` | AFAD TADAS API | Gerekir | Var (`mseed`, `asc2`, `asd`) | `HYPO_DEPTH(km)` yanittaki `relatedDepth` alanindan, yoksa `rhyp`/`repi`'den doldurulur |
-| `ProviderName.FDSN` | ObsPy uyumlu FDSN servisleri (USGS, IRIS ...) | Gerekir | Waveform arama (`Stream`) | Istasyon ve waveform servisleri icin `[fdsn]` extra'si gerekir |
+| `ProviderName.FDSN` | FDSN web servisleri (USGS, EMSC, IRIS, KOERI ...) | Gerekir | Var (`record_search=True`; `mseed`, `asc2`) | Ek paket gerekmez. Mesafeler nokta kaynak; Vs30 ve PGA yok |
 | `ProviderName.ESM` | Engineering Strong-Motion database (esm-db.eu; Avrupa, Turkiye, Orta Dogu) | Gerekir | Var (`ascii`, `mseed`, `sac`; islenmis veya ham) | Herkese acik veri, anahtar gerekmez. Rjb/Rrup bos ise Repi/Rhyp kullanilir; PGA/PGV/PGD RotD50 |
 
 Birden fazla provider ayni anda kullanilabilir; sonuclar ortak kolon
@@ -350,7 +349,7 @@ if not download.success:
 Tek dosyalik ve sorunlu kayit iceren partiler dogru islenir (tek sorunlu kayit
 tum partiyi dusurmez). Ayrintilar: [Waveform Indirme](docs/waveform-download.md).
 
-**FDSN** istasyon ve waveform servisleri (`[fdsn]` extra'si gerekir):
+**FDSN** istasyon ve waveform servisleri:
 
 ```python
 api = EarthquakeAPI(provider_names=[ProviderName.FDSN], strategies=[strategy])
@@ -359,14 +358,15 @@ stations = api.search_fdsn_stations(
     network="TU", station="*", channel="HN?",
     starttime="2023-02-06", endtime="2023-02-07",
 )
-stream = api.search_fdsn_waveforms(
+traces = api.search_fdsn_waveforms(
     network="TU", station="ANK", location="*", channel="HN?",
     starttime="2023-02-06T01:16:00Z", endtime="2023-02-06T01:17:00Z",
 )
 ```
 
-Istasyon sonucu kanal basina bir DataFrame satiri, waveform sonucu ObsPy
-`Stream`'dir. Metotlarin `_async` surumleri de vardir.
+Istasyon sonucu kanal basina bir DataFrame satiri, waveform sonucu
+`selection_service.waveform.Trace` listesidir. Metotlarin `_async` surumleri de
+vardir. Kayit aramasi ve indirme: [FDSN Saglayicisi](docs/fdsn.md).
 
 ## Komut satiri
 
@@ -447,6 +447,23 @@ esigini calistirir. Katki icin: branch acin, davranis degisikligine test
 ekleyin, dokuman orneklerinin gercek API ile calistigini dogrulayin
 ([Test ve Kalite](docs/testing.md)).
 
+## 2.3.0: ObsPy'siz FDSN ve FDSN kayit indirme
+
+FDSN provider'i olay, istasyon ve dataselect servislerini dogrudan HTTP ile
+kullanir; ObsPy bagimliligi kalkti (`[fdsn]` extra'si bos, eski komutlar
+calismaya devam eder). `record_search=True` ile her deprem icin cevredeki ivme
+olcer istasyonlari aranir, kayit basina satir doner ve kayitlar indirilebilir:
+`mseed` ham, `asc2` kanal duyarliligiyla cm/s^2'ye cevrilmis ESM benzeri ASCII.
+Yeni `selection_service.waveform` modulu miniSEED 2 (Steim1/2, tamsayi, kayan
+nokta) okur ve ASCII yazar.
+
+Uyumluluk notlari: `FDSNProvider` artik ObsPy `client`/`station_client`/
+`waveform_client` yerine `session` (requests) alir; `search_fdsn_waveforms`
+ObsPy `Stream` yerine `Trace` listesi dondurur; olay satirlarinda `EVENT`
+katalogun kisa kimligidir (ornegin `us6000jllz`). FDSN satirlari (`FDSN_USGS`
+gibi etiketler) indirme servisinde `FDSN` provider'ina yonlendirilir.
+Ayrintilar: [FDSN Saglayicisi](docs/fdsn.md).
+
 ## 2.2.1 duzeltmesi: ESM arama ve indirme
 
 2.2.0'da ESM flatfile sorgusu servisin tanimadigi `u_ia`/`v_ia` alanlarini
@@ -503,7 +520,7 @@ yapilan ust duzey import'lar degismedi; modul yollari degisti:
 | `selection_service.processing.Selection` | `selection_service.processing.criteria` (kriterler) ve `...processing.strategies` (stratejiler) |
 | `IDataProvider` | `IDataFetcher` / `IWaveformDownloader` |
 | `SpectrumMatchStrategy`, `ParetoSelectionStrategy`, `--strategy spectrum/pareto` | Kaldirildi |
-| `obspy` zorunlu bagimlilik | Opsiyonel: `pip install "earthquake-selection[fdsn]"` |
+| `obspy` zorunlu bagimlilik | Kaldirildi (2.3.0'dan itibaren FDSN de ObsPy'siz calisir) |
 
 Tum modul adlari `snake_case` oldu. Tam liste ve davranis duzeltmeleri:
 [2.0 Gecis Rehberi](docs/migration-v2.md).

@@ -12,10 +12,12 @@ Mevcut provider'lar:
   Avrupa, Turkiye, Orta Dogu) islenmis kayitlari arar ve waveform indirir
   (2.2.0). Herkese acik veri icin anahtar gerekmez. Ayrintilar:
   [ESM saglayicisi](esm.md).
-- `ProviderName.FDSN`: ObsPy uyumlu FDSN servislerini sorgular. Varsayilan olarak
-  event katalogu icin HTTPS `USGS`, istasyon ve waveform icin HTTPS `IRIS`
-  kullanilir. `service`/`base_url` event servisini, `data_service`/
+- `ProviderName.FDSN`: FDSN web servislerini dogrudan HTTP ile sorgular (ObsPy
+  gerekmez). Varsayilan olarak event katalogu icin `USGS`, istasyon ve waveform
+  icin `IRIS` kullanilir. `service`/`base_url` event servisini, `data_service`/
   `data_base_url` ise istasyon ve waveform servisini degistirir.
+  `record_search=True` ile kayit basina satir doner ve kayitlar indirilebilir.
+  Ayrintilar: [FDSN saglayicisi](fdsn.md).
 
 FDSN etkin bir `EarthquakeAPI` uzerinden istasyon ve waveform servisleri de
 kullanilabilir:
@@ -26,15 +28,15 @@ stations = api.search_fdsn_stations(
     starttime="2023-02-06", endtime="2023-02-07",
 )
 
-stream = api.search_fdsn_waveforms(
+traces = api.search_fdsn_waveforms(
     network="TU", station="ANK", location="*", channel="HN?",
     starttime="2023-02-06T01:16:00Z",
     endtime="2023-02-06T01:17:00Z",
 )
 ```
 
-Istasyon sonucu kanal basina bir DataFrame satiri, waveform sonucu ise ObsPy
-`Stream` nesnesidir. Ayni metotlar `_async` son ekiyle asenkron kullanilabilir.
+Istasyon sonucu kanal basina bir DataFrame satiri, waveform sonucu ise
+`selection_service.waveform.Trace` listesidir. Ayni metotlar `_async` son ekiyle asenkron kullanilabilir.
 
 Provider'lar ortak `IDataFetcher` sozlesmesini uygular:
 

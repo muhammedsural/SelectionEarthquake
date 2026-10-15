@@ -14,6 +14,10 @@
 
 ::: selection_service.providers.fdsn_provider.FDSNProvider
 
+::: selection_service.waveform.mseed
+
+::: selection_service.waveform.ascii
+
 ::: selection_service.providers.afad.afad_api_client.AfadApiClient
 
 ::: selection_service.providers.afad.afad_file_manager.AfadFileManager

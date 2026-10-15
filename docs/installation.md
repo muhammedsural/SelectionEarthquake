@@ -11,12 +11,9 @@ Proje `pyproject.toml` icinde `Python >= 3.10` ister. Test matrisi Python
 pip install earthquake-selection
 ```
 
-AFAD, PEER ve ESM provider'lari temel kurulumla calisir. FDSN provider'i
-(ObsPy tabanli) opsiyoneldir; kullanacaksaniz:
-
-```bash
-pip install "earthquake-selection[fdsn]"
-```
+AFAD, PEER, ESM ve FDSN provider'lari temel kurulumla calisir. 2.3.0'dan
+itibaren FDSN icin ObsPy gerekmez; `earthquake-selection[fdsn]` komutu
+uyumluluk icin kabul edilir ama ek paket kurmaz.
 
 Kurulumdan sonra import paketi `selection_service` olur:
 

@@ -113,7 +113,7 @@ class EarthquakeAPI:
         return await provider.fetch_stations_async(**params)
 
     def search_fdsn_waveforms(self, **params: Any) -> Result:
-        """Fetch an ObsPy Stream from the configured FDSN dataselect service."""
+        """Fetch decoded traces (``waveform.Trace`` list) from the FDSN dataselect service."""
         provider = self.registry.get(ProviderName.FDSN.value)
         if provider is None or not hasattr(provider, "fetch_waveforms_sync"):
             return Result.fail(
@@ -126,7 +126,7 @@ class EarthquakeAPI:
         return provider.fetch_waveforms_sync(**params)
 
     async def search_fdsn_waveforms_async(self, **params: Any) -> Result:
-        """Asynchronously fetch an ObsPy Stream from the FDSN service."""
+        """Asynchronously fetch decoded traces from the FDSN dataselect service."""
         provider = self.registry.get(ProviderName.FDSN.value)
         if provider is None or not hasattr(provider, "fetch_waveforms_async"):
             return Result.fail(
