@@ -28,7 +28,11 @@ class MSeedError(ValueError):
 
 @dataclass
 class Trace:
-    """Tek kanalin surekli ornekleri."""
+    """Tek kanalin surekli ornekleri.
+
+    Tamsayi kodlanmis veri ham sayimdir (``units="counts"``); kayan nokta
+    verinin birimi dosyada yazmaz (``"unknown"``).
+    """
 
     network: str
     station: str
@@ -232,6 +236,7 @@ def read_mseed(raw: bytes, max_gap_samples: int = 10) -> List[Trace]:
         rate = records[0].rate
         if rate <= 0:
             continue
+        units = "counts" if all(np.issubdtype(r.data.dtype, np.integer) for r in records) else "unknown"
         start = records[0].start
         pieces = [records[0].data.astype(np.float64)]
         expected = len(records[0].data)
@@ -240,7 +245,7 @@ def read_mseed(raw: bytes, max_gap_samples: int = 10) -> List[Trace]:
             gap = offset - expected
             data = record.data.astype(np.float64)
             if gap > max_gap_samples or abs(record.rate - rate) > 1e-6 * rate:
-                traces.append(_trace(key, start, rate, pieces))
+                traces.append(_trace(key, start, rate, pieces, units))
                 start, pieces, expected = record.start, [data], len(data)
                 continue
             if gap > 0:
@@ -250,11 +255,11 @@ def read_mseed(raw: bytes, max_gap_samples: int = 10) -> List[Trace]:
                 data = data[-gap:]
             pieces.append(data)
             expected = offset + len(record.data)
-        traces.append(_trace(key, start, rate, pieces))
+        traces.append(_trace(key, start, rate, pieces, units))
     return traces
 
 
-def _trace(key, start, rate, pieces) -> Trace:
+def _trace(key, start, rate, pieces, units) -> Trace:
     network, station, location, channel = key
     data = np.concatenate(pieces) if pieces else np.zeros(0)
-    return Trace(network, station, location, channel, start, rate, data)
+    return Trace(network, station, location, channel, start, rate, data, units)

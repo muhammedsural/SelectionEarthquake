@@ -23,7 +23,7 @@ def test_integer_encodings_match_source(name):
     signal = expected_signal()
     assert east.id == "TK.4614.00.HNE" and north.id == "TK.4614.00.HNN"
     assert np.array_equal(east.data, signal) and np.array_equal(north.data, -signal)
-    assert east.sampling_rate == 100.0 and east.delta == 0.01
+    assert east.sampling_rate == 100.0 and east.delta == 0.01 and east.units == "counts"
     assert east.starttime == datetime(2023, 2, 6, 1, 17, 34, 123400, tzinfo=timezone.utc)
     assert east.endtime == datetime(2023, 2, 6, 1, 18, 4, 113400, tzinfo=timezone.utc)
 
@@ -33,6 +33,7 @@ def test_int16_float_and_little_endian():
     assert np.array_equal(east.data, (expected_signal() // 2).astype(np.int16))
     (vertical,) = read_mseed((DATA / "float32.mseed").read_bytes())
     assert np.allclose(vertical.data, (expected_signal() / 3.0).astype(np.float32))
+    assert vertical.units == "unknown"
     (little,) = read_mseed((DATA / "float64_le.mseed").read_bytes())
     assert np.allclose(little.data, vertical.data)
 
