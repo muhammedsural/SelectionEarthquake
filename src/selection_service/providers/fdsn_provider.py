@@ -34,7 +34,7 @@ from ..enums.enums import ProviderName
 from ..processing.criteria import SearchCriteria
 from ..processing.mappers import IColumnMapper
 from ..processing.result_handle import Result, result_decorator
-from ..waveform import Trace, read_mseed, write_ascii
+from ..waveform import Trace, align, read_mseed, write_ascii
 from .afad.afad_file_manager import AfadFileManager
 from .esm_provider import apply_client_filters
 from .interfaces import IDataFetcher, IWaveformDownloader
@@ -253,7 +253,9 @@ class FDSNProvider(IDataFetcher, IWaveformDownloader):
         if export_type == "mseed":
             (target / f"fdsn_{label}.mseed").write_bytes(raw)
             return True
-        traces = self.calibrate(read_mseed(raw), self._query_stations(query))
+        # Veri merkezi parcalari pencereye kirpmadan dondurebilir; bilesenler istenen
+        # pencereye ve ortak araliga kirpilir (ayni baslangic, ayni ornek sayisi).
+        traces = self.calibrate(align(read_mseed(raw), start, end), self._query_stations(query))
         if not traces:
             raise ProviderError(self.get_name(), None, f"{filename} icin dalga formu yok")
         write_ascii(traces, target, f"fdsn_{label}", header={

@@ -253,3 +253,25 @@ def test_download_batch_counts_failures(tmp_path):
 
 def test_provider_has_stable_registry_name():
     assert provider().get_name() == ProviderName.FDSN.value
+
+
+def test_download_aligns_components_to_window(tmp_path, monkeypatch):
+    from datetime import datetime, timedelta, timezone
+
+    from selection_service.providers import fdsn_provider
+    from selection_service.waveform import Trace
+
+    t0 = datetime(2023, 2, 6, 1, 16, 27, 820000, tzinfo=timezone.utc)
+    traces = [Trace("TK", "4614", "", "HNE", t0 + timedelta(seconds=29.66), 100.0, np.arange(22748.0)),
+              Trace("TK", "4614", "", "HNN", t0 + timedelta(seconds=27.68), 100.0, np.arange(22495.0))]
+    monkeypatch.setattr(fdsn_provider, "read_mseed", lambda raw: traces)
+    fdsn = provider(file_manager=AfadFileManager(base_dir=str(tmp_path)), record_search=True)
+    fdsn.fetch_data_sync(fdsn.map_criteria(criteria(max_Repi=50)))
+    assert fdsn.download_single_waveforms("TK.4614..HN", event_id="us6000jllz").success
+    headers = []
+    for path in sorted((tmp_path / "event_us6000jllz").glob("*.ASC")):
+        lines = path.read_text().splitlines()
+        headers.append(dict(line.split(": ", 1) for line in lines if ": " in line))
+    # Pencere: olaydan 30 s once, 180 s sonra; iki bilesen ayni anda baslar, ayni uzunlukta.
+    assert [h["DATE_TIME_FIRST_SAMPLE_YYYYMMDD_HHMMSS"] for h in headers] == ["20230206_011704.870"] * 2
+    assert [h["NDATA"] for h in headers] == ["21000", "21000"]
