@@ -12,6 +12,7 @@ SRO gibi eski kodlamalar.
 
 from __future__ import annotations
 
+import math
 import struct
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -257,6 +258,35 @@ def read_mseed(raw: bytes, max_gap_samples: int = 10) -> List[Trace]:
             expected = offset + len(record.data)
         traces.append(_trace(key, start, rate, pieces, units))
     return traces
+
+
+def align(traces: List[Trace], start: datetime | None = None, end: datetime | None = None) -> List[Trace]:
+    """Izleri ortak zaman araligina kirpar.
+
+    Veri merkezleri dataselect isteginde kayit parcalarini pencereye kirpmadan
+    dondurebilir; bilesenler farkli anlarda baslar ve uzunluklari farklidir.
+    Sonuc: her iz ``start``/``end`` (verildiyse) ve tum izlerin ortak oldugu
+    aralikla sinirlanir, ayni ornek sayisina sahip olur. Ortak aralik yoksa bos
+    liste doner.
+    """
+    if not traces:
+        return []
+    common_start = max([trace.starttime for trace in traces] + ([start] if start else []))
+    common_end = min([trace.endtime for trace in traces] + ([end] if end else []))
+    if common_end < common_start:
+        return []
+    aligned = []
+    for trace in traces:
+        offset = max(0, math.ceil((common_start - trace.starttime).total_seconds() * trace.sampling_rate - 1e-6))
+        aligned.append((trace, offset))
+    count = min(int(math.floor((common_end - trace.starttime).total_seconds() * trace.sampling_rate + 1e-6))
+                - offset + 1 for trace, offset in aligned)
+    if count <= 0:
+        return []
+    return [Trace(trace.network, trace.station, trace.location, trace.channel,
+                  trace.starttime + timedelta(seconds=offset / trace.sampling_rate), trace.sampling_rate,
+                  trace.data[offset: offset + count], trace.units, dict(trace.meta))
+            for trace, offset in aligned]
 
 
 def _trace(key, start, rate, pieces, units) -> Trace:

@@ -447,6 +447,19 @@ esigini calistirir. Katki icin: branch acin, davranis degisikligine test
 ekleyin, dokuman orneklerinin gercek API ile calistigini dogrulayin
 ([Test ve Kalite](docs/testing.md)).
 
+## 2.3.1 duzeltmesi: FDSN bilesenleri ayni pencerede
+
+Veri merkezleri dataselect isteginde kayit parcalarini istenen pencereye
+kirpmadan dondurebiliyor; bilesenler farkli anlarda basliyor ve uzunluklari
+farkli oluyordu (KO.KHMN, 6 Subat 2023: E 22 748, N 22 495 ornek). ASCII
+indirmede bilesenler artik istenen pencereye ve ortak araliga kirpilir: ayni
+baslangic, ayni ornek sayisi. Yardimci fonksiyon:
+`selection_service.waveform.align`. `mseed` ciktisi ham veridir ve kirpilmaz.
+
+Tekil indirme basarisiz oldugunda donen hata mesaji saglayicinin gerekcesini
+de tasir (ornegin `Single waveform download failed: FDSN veri merkezinde bu
+kayit icin veri yok`); onceden yalnizca genel mesaj okunabiliyordu.
+
 ## 2.3.0: ObsPy'siz FDSN ve FDSN kayit indirme
 
 FDSN provider'i olay, istasyon ve dataselect servislerini dogrudan HTTP ile

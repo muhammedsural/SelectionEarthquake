@@ -59,7 +59,10 @@ download = api.download_single_waveform(
 
 - Zaman penceresi depremden `pre_event_s` once baslar, `120 s + mesafe/3.5`
   (en az 180 s, mesafe bilinmiyorsa 300 s) sonra biter.
-- `export_type="mseed"` ham miniSEED (sayim) yazar.
+- `export_type="mseed"` ham miniSEED (sayim) yazar; veri merkezinin dondurdugu
+  parcalar oldugu gibi kalir (bilesenler farkli anlarda baslayabilir).
+- `asc2`/`ascii` ciktisinda bilesenler istenen pencereye ve ortak araliga
+  kirpilir (2.3.1): ayni baslangic zamani, ayni ornek sayisi.
 - `asc2`/`ascii` her bilesen icin ESM benzeri bir ASCII dosyasi yazar. Sayimlar
   istasyon servisindeki kanal duyarliligina (`Scale`) bolunur; birim m/s^2 ise
   cm/s^2'ye cevrilir. Bu, ivme olcerlerin duz bandinda alet tepkisinin
@@ -71,7 +74,8 @@ download = api.download_single_waveform(
 `selection_service.waveform.read_mseed` miniSEED 2 verisini numpy ile cozer
 (16/32 bit tamsayi, 32/64 bit kayan nokta, Steim1, Steim2). Kanal basina bir
 `Trace` doner; kucuk bosluklar interpolasyonla doldurulur, cakisan ornekler
-atilir. miniSEED 3 ve Blockette 1000 olmayan kayitlar desteklenmez.
+atilir. `align(traces, start, end)` izleri ortak zaman araligina kirpar.
+miniSEED 3 ve Blockette 1000 olmayan kayitlar desteklenmez.
 
 ```python
 from selection_service.waveform import read_mseed, write_ascii

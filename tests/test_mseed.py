@@ -108,3 +108,26 @@ def test_write_ascii_round_trip(tmp_path):
     assert header["DATE_TIME_FIRST_SAMPLE_YYYYMMDD_HHMMSS"] == "20230206_011734.500"
     assert header["EVENT_ID"] == "e1" and header["SENSITIVITY"] == "2.0"
     assert [float(value) for value in lines[-3:]] == [1.5, -2.25, 0.0]
+
+
+def test_align_trims_to_window_and_common_span():
+    from datetime import timedelta
+    from selection_service.waveform import align
+
+    t0 = datetime(2023, 2, 6, 1, 16, 27, 820000, tzinfo=timezone.utc)
+    east = Trace("KO", "KHMN", "", "HNE", t0 + timedelta(seconds=29.66), 100.0, np.arange(22748.0))
+    north = Trace("KO", "KHMN", "", "HNN", t0 + timedelta(seconds=27.68), 100.0, np.arange(22495.0))
+    vertical = Trace("KO", "KHMN", "", "HNZ", t0, 100.0, np.arange(30000.0))
+    window_start = datetime(2023, 2, 6, 1, 17, 4, 861000, tzinfo=timezone.utc)
+    window_end = window_start + timedelta(seconds=210)
+    aligned = align([east, north, vertical], window_start, window_end)
+    assert {trace.starttime for trace in aligned} == {aligned[0].starttime}
+    assert {len(trace.data) for trace in aligned} == {21000}
+    assert abs((aligned[0].starttime - window_start).total_seconds()) < 0.01
+    # Ilk ornek pencere basindan sonraki ilk ornektir; veri kaymaz.
+    assert aligned[0].data[0] == east.data[round((aligned[0].starttime - east.starttime).total_seconds() * 100)]
+    assert align([]) == []
+    late = Trace("KO", "KHMN", "", "HNE", window_end + timedelta(seconds=5), 100.0, np.arange(10.0))
+    assert align([late, north], window_start, window_end) == []
+    assert len(align([east, north])[0].data) == min(
+        len(east.data), len(north.data) - 198)  # ortak aralik, pencere yok
