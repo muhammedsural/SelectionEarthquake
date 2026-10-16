@@ -194,7 +194,7 @@ def test_waveform_download_single_success_and_not_supported():
 def test_waveform_download_single_fails_when_provider_returns_fail():
     provider = MagicMock()
     provider.download_single_waveforms.return_value = Result.fail(
-        ProviderError("AFAD", Exception("bad zip"), "download failed")
+        ProviderError("FDSN", None, "FDSN: kayit icin veri yok")
     )
     registry = MagicMock()
     registry.get.return_value = provider
@@ -204,6 +204,9 @@ def test_waveform_download_single_fails_when_provider_returns_fail():
         result = service.download_single("a.mseed", "1", "AFAD.TK.KND")
 
     assert result.success is False
+    # Saglayicinin gerekcesi dis mesajda kalir (kullanici "veri yok" gormeli).
+    assert str(result.error) == (
+        "Single waveform download failed: FDSN: kayit icin veri yok")
 
 
 def test_earthquake_query_service_run_sync_and_reselection():

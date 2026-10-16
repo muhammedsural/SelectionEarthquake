@@ -456,6 +456,10 @@ indirmede bilesenler artik istenen pencereye ve ortak araliga kirpilir: ayni
 baslangic, ayni ornek sayisi. Yardimci fonksiyon:
 `selection_service.waveform.align`. `mseed` ciktisi ham veridir ve kirpilmaz.
 
+Tekil indirme basarisiz oldugunda donen hata mesaji saglayicinin gerekcesini
+de tasir (ornegin `Single waveform download failed: FDSN veri merkezinde bu
+kayit icin veri yok`); onceden yalnizca genel mesaj okunabiliyordu.
+
 ## 2.3.0: ObsPy'siz FDSN ve FDSN kayit indirme
 
 FDSN provider'i olay, istasyon ve dataselect servislerini dogrudan HTTP ile

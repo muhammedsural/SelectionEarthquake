@@ -185,14 +185,19 @@ class WaveformDownloadService:
                 **kwargs,
             )
             if not self._provider_result_success(provider_result):
+                cause = (getattr(provider_result, "error", None)
+                         or provider_result)
                 return Result.fail(
-                    ProviderError(provider_name, RuntimeError(str(provider_result)), "Single waveform download failed")
+                    ProviderError(
+                        provider_name, RuntimeError(str(cause)),
+                        f"Single waveform download failed: {cause}")
                 )
             return Result.ok(True)
 
         except Exception as e:
             return Result.fail(
-                ProviderError(provider_name, e, "Single waveform download failed")
+                ProviderError(provider_name, e,
+                              f"Single waveform download failed: {e}")
             )
 
     def _provider(self, name: str) -> Any:
