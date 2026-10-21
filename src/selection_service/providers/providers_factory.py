@@ -39,6 +39,11 @@ class CachedProviderProxy(IDataFetcher):
         self._provider = provider
         self._cache = cache_manager
 
+    @property
+    def wrapped_provider(self) -> IDataFetcher:
+        """Sarmalanan asıl provider (supports_download bunu denetler)."""
+        return self._provider
+
     # ──────────────────────────────────────────────────────────────
     # IDataFetcher sözleşmesi — zorunlu delegasyonlar
     # ──────────────────────────────────────────────────────────────

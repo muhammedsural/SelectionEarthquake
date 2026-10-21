@@ -8,6 +8,7 @@ from selection_service.enums.enums import ProviderName
 from selection_service.processing.result_handle import Result
 from selection_service.providers.cache_manager import CacheManager
 from selection_service.providers.providers_factory import CachedProviderProxy, ProviderFactory
+from selection_service.providers.interfaces import supports_download
 from selection_service.providers.afad_provider import AFADDataProvider
 from selection_service.providers.peer_provider import PeerWest2Provider
 from selection_service.providers.fdsn_provider import FDSNProvider
@@ -121,3 +122,26 @@ def test_provider_factory_unknown_provider_raises():
     with pytest.raises(ValueError, match="Unknown provider"):
         ProviderFactory.create_provider("UNKNOWN", use_cache=False)
 
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        (ProviderName.AFAD, True),
+        (ProviderName.FDSN, True),
+        (ProviderName.ESM, True),
+        (ProviderName.PEER, False),
+    ],
+)
+def test_cached_proxy_keeps_download_support(name, expected):
+    # Python 3.12+ protokol kontrolü __getattr__'ı çağırmaz; proxy açılmalı.
+    provider = ProviderFactory.create_provider(name, use_cache=True)
+
+    assert isinstance(provider, CachedProviderProxy)
+    assert supports_download(provider) is expected
+
+
+def test_supports_download_does_not_unwrap_mocks_forever():
+    # Mock her adı üretir; wrapped_provider zinciri sonsuz açılmamalı.
+    # (Protokol sonucu sürüme bağlı: 3.11'de True, 3.12+'da False.)
+    assert isinstance(supports_download(MagicMock()), bool)

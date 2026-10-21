@@ -18,6 +18,7 @@ Not: eski ``IDataProvider`` v2.0.0'da kaldırıldı.
 
 from __future__ import annotations
 
+import inspect
 from typing import Any, Dict, List, Protocol, runtime_checkable
 
 import pandas as pd
@@ -187,5 +188,12 @@ def supports_download(provider: IDataFetcher) -> bool:
     Returns:
         True  — provider aynı zamanda IWaveformDownloader protokolünü karşılıyor.
         False — provider yalnızca veri çekmeyi destekliyor.
+
+    Not: Python 3.12+ protokol kontrolünde ``__getattr__`` çağrılmaz
+    (``inspect.getattr_static``); bu yüzden CachedProviderProxy gibi
+    sarmalayıcılar ``wrapped_provider`` ile açılıp asıl provider denetlenir.
     """
+    # getattr_static: Mock gibi her adı üreten nesnelerde sonsuz açılmayı önler.
+    if inspect.getattr_static(provider, "wrapped_provider", None) is not None:
+        return supports_download(provider.wrapped_provider)
     return isinstance(provider, IWaveformDownloader)
