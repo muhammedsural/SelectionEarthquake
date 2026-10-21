@@ -141,5 +141,7 @@ def test_cached_proxy_keeps_download_support(name, expected):
     assert supports_download(provider) is expected
 
 
-def test_supports_download_handles_mocks():
-    assert supports_download(MagicMock()) is False
+def test_supports_download_does_not_unwrap_mocks_forever():
+    # Mock her adı üretir; wrapped_provider zinciri sonsuz açılmamalı.
+    # (Protokol sonucu sürüme bağlı: 3.11'de True, 3.12+'da False.)
+    assert isinstance(supports_download(MagicMock()), bool)
