@@ -447,6 +447,14 @@ esigini calistirir. Katki icin: branch acin, davranis degisikligine test
 ekleyin, dokuman orneklerinin gercek API ile calistigini dogrulayin
 ([Test ve Kalite](docs/testing.md)).
 
+## 2.3.2 duzeltmesi: Python 3.12+ ile indirme
+
+Python 3.12 ve sonrasinda protokol kontrolu (`isinstance(x, IWaveformDownloader)`)
+`__getattr__` cagirmadigi icin onbellekli saglayicilar (`CachedProviderProxy`)
+"dalga formu indirmeyi desteklemiyor" diye reddediliyordu; AFAD, FDSN ve ESM
+indirmeleri calismiyordu. `supports_download` artik proxy'yi acip asil
+saglayiciyi denetler.
+
 ## 2.3.1 duzeltmesi: FDSN bilesenleri ayni pencerede
 
 Veri merkezleri dataselect isteginde kayit parcalarini istenen pencereye
