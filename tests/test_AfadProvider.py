@@ -172,6 +172,59 @@ def test_batch_failure_falls_back_to_single_downloads(tmp_path, monkeypatch):
     assert result.value["batches"][0]["retry_recovered"] == 2
 
 
+class TestAfadFileTypeFallback:
+    """Bazı AFAD kayıtları yalnızca "unprocessed" tipinde vardır (2026-10:
+    Kahramanmaraş Mw7.7, 20230206011732_3139); "ap" isteği hata gövdesi döner."""
+
+    @staticmethod
+    def _provider(tmp_path, download):
+        from selection_service.providers.afad.afad_file_manager import AfadFileManager
+        api = MagicMock()
+        api.download_waveform.side_effect = download
+        return api, AFADDataProvider(AFADColumnMapper(), api_client=api,
+                                     file_manager=AfadFileManager(base_dir=str(tmp_path)))
+
+    def test_falls_back_to_unprocessed_when_ap_fails(self, tmp_path):
+        from selection_service.core.error_handle import NetworkError
+
+        def download(payload):
+            if payload["file_type"] == ["ap"]:
+                raise NetworkError("AFAD", Exception('Unexpected download body: {"Result":101}'))
+            return b"MSEED"
+
+        api, p = self._provider(tmp_path, download)
+        result = p.download_single_waveforms("20230206011732_3139", event_id=1,
+                                             file_type="ap", file_status="Acc")
+
+        assert result.success
+        sent = [call.args[0] for call in api.download_waveform.call_args_list]
+        assert [s["file_type"] for s in sent] == [["ap"], ["unprocessed"]]
+        assert sent[1] == {
+            "filename": ["20230206011732_3139"], "file_type": ["unprocessed"],
+            "file_status": "Acc", "export_type": "mseed",
+            "user_name": "GuestUser", "call": "afad",
+        }
+
+    def test_requested_type_is_not_retried_twice(self, tmp_path):
+        api, p = self._provider(tmp_path, lambda payload: b"MSEED")
+        assert p.download_single_waveforms("x", event_id=1, file_type="unprocessed").success
+        assert api.download_waveform.call_count == 1
+
+    def test_error_names_each_file_type_reason(self, tmp_path):
+        from selection_service.core.error_handle import NetworkError
+
+        def download(payload):
+            raise NetworkError("AFAD", Exception(f"boom-{payload['file_type'][0]}"),
+                               "Download request failed")
+
+        _, p = self._provider(tmp_path, download)
+        result = p.download_single_waveforms("x", event_id=1)
+
+        assert not result.success
+        message = str(result.error)
+        assert "ap: boom-ap" in message and "unprocessed: boom-unprocessed" in message
+
+
 class TestAfadDistanceFilters:
     """AFAD fromRrup/toRrup ile her zaman bos liste donduruyor (2026-10 canli
     test): mesafe sinirlari sunucuya gonderilmez, yanita istemcide uygulanir."""

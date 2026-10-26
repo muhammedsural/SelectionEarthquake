@@ -447,6 +447,17 @@ esigini calistirir. Katki icin: branch acin, davranis degisikligine test
 ekleyin, dokuman orneklerinin gercek API ile calistigini dogrulayin
 ([Test ve Kalite](docs/testing.md)).
 
+## 2.3.3 duzeltmesi: AFAD dosya tipi yedegi
+
+AFAD her kaydi her dosya tipinde sunmaz. Ornegin Kahramanmaras Mw7.7
+(20230206011732_3139) kaydi `file_type: "ap"` ile istenince hata govdesi
+donuyor; tadas.afad.gov.tr indirme sayfasi ayni kaydi `"unprocessed"` ile
+indiriyor. Tekil AFAD indirmesi istenen tip basarisiz olursa artik
+`unprocessed` ile yeniden dener (`AFADDataProvider.FALLBACK_FILE_TYPES`).
+Toplu indirmede eksik kalan dosyalar tekil indirmeye dustugu icin ayni yedek
+orada da calisir. Hepsi basarisiz olursa hata mesaji her tipin nedenini
+ayri ayri verir.
+
 ## 2.3.2 duzeltmesi: Python 3.12+ ile indirme
 
 Python 3.12 ve sonrasinda protokol kontrolu (`isinstance(x, IWaveformDownloader)`)

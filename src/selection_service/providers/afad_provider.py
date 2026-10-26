@@ -41,6 +41,12 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
     IWaveformDownloader → download_single_waveforms / download_waveforms_batch
     """
 
+    # ExportData ``file_type``: "ap" işlenmiş kayıt ailesidir; tadas.afad.gov.tr
+    # indirme sayfası ise "unprocessed" gönderir ve bazı kayıtlar yalnızca
+    # bu tipte vardır (ör. 20230206011732_3139).
+    DEFAULT_FILE_TYPE = "ap"
+    FALLBACK_FILE_TYPES = ("unprocessed",)
+
     def __init__(
         self,
         column_mapper: Type[IColumnMapper],
@@ -129,21 +135,42 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
 
     @result_decorator
     def download_single_waveforms(self, filename: str, **kwargs: Any) -> bool:
-        """Tekil dalga formu indir, kaydet ve çıkar."""
-        payload = self._prepare_download_payload([filename], **kwargs)
+        """Tekil dalga formu indir, kaydet ve çıkar.
+
+        AFAD her kaydı her dosya tipinde sunmaz (ör. bazı kayıtlarda yalnızca
+        ``unprocessed`` vardır, ``ap`` isteği hata gövdesi döner). İstenen tip
+        başarısız olursa ``FALLBACK_FILE_TYPES`` sırayla denenir.
+        """
         event_id = kwargs.get("event_id", int(time.time()))
         station_code = kwargs.get("station_code", "unknown")
-
-        content = self.api_client.download_waveform(payload)
         zip_name = f"waveforms_{event_id}_{station_code}.zip"
-        extracted = self.file_manager.store_download(
-            content, event_id, zip_name,
-            kwargs.get("export_type", "mseed"),
-            raw_filename=filename,
+
+        failures: List[str] = []
+        for file_type in self._file_type_attempts(kwargs.get("file_type")):
+            payload = self._prepare_download_payload(
+                [filename], **{**kwargs, "file_type": file_type}
+            )
+            try:
+                content = self.api_client.download_waveform(payload)
+                extracted = self.file_manager.store_download(
+                    content, event_id, zip_name,
+                    kwargs.get("export_type", "mseed"),
+                    raw_filename=filename,
+                )
+            except Exception as e:
+                failures.append(f"{file_type}: {self._error_reason(e)}")
+                logger.warning("AFAD %s (%s) indirilemedi: %s", filename, file_type, e)
+                continue
+            if extracted:
+                if failures:
+                    logger.info("AFAD %s, %s dosya tipiyle indirildi.", filename, file_type)
+                return True
+            failures.append(f"{file_type}: arşivden dosya çıkmadı")
+
+        raise ProviderError(
+            "AFAD", None,
+            f"{filename} indirilemedi ({'; '.join(failures)})",
         )
-        if not extracted:
-            raise ProviderError("AFAD", None, f"No files extracted for {filename}")
-        return True
 
     @result_decorator
     def download_waveforms_batch(
@@ -343,12 +370,25 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
         clean_filenames = [name for name in filenames if name]
         return {
             "filename": clean_filenames,
-            "file_type": [kwargs.get("file_type", "ap")] * len(clean_filenames),
+            "file_type": [kwargs.get("file_type") or self.DEFAULT_FILE_TYPE] * len(clean_filenames),
             "file_status": kwargs.get("file_status", "Acc"),
             "export_type": kwargs.get("export_type", "mseed"),
             "user_name": kwargs.get("user_name", "GuestUser"),
             "call": "afad",
         }
+
+    @classmethod
+    def _file_type_attempts(cls, requested: Any) -> List[str]:
+        """İstenen dosya tipi önce, ardından denenmemiş yedek tipler."""
+        attempts = [str(requested or cls.DEFAULT_FILE_TYPE)]
+        attempts += [t for t in cls.FALLBACK_FILE_TYPES if t not in attempts]
+        return attempts
+
+    @staticmethod
+    def _error_reason(error: Exception) -> str:
+        # NetworkError dış mesajı genel kalır; asıl neden original_error'dadır.
+        original = getattr(error, "original_error", None)
+        return str(original or error)
 
     def _download_event_id(self, **kwargs: Any) -> Any:
         event_id = kwargs.get("event_id")
