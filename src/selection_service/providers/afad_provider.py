@@ -41,11 +41,13 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
     IWaveformDownloader → download_single_waveforms / download_waveforms_batch
     """
 
-    # ExportData ``file_type``: "ap" işlenmiş kayıt ailesidir; tadas.afad.gov.tr
-    # indirme sayfası ise "unprocessed" gönderir ve bazı kayıtlar yalnızca
-    # bu tipte vardır (ör. 20230206011732_3139).
+    # ExportData ``file_type``: "ap" otomatik, "mp" elle işlenmiş, "unprocessed"
+    # ham kayıttır. Her kayıt her tipte yoktur (ör. 20230206011732_3139 yalnızca
+    # unprocessed; ap/mp isteği {"Result":106} döner). Arama yanıtındaki
+    # isAuto/isManual/isUnprocessed bayrakları hangi tiplerin olduğunu söyler.
     DEFAULT_FILE_TYPE = "ap"
-    FALLBACK_FILE_TYPES = ("unprocessed",)
+    FALLBACK_FILE_TYPES = ("unprocessed", "mp")
+    FILE_TYPE_FLAGS = (("ap", "isAuto"), ("mp", "isManual"), ("unprocessed", "isUnprocessed"))
 
     def __init__(
         self,
@@ -64,6 +66,8 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
  
         self.mapped_df: pd.DataFrame | None = None
         self.response_df: pd.DataFrame | None = None
+        # recordFilename -> AFAD'da mevcut dosya tipleri (arama yanıtından).
+        self._available_file_types: Dict[str, List[str]] = {}
 
     # ──────────────────────────────────────────────────────────────
     # IDataFetcher sözleşmesi
@@ -146,7 +150,7 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
         zip_name = f"waveforms_{event_id}_{station_code}.zip"
 
         failures: List[str] = []
-        for file_type in self._file_type_attempts(kwargs.get("file_type")):
+        for file_type in self._file_type_attempts(kwargs.get("file_type"), filename):
             payload = self._prepare_download_payload(
                 [filename], **{**kwargs, "file_type": file_type}
             )
@@ -313,6 +317,7 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
             )
 
         self.response_df = self._apply_distance_bounds(pd.DataFrame(data), distance_bounds)
+        self._remember_file_types(self.response_df)
         if self.response_df.empty:
             logger.warning(
                 "AFAD %d kayıt döndürdü; mesafe filtresinden sonra kayıt kalmadı.",
@@ -370,19 +375,42 @@ class AFADDataProvider(IDataFetcher, IWaveformDownloader):
         clean_filenames = [name for name in filenames if name]
         return {
             "filename": clean_filenames,
-            "file_type": [kwargs.get("file_type") or self.DEFAULT_FILE_TYPE] * len(clean_filenames),
+            # file_type dosya başınadır; her kayıt için mevcut ilk tip istenir.
+            "file_type": [
+                self._file_type_attempts(kwargs.get("file_type"), name)[0]
+                for name in clean_filenames
+            ],
             "file_status": kwargs.get("file_status", "Acc"),
             "export_type": kwargs.get("export_type", "mseed"),
             "user_name": kwargs.get("user_name", "GuestUser"),
             "call": "afad",
         }
 
-    @classmethod
-    def _file_type_attempts(cls, requested: Any) -> List[str]:
-        """İstenen dosya tipi önce, ardından denenmemiş yedek tipler."""
-        attempts = [str(requested or cls.DEFAULT_FILE_TYPE)]
-        attempts += [t for t in cls.FALLBACK_FILE_TYPES if t not in attempts]
-        return attempts
+    def _remember_file_types(self, df: pd.DataFrame) -> None:
+        if "recordFilename" not in df.columns:
+            return
+        flags = [(file_type, col) for file_type, col in self.FILE_TYPE_FLAGS if col in df.columns]
+        if not flags:
+            return
+        for _, row in df.iterrows():
+            # Sütun tamamen bool ise değerler numpy.bool_ gelir; ``is True`` yetmez.
+            available = [file_type for file_type, col in flags if row.get(col) in (True,)]
+            if available and row["recordFilename"]:
+                self._available_file_types[str(row["recordFilename"])] = available
+
+    def _file_type_attempts(self, requested: Any, filename: str | None = None) -> List[str]:
+        """Denenecek dosya tipleri: istenen tip önce, ardından yedekler.
+
+        Arama yanıtı kaydın hangi tiplerde olduğunu bildirdiyse yalnızca
+        onlar denenir (istenen tip yoksa hiç istenmez).
+        """
+        requested = str(requested or self.DEFAULT_FILE_TYPE)
+        available = self._available_file_types.get(str(filename)) if filename else None
+        if available:
+            return ([requested] if requested in available else []) + [
+                t for t in available if t != requested
+            ]
+        return [requested] + [t for t in self.FALLBACK_FILE_TYPES if t != requested]
 
     @staticmethod
     def _error_reason(error: Exception) -> str:

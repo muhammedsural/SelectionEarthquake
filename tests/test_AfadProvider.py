@@ -225,6 +225,55 @@ class TestAfadFileTypeFallback:
         assert "ap: boom-ap" in message and "unprocessed: boom-unprocessed" in message
 
 
+class TestAfadAvailableFileTypes:
+    """Arama yanıtındaki isAuto/isManual/isUnprocessed bayrakları kullanılır."""
+
+    RECORDS = [
+        {"waveformId": 327948, "recordFilename": "20230206011732_3139",
+         "isUnprocessed": True, "isManual": False, "isAuto": False},
+        {"waveformId": 1, "recordFilename": "auto_rec",
+         "isUnprocessed": True, "isManual": False, "isAuto": True},
+    ]
+
+    @staticmethod
+    def _provider(tmp_path, records):
+        from selection_service.providers.afad.afad_file_manager import AfadFileManager
+        api = MagicMock()
+        api.download_waveform.return_value = b"MSEED"
+        mapper = MagicMock()
+        mapper.map_columns.side_effect = lambda df: df.copy()
+        p = AFADDataProvider(mapper, api_client=api,
+                             file_manager=AfadFileManager(base_dir=str(tmp_path)))
+        p._process_response_data(records)
+        return api, p
+
+    def test_unprocessed_only_record_is_requested_as_unprocessed(self, tmp_path):
+        api, p = self._provider(tmp_path, self.RECORDS)
+
+        assert p.download_single_waveforms("20230206011732_3139", event_id=1,
+                                           file_type="ap").success
+        assert api.download_waveform.call_count == 1
+        assert api.download_waveform.call_args.args[0]["file_type"] == ["unprocessed"]
+
+    def test_requested_type_kept_when_available(self, tmp_path):
+        _, p = self._provider(tmp_path, self.RECORDS)
+        assert p._file_type_attempts("ap", "auto_rec") == ["ap", "unprocessed"]
+        assert p._file_type_attempts("ap", "unknown") == ["ap", "unprocessed", "mp"]
+
+    def test_batch_payload_uses_type_per_file(self, tmp_path):
+        _, p = self._provider(tmp_path, self.RECORDS)
+        payload = p._prepare_download_payload(["20230206011732_3139", "auto_rec"], file_type="ap")
+        assert payload["file_type"] == ["unprocessed", "ap"]
+
+    def test_numpy_bool_flags(self, tmp_path):
+        records = [dict(r) for r in self.RECORDS]
+        _, p = self._provider(tmp_path, records)  # tüm sütunlar bool -> numpy.bool_
+        assert p._available_file_types["auto_rec"] == ["ap", "unprocessed"]
+        records.append({"waveformId": 2, "recordFilename": "nan_rec"})  # bayraklar NaN
+        _, p = self._provider(tmp_path, records)
+        assert "nan_rec" not in p._available_file_types
+
+
 class TestAfadDistanceFilters:
     """AFAD fromRrup/toRrup ile her zaman bos liste donduruyor (2026-10 canli
     test): mesafe sinirlari sunucuya gonderilmez, yanita istemcide uygulanir."""
