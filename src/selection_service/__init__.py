@@ -5,7 +5,7 @@ selection_service
 A Python library for earthquake ground motion selection and processing.
 """
 
-__version__ = "2.3.2"
+__version__ = "2.3.3"
 
 # --- Core API ---
 from .core.logging_config import setup_logging
