@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/docs-mkdocs-informational)](https://muhammedsural.github.io/SelectionEarthquake)
 
-Deprem kayitlarini AFAD, PEER NGA-West2, ESM ve FDSN servislerinden cekip ortak
+Deprem kayitlarini AFAD, PEER NGA-West2, ESM, CESMD ve FDSN servislerinden cekip ortak
 kolon semasina normalize eden; arama kriterlerine gore puanlayan ve
 **TBDY 2018'e uygun, bolge ozelliklerine (buyukluk, uzaklik, mekanizma, zemin)
 benzeyen deprem kayitlarini seçen** Python kutuphanesi.
@@ -123,6 +123,7 @@ pip install -e ".[dev]"
 | `ProviderName.AFAD` | AFAD TADAS API | Gerekir | Var (`mseed`, `asc2`, `asd`) | `HYPO_DEPTH(km)` yanittaki `relatedDepth` alanindan, yoksa `rhyp`/`repi`'den doldurulur |
 | `ProviderName.FDSN` | FDSN web servisleri (USGS, EMSC, IRIS, KOERI ...) | Gerekir | Var (`record_search=True`; `mseed`, `asc2`) | Ek paket gerekmez. Mesafeler nokta kaynak; Vs30 ve PGA yok |
 | `ProviderName.ESM` | Engineering Strong-Motion database (esm-db.eu; Avrupa, Turkiye, Orta Dogu) | Gerekir | Var (`ascii`, `mseed`, `sac`; islenmis veya ham) | Herkese acik veri, anahtar gerekmez. Rjb/Rrup bos ise Repi/Rhyp kullanilir; PGA/PGV/PGD RotD50 |
+| `ProviderName.CESMD` | Center for Engineering Strong Motion Data (strongmotioncenter.org; ABD ve dunya) | Gerekir | Var (ZIP dataset; islenmis `P` veya ham `R`) | Aramada anahtar gerekmez; indirme kayitli e-posta ister (`email=` veya `CESMD_EMAIL`). Rjb/Rrup = CESMD fay mesafesi, yoksa Repi; PGA g'den cm/s^2'ye cevrilir |
 
 Birden fazla provider ayni anda kullanilabilir; sonuclar ortak kolon
 semasinda birlesir. Yeni provider eklemek icin
@@ -495,6 +496,14 @@ ObsPy `Stream` yerine `Trace` listesi dondurur; olay satirlarinda `EVENT`
 katalogun kisa kimligidir (ornegin `us6000jllz`). FDSN satirlari (`FDSN_USGS`
 gibi etiketler) indirme servisinde `FDSN` provider'ina yonlendirilir.
 Ayrintilar: [FDSN Saglayicisi](docs/fdsn.md).
+
+## 2.4.0: CESMD saglayicisi
+
+`ProviderName.CESMD` CESMD'yi (strongmotioncenter.org) ekler; ayrintilar
+[CESMD Saglayicisi](docs/cesmd.md) sayfasindadir. Arama anahtarsiz calisir.
+Indirme CESMD'nin ucretsiz kaydindaki e-postayi ister: `CESMD_EMAIL` ortam
+degiskeni veya `EarthquakeAPI(..., email="...")`. Servisin ZIP icerigi henuz
+kayitli bir e-postayla canli denenmedi; testler sahte oturumla calisir.
 
 ## ESM arama ve indirme duzeltmesi (2.3.0)
 

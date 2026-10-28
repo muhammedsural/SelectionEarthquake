@@ -7,7 +7,7 @@ kutuphanesidir.
 
 ## Ne saglar?
 
-- AFAD, PEER, ESM ve FDSN verilerini tek tip DataFrame formatina donusturur.
+- AFAD, PEER, ESM, CESMD ve FDSN verilerini tek tip DataFrame formatina donusturur.
 - Ortak `SearchCriteria` modeliyle provider farklarini gizler.
 - Gaussian tabanli skor uretir ve kriter bazli skor kirilimi verir.
 - TBDY 2018 secim sinirlarini uygular:
@@ -16,7 +16,7 @@ kutuphanesidir.
   - istasyon basina maksimum kayit
   - deprem olayi basina maksimum kayit
 - Her kayit icin secildi/reddedildi durumunu ve gerekcesini raporlar.
-- AFAD ve ESM kayitlari icin waveform indirme akisini destekler.
+- AFAD, ESM ve CESMD kayitlari icin waveform indirme akisini destekler.
 - CLI ile uc uca arama, secim, CSV ve JSON rapor uretimi sunar.
 
 ## Paket adi ve import adi

@@ -5,6 +5,7 @@ class ProviderName(str, Enum):
     PEER = "PEER"
     FDSN = "FDSN"
     ESM = "ESM"
+    CESMD = "CESMD"
 
 class DesignCode(str, Enum):
     TBDY_2018 = "TBDY_2018"

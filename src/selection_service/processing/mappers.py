@@ -487,6 +487,73 @@ class ESMColumnMapper(BaseColumnMapper):
         return self._ensure_standard_columns(out)
 
 
+class CESMDColumnMapper(BaseColumnMapper):
+    """CESMD records (strongmotioncenter.org) kolon esleyici.
+
+    - Buyukluk ``ev_mag`` (tur ``ev_magType``: MW/MWW/ML...).
+    - PGA g -> cm/s^2 (islenmis yatay en buyuk, yoksa ham); PGV cm/s, PGD cm.
+    - Rjb/Rrup: CESMD fay mesafesi (``fault_dist``); bos ise Repi kullanilir
+      (nokta kaynak yaklasimi, ESM ile ayni).
+    - Mekanizma ``faultType``: NM, RS/RR, SS.
+    - FILE_NAME_H1 indirme anahtari ``AG.ISTASYON~REPI``; EVENT USGS kimligi.
+    - Ne ham ne islenmis verisi olmayan kayitlar indirilemeyecegi icin atilir.
+    """
+
+    G_TO_CM_S2 = 980.665
+    MECHANISMS = {"NM": "Normal", "RS": "Reverse", "RR": "Reverse", "SS": "StrikeSlip"}
+
+    def __init__(self, **kwargs):
+        super().__init__(column_mappings={})
+
+    @staticmethod
+    def _num(df: pd.DataFrame, column: str) -> pd.Series:
+        if column not in df.columns:
+            return pd.Series(np.nan, index=df.index, dtype=float)
+        return pd.to_numeric(df[column], errors="coerce")
+
+    @staticmethod
+    def _text(df: pd.DataFrame, column: str) -> pd.Series:
+        if column not in df.columns:
+            return pd.Series("", index=df.index)
+        return df[column].fillna("").astype(str).str.strip()
+
+    def map_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+        if "rec_raw" in df.columns and "rec_processed" in df.columns:
+            df = df[df["rec_raw"].astype(bool) | df["rec_processed"].astype(bool)]
+        out = pd.DataFrame(index=df.index)
+        out["PROVIDER"] = ProviderName.CESMD.value
+        network, station = self._text(df, "st_network"), self._text(df, "st_code")
+        epidist = self._num(df, "rec_epidist")
+        out["EVENT"] = self._text(df, "ev_id")
+        out["SSN"] = network + "." + station
+        out["STATION"] = station
+        out["STATION_ID"] = out["SSN"]
+        out["FILE_NAME_H1"] = [
+            f"{n}.{s}" + (f"~{e:.1f}" if pd.notna(e) else "") for n, s, e in zip(network, station, epidist)
+        ]
+        out["RSN"] = out["EVENT"] + "|" + out["FILE_NAME_H1"]
+        out["YEAR"] = pd.to_numeric(self._text(df, "ev_time").str[:4], errors="coerce").astype("Int64")
+        out["MAGNITUDE"] = self._num(df, "ev_mag")
+        out["MAGNITUDE_TYPE"] = self._text(df, "ev_magType").replace("", None)
+        out["HYPO_LAT"] = self._num(df, "ev_latitude")
+        out["HYPO_LON"] = self._num(df, "ev_longitude")
+        out["HYPO_DEPTH(km)"] = self._num(df, "ev_depth")
+        out["STATION_LAT"] = self._num(df, "st_latitude")
+        out["STATION_LON"] = self._num(df, "st_longitude")
+        out["VS30(m/s)"] = self._num(df, "st_vs30")
+        distance = self._num(df, "rec_fault_dist").fillna(epidist)
+        out["RJB(km)"] = distance
+        out["RRUP(km)"] = distance
+        out["MECHANISM"] = self._text(df, "ev_faultType").str.upper().map(self.MECHANISMS).fillna("Unknown")
+        pga = pd.concat([self._num(df, "rec_pgav2"), self._num(df, "rec_pgav1")], axis=1).bfill(axis=1).iloc[:, 0]
+        out["PGA(cm2/sec)"] = pga * self.G_TO_CM_S2
+        out["PGV(cm/sec)"] = self._num(df, "rec_pgv")
+        out["PGD(cm)"] = self._num(df, "rec_pgd")
+        out["ENDPOINTSOURCE"] = "https://earthquake.usgs.gov/earthquakes/eventpage/" + out["EVENT"]
+        return self._ensure_standard_columns(out)
+
+
 class ColumnMapperFactory:
     """Kolon eşleyici factory sınıfı"""
  
@@ -497,6 +564,7 @@ class ColumnMapperFactory:
         ProviderName.PEER.value: PEERColumnMapper,
         ProviderName.FDSN.value: FDSNColumnMapper,
         ProviderName.ESM.value: ESMColumnMapper,
+        ProviderName.CESMD.value: CESMDColumnMapper,
     }
  
     @classmethod
@@ -531,6 +599,8 @@ class ColumnMapperFactory:
             return FDSNColumnMapper(**kwargs)
         if provider_Name == ProviderName.ESM:
             return ESMColumnMapper(**kwargs)
+        if provider_Name == ProviderName.CESMD:
+            return CESMDColumnMapper(**kwargs)
         else:
             return BaseColumnMapper(column_mappings={}, **kwargs)
  
