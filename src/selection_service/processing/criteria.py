@@ -471,6 +471,34 @@ class SearchCriteria(BaseModel):
             params["contains-string"] = "False"
         return {key: value for key, value in params.items() if value is not None}
 
+    def to_cesmd_params(self) -> Dict[str, Any]:
+        """CESMD records servisinin sunucu tarafinda uyguladigi filtreler."""
+
+        def cesmd_time(value: str, end_of_day: bool = False) -> str:
+            value = value.replace("T", " ").replace("Z", "").split(".")[0]
+            if " " in value:
+                return value
+            return f"{value} {'23:59:59' if end_of_day else '00:00:00'}"
+
+        params: Dict[str, Any] = {
+            "startdate": cesmd_time(self.start_date),
+            "enddate": cesmd_time(self.end_date, end_of_day=True),
+            "minmag": self.min_magnitude,
+            "maxmag": self.max_magnitude,
+            "minepidist": self.min_Repi,
+            "maxepidist": self.max_Repi,
+            "netid": self.network,
+            "nodata": 404,
+            # Serbest alan (zemin) istasyonlari; bina/baraj kayitlari secime uygun degil.
+            "sttype": "G",
+        }
+        box = self.bbox or (self.min_latitude, self.max_latitude, self.min_longitude, self.max_longitude)
+        for key, value in zip(("eminlat", "emaxlat", "eminlon", "emaxlon"), box):
+            params[key] = value
+        if self.circleLatitude is not None and self.circleRadius is not None:
+            params.update({"elat": self.circleLatitude, "elon": self.circleLongitude, "erad": self.circleRadius})
+        return {key: value for key, value in params.items() if value is not None}
+
     def esm_client_filters(self) -> Dict[str, Any]:
         """ESM yanitina istemci tarafinda uygulanacak sinirlar (bkz. ESMProvider)."""
         filters: Dict[str, Any] = {

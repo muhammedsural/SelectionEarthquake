@@ -17,6 +17,7 @@ from ..processing.result_handle import Result
 from ..providers.afad_provider import AFADDataProvider
 from ..providers.peer_provider import PeerWest2Provider
 from ..providers.fdsn_provider import FDSNProvider
+from ..providers.cesmd_provider import CESMDProvider
 from ..providers.esm_provider import ESMProvider
 from ..providers.interfaces import IDataFetcher          # ← yeni
 from ..enums.enums import ProviderName
@@ -169,6 +170,8 @@ class ProviderFactory:
             provider = FDSNProvider(column_mapper=mapper, **kwargs)
         elif provider_type == ProviderName.ESM:
             provider = ESMProvider(column_mapper=mapper)
+        elif provider_type == ProviderName.CESMD:
+            provider = CESMDProvider(column_mapper=mapper, **kwargs)
         else:
             raise ValueError(f"Unknown provider: {provider_type}")
 

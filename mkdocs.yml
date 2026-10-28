@@ -55,6 +55,7 @@ nav:
       - Raporlama: reporting.md
       - Waveform Indirme: waveform-download.md
       - ESM Saglayicisi: esm.md
+      - CESMD Saglayicisi: cesmd.md
       - FDSN Saglayicisi: fdsn.md
   - Gelistirme:
       - Mimari: architecture.md
