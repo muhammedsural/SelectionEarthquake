@@ -1,4 +1,5 @@
 import io
+import io
 import zipfile
 
 import pandas as pd
@@ -198,6 +199,40 @@ def test_download_builds_dataset_query_and_extracts_the_zip(tmp_path, monkeypatc
     assert params["minepidist"] == pytest.approx(34.44) and params["maxepidist"] == pytest.approx(34.56)
     kept = sorted(path.name for path in tmp_path.rglob("*") if path.is_file())
     assert kept == ["CI.CCC.V2.zip.txt", "CI.CCC_HNE.V2"]  # baska istasyon dosyasi atilir
+
+
+def nested_dataset(inner_names):
+    """Canli CESMD dataset yaniti: metadata.json + ic ZIP (kayitlar)."""
+    inner = io.BytesIO()
+    with zipfile.ZipFile(inner, "w") as archive:
+        for name in inner_names:
+            archive.writestr(name, "veri")
+    outer = io.BytesIO()
+    with zipfile.ZipFile(outer, "w") as archive:
+        archive.writestr("metadata.json", '{"details": {"url": "...email=gizli%40example.org"}}')
+        archive.writestr("ci38457511/ci38457511_AZBSAP/ci38457511_azbsapp.zip", inner.getvalue())
+    return outer.getvalue()
+
+
+def test_download_unpacks_the_nested_zip_and_keeps_only_acceleration(tmp_path, monkeypatch):
+    monkeypatch.setenv("CESMD_EMAIL", "kullanici@example.org")
+    inner = [
+        "AZBSAPp/V2C/AZBSAP-n.70004bn0.HNE.--.acc.V2c",
+        "AZBSAPp/V2C/AZBSAP-n.70004bn0.HNE.--.vel.V2c",
+        "AZBSAPp/V2C/AZBSAP-n.70004bn0.HNE.--.dis.V2c",
+        "AZBSAPp/V3C/AZBSAP-n.70004bn0.HNE.--.V3c",
+    ]
+    cesmd = provider(FakeSession(FakeResponse(200, content=nested_dataset(inner))), tmp_path)
+    assert cesmd.download_single_waveforms("AZ.BSAP~302.1", event_id="ci38457511").success
+    kept = sorted(path.name for path in tmp_path.rglob("*") if path.is_file())
+    assert kept == ["AZBSAP-n.70004bn0.HNE.--.acc.V2c"]  # metadata.json (e-posta) dahil digerleri silinir
+
+
+def test_download_keeps_legacy_multichannel_v2_files(tmp_path, monkeypatch):
+    monkeypatch.setenv("CESMD_EMAIL", "kullanici@example.org")
+    cesmd = provider(FakeSession(FakeResponse(200, content=nested_dataset(["CIADO.V2", "CIADO.V3"]))), tmp_path)
+    assert cesmd.download_single_waveforms("CI.ADO~136.1", event_id="ci38457511").success
+    assert sorted(path.name for path in tmp_path.rglob("*") if path.is_file()) == ["CIADO.V2"]
 
 
 def test_download_uses_processed_data_by_default_and_explicit_email(tmp_path, monkeypatch):

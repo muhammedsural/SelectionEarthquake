@@ -33,6 +33,17 @@ indirme aciklayici bir hatayla durur.
 servis istasyon koduyla suzmedigi icin ag (`netid`) ve Repi penceresi
 (+-0.06 km) sunucuya, istasyon kodu ZIP icerigine uygulanir.
 
+Indirme 2019 Ridgecrest depremi icin CI, AZ, BK, CE, NC, NN, NP, PG, WR aglarinda
+canli dogrulandi. Yanit, `metadata.json` (istek adresi kayitli e-postayi icerir) ve
+asil kayitlari tasiyan ic ZIP'ten olusur. Kutuphane ic ZIP'i acar, yalniz ivme
+dosyalarini tutar (hiz/yer degistirme `.vel`/`.dis`, spektrum `V3` ve
+`metadata.json` silinir) ve su dosyalari birakir:
+
+- CSMIP/CGS/SCSN/NCSN/UNR aglari: tek dosyada tum kanallar, `CIADO.V2` (islenmis) veya
+  `CIADO.V1` (ham).
+- USGS NSMP/BK/AZ/NP/WR ve benzeri: kanal basina COSMOS dosyasi, `*.acc.V2c`
+  (islenmis) veya `*.V1c` (ham).
+
 ```python
 import os
 from selection_service.core.earthquake_api import EarthquakeAPI

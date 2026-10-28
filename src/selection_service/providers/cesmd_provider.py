@@ -240,13 +240,38 @@ class CESMDProvider(IDataFetcher, IWaveformDownloader):
         _network, station, _epi = parse_file_key(filename)
         safe_event = re.sub(r"[^A-Za-z0-9_-]", "_", str(event_id))
         safe_name = re.sub(r"[^A-Za-z0-9_-]", "_", filename.partition("~")[0])
+        # Canli dogrulandi: dis ZIP metadata.json (e-posta iceren istek adresi dahil) ve
+        # icinde asil kayitlari tasiyan ikinci bir ZIP verir; "asc2" ic ZIP'i de acar.
         extracted = self.file_manager.store_download(
-            response.content, safe_event, f"cesmd_{safe_event}_{safe_name}.zip", "zip"
+            response.content, safe_event, f"cesmd_{safe_event}_{safe_name}.zip", "asc2"
         )
+        extracted = self._keep_acceleration_files(extracted)
         extracted = self._keep_station_files(extracted, station)
         if not extracted:
             raise ProviderError(self.name, None, f"No files extracted for {filename}")
         return True
+
+    @staticmethod
+    def _is_acceleration_file(path: str) -> bool:
+        """Ivme kaydi mi? Hiz/yer degistirme (``.vel``/``.dis``), spektrum (V3) ve
+        metadata.json atilir. Eski CSMIP/NSMP ``.v1``/``.v2`` dosyalari ivmeyi icerir."""
+        name = os.path.basename(path).lower()
+        if name == "metadata.json" or name.endswith((".json", ".zip")):
+            return False
+        if re.search(r"\.v3c?$", name):
+            return False
+        return not re.search(r"\.(vel|dis)\.v\d", name)
+
+    @classmethod
+    def _keep_acceleration_files(cls, paths: List[str]) -> List[str]:
+        """Ivme disindaki dosyalari diskten siler (metadata.json istek adresinde e-posta tasir)."""
+        kept = []
+        for path in paths:
+            if cls._is_acceleration_file(path):
+                kept.append(path)
+            elif os.path.isfile(path):
+                os.remove(path)
+        return kept
 
     @staticmethod
     def _keep_station_files(paths: List[str], station: str) -> List[str]:
