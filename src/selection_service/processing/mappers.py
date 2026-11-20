@@ -554,6 +554,74 @@ class CESMDColumnMapper(BaseColumnMapper):
         return self._ensure_standard_columns(out)
 
 
+class NGAW3ColumnMapper(BaseColumnMapper):
+    """NGA-West3 flatfile (nga-gm.org) kolon esleyici.
+
+    - ``/flatfile`` yaniti motion + event + station + site + path + intensity_measure alanlarini
+      kayit basina bir satirda verir (RotD50 bilesen varsayilani).
+    - PGA g -> cm/s^2, PGV cm/s. PGD flatfile'da yoktur (bos).
+    - Mekanizma ``mechanism_based_on_Rake`` (0 SS, 1 N, 2 R, 3 R/O, 4 N/O), NGA-West2 ile ayni.
+    - FILE_NAME_H1 indirme anahtari ``NGAW3_MID<motion_id>``; EVENT ComCat kimligi (yoksa
+      ``NGAW3-<event_id>``).
+    """
+
+    G_TO_CM_S2 = 980.665
+
+    def __init__(self, **kwargs):
+        super().__init__(column_mappings={})
+
+    @staticmethod
+    def _num(df: pd.DataFrame, column: str) -> pd.Series:
+        if column not in df.columns:
+            return pd.Series(np.nan, index=df.index, dtype=float)
+        return pd.to_numeric(df[column], errors="coerce")
+
+    @staticmethod
+    def _text(df: pd.DataFrame, column: str) -> pd.Series:
+        if column not in df.columns:
+            return pd.Series("", index=df.index)
+        return df[column].fillna("").astype(str).str.strip()
+
+    def map_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+        out = pd.DataFrame(index=df.index)
+        out["PROVIDER"] = ProviderName.NGAW3.value
+        motion_id = self._text(df, "motion_id").str.replace(r"\.0$", "", regex=True)
+        event_id = self._text(df, "event_id").str.replace(r"\.0$", "", regex=True)
+        comcat = self._text(df, "comcat_id")
+        network, code, name = (self._text(df, c) for c in ("network_code", "station_code", "station_name"))
+        station = code.where(code != "", name)
+        out["EVENT"] = comcat.where(comcat != "", "NGAW3-" + event_id)
+        out["RSN"] = motion_id
+        out["FILE_NAME_H1"] = "NGAW3_MID" + motion_id
+        out["STATION"] = station
+        out["SSN"] = (network + "." + station).str.strip(".")
+        out["STATION_ID"] = out["SSN"]
+        out["YEAR"] = pd.to_numeric(self._text(df, "datetime").str[:4], errors="coerce").astype("Int64")
+        out["MAGNITUDE"] = self._num(df, "magnitude")
+        out["MAGNITUDE_TYPE"] = self._text(df, "magnitude_type").replace("", None)
+        out["HYPO_LAT"] = self._num(df, "hypocenter_latitude")
+        out["HYPO_LON"] = self._num(df, "hypocenter_longitude")
+        out["HYPO_DEPTH(km)"] = self._num(df, "hypocenter_depth")
+        out["HYPOCENTER_DEPTH(km)"] = out["HYPO_DEPTH(km)"]
+        out["STATION_LAT"] = self._num(df, "station_latitude")
+        out["STATION_LON"] = self._num(df, "station_longitude")
+        out["VS30(m/s)"] = self._num(df, "vs30")
+        out["RJB(km)"] = self._num(df, "rjb")
+        out["RRUP(km)"] = self._num(df, "rrup")
+        out["RAKE1"] = self._num(df, "rake")
+        out["MECHANISM"] = (
+            self._num(df, "mechanism_based_on_Rake").map(lambda v: MECHANISM_MAP.get(int(v)) if pd.notna(v) else None)
+        ).fillna("Unknown")
+        out["PGA(cm2/sec)"] = self._num(df, "pga_rotd50") * self.G_TO_CM_S2
+        out["PGV(cm/sec)"] = self._num(df, "pgv_rotd50")
+        out["LOWFREQ(Hz)"] = pd.concat(
+            [self._num(df, "hpass_fc_h1"), self._num(df, "hpass_fc_h2")], axis=1
+        ).max(axis=1)
+        out["ENDPOINTSOURCE"] = "https://nga-gm.org/flatfile"
+        return self._ensure_standard_columns(out)
+
+
 class ColumnMapperFactory:
     """Kolon eşleyici factory sınıfı"""
  
@@ -565,6 +633,7 @@ class ColumnMapperFactory:
         ProviderName.FDSN.value: FDSNColumnMapper,
         ProviderName.ESM.value: ESMColumnMapper,
         ProviderName.CESMD.value: CESMDColumnMapper,
+        ProviderName.NGAW3.value: NGAW3ColumnMapper,
     }
  
     @classmethod
@@ -601,6 +670,8 @@ class ColumnMapperFactory:
             return ESMColumnMapper(**kwargs)
         if provider_Name == ProviderName.CESMD:
             return CESMDColumnMapper(**kwargs)
+        if provider_Name == ProviderName.NGAW3:
+            return NGAW3ColumnMapper(**kwargs)
         else:
             return BaseColumnMapper(column_mappings={}, **kwargs)
  

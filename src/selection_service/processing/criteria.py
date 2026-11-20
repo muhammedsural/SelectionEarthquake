@@ -499,6 +499,41 @@ class SearchCriteria(BaseModel):
             params.update({"elat": self.circleLatitude, "elon": self.circleLongitude, "erad": self.circleRadius})
         return {key: value for key, value in params.items() if value is not None}
 
+    def to_ngaw3_params(self) -> Dict[str, Any]:
+        """NGA-West3 flatfile ``where`` ifadesi (sunucu tarafi sayisal sinirlar).
+
+        Tarih, mekanizma, daire ve PGA/PGV sinirlari yanit geldikten sonra istemcide
+        uygulanir; yalniz dogrulanmis sayisal alanlar sunucuya gider. Yalniz indirilebilir
+        (``public_time_series=1``) kayitlar istenir.
+        """
+        conditions = ["public_time_series=1"]
+        ranges = (
+            ("magnitude", self.min_magnitude, self.max_magnitude),
+            ("hypocenter_depth", self.min_depth, self.max_depth),
+            ("vs30", self.min_vs30, self.max_vs30),
+            ("rjb", self.min_Rjb, self.max_Rjb),
+            ("rrup", self.min_Rrup, self.max_Rrup),
+            ("epicentral_distance", self.min_Repi, self.max_Repi),
+        )
+        for field, low, high in ranges:
+            if low is not None:
+                conditions.append(f"{field}>={low}")
+            if high is not None:
+                conditions.append(f"{field}<={high}")
+        box = self.bbox or (self.min_latitude, self.max_latitude, self.min_longitude, self.max_longitude)
+        for field, op, value in zip(
+            ("hypocenter_latitude", "hypocenter_latitude", "hypocenter_longitude", "hypocenter_longitude"),
+            (">=", "<=", ">=", "<="),
+            box,
+        ):
+            if value is not None:
+                conditions.append(f"{field}{op}{value}")
+        return {"where": " AND ".join(conditions)}
+
+    def ngaw3_date_range(self) -> tuple[str, str]:
+        """Istemci tarafinda uygulanacak tarih araligi (``YYYY-MM-DD``)."""
+        return self.start_date[:10], self.end_date[:10]
+
     def esm_client_filters(self) -> Dict[str, Any]:
         """ESM yanitina istemci tarafinda uygulanacak sinirlar (bkz. ESMProvider)."""
         filters: Dict[str, Any] = {
