@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
+import os
+import sys
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Callable, Iterable
 
 from selection_service.core.earthquake_api import EarthquakeAPI
 from selection_service.core.logging_config import setup_logging
@@ -28,11 +31,72 @@ def _provider_names(values: Iterable[str]) -> list[ProviderName]:
     return providers
 
 
+def collect_credentials(
+    providers: list[ProviderName],
+    args: argparse.Namespace,
+    *,
+    need_download: bool,
+    environ: dict[str, str] | None = None,
+    interactive: bool | None = None,
+    ask: Callable[[str], str] = input,
+    ask_secret: Callable[[str], str] = getpass.getpass,
+) -> dict[str, Any]:
+    """Hesap gerektiren provider'lar icin eksik bilgiyi sorar.
+
+    Oncelik: komut satiri argumani, ortam degiskeni, terminal sorusu. Parola yalniz gizli
+    (``getpass``) sorulur; ortam degiskeni veya ``--ngagm-password`` verilmisse sorulmaz.
+    Terminal etkilesimli degilse (boru, CI) sorulmaz; provider eksik bilgiyi kendi
+    aciklayici hatasiyla bildirir.
+    """
+    env = os.environ if environ is None else environ
+    interactive = sys.stdin.isatty() if interactive is None else interactive
+    kwargs: dict[str, Any] = {}
+    credentials: dict[ProviderName, dict[str, str]] = {}
+
+    if ProviderName.CESMD in providers and need_download:
+        # CESMD aramasi anahtarsiz calisir; kayitli e-posta yalniz indirme icin gerekir.
+        email = args.cesmd_email or env.get("CESMD_EMAIL")
+        if not email and interactive:
+            email = ask("CESMD kayitli e-posta (https://strongmotioncenter.org kaydi): ").strip()
+        if email:
+            credentials[ProviderName.CESMD] = {"email": email}
+
+    if ProviderName.NGAW3 in providers:
+        username = args.ngagm_username or env.get("NGAGM_USERNAME")
+        password = args.ngagm_password or env.get("NGAGM_PASSWORD")
+        if not username and interactive:
+            username = ask("NGA-West3 (nga-gm.org) kullanici adi: ").strip()
+        if username and not password and interactive:
+            password = ask_secret("NGA-West3 (nga-gm.org) parola: ")
+        if username or password:
+            credentials[ProviderName.NGAW3] = {
+                key: value for key, value in (("username", username), ("password", password)) if value
+            }
+    if credentials:
+        kwargs["credentials"] = credentials
+    return kwargs
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Run an earthquake record search, selection, report, and optional waveform download."
     )
-    parser.add_argument("--providers", nargs="+", default=["peer"], help="Provider names: peer afad")
+    parser.add_argument(
+        "--providers", nargs="+", default=["peer"], help="Provider names: peer afad fdsn esm cesmd ngaw3"
+    )
+    parser.add_argument(
+        "--cesmd-email",
+        help="CESMD registered e-mail (download only). Default: CESMD_EMAIL env var, else asked in the terminal.",
+    )
+    parser.add_argument(
+        "--ngagm-username",
+        help="nga-gm.org user name for NGAW3. Default: NGAGM_USERNAME env var, else asked in the terminal.",
+    )
+    parser.add_argument(
+        "--ngagm-password",
+        help="nga-gm.org password. Prefer the NGAGM_PASSWORD env var or the hidden prompt: "
+        "command-line arguments are visible in the process list and shell history.",
+    )
     parser.add_argument("--start-date", default="2000-01-01")
     parser.add_argument("--end-date", default="2025-09-05")
     parser.add_argument("--min-magnitude", type=float, default=7.0)
@@ -86,7 +150,8 @@ def main(argv: list[str] | None = None) -> int:
         "constraint": TBDY2018ConstraintStrategy,
     }
     strategy = strategies[args.strategy](config=config)
-    api = EarthquakeAPI(provider_names=providers, strategies=[strategy], use_cache=True)
+    credentials = collect_credentials(providers, args, need_download=args.download_waveforms)
+    api = EarthquakeAPI(provider_names=providers, strategies=[strategy], use_cache=True, **credentials)
 
     result = api.run_sync(criteria=criteria, strategy_name=strategy.get_name())
     if not result.success:

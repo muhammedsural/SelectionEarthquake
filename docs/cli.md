@@ -33,6 +33,27 @@ quake-sel --providers afad --start-date 2023-02-06 --end-date 2023-02-07 --min-m
 
 AFAD API ag erisimi gerektirir.
 
+## Hesap gerektiren provider'lar (CESMD, NGA-West3)
+
+Her provider'in kendi hesabi vardir. Bilgi su sirayla alinir: komut satiri argumani,
+ortam degiskeni, terminalde soru. Parola yalniz gizli sorulur (yazarken gorunmez).
+
+| Provider | Gerekli bilgi | Argüman | Ortam degiskeni | Ne zaman sorulur |
+| --- | --- | --- | --- | --- |
+| `cesmd` | Kayitli e-posta | `--cesmd-email` | `CESMD_EMAIL` | Yalniz `--download-waveforms` ile (arama anahtarsiz) |
+| `ngaw3` | nga-gm.org kullanici adi ve parola | `--ngagm-username`, `--ngagm-password` | `NGAGM_USERNAME`, `NGAGM_PASSWORD` | Her calistirmada |
+
+```bash
+quake-sel --providers ngaw3 --min-magnitude 6.5 --download-waveforms
+# NGA-West3 (nga-gm.org) kullanici adi: ...
+# NGA-West3 (nga-gm.org) parola:            (gizli)
+```
+
+Terminal etkilesimli degilse (boru, CI) soru sorulmaz; ortam degiskenlerini verin, yoksa
+provider eksik bilgiyi aciklayan bir hatayla durur. `--ngagm-password` komut satirinda
+gorunur (surec listesi, kabuk gecmisi); bunun yerine ortam degiskenini veya gizli soruyu
+kullanin.
+
 ## Waveform indirme
 
 ```bash
@@ -46,7 +67,9 @@ PEER download desteklemez ve indirme adiminda atlanir.
 
 | Parametre | Varsayilan | Aciklama |
 | --- | --- | --- |
-| `--providers` | `peer` | `peer`, `afad` veya ikisi birden |
+| `--providers` | `peer` | `peer`, `afad`, `fdsn`, `esm`, `cesmd`, `ngaw3` (birden fazla verilebilir) |
+| `--cesmd-email` | yok | CESMD indirme e-postasi |
+| `--ngagm-username` / `--ngagm-password` | yok | NGA-West3 hesabi |
 | `--start-date` | `2000-01-01` | Baslangic tarihi |
 | `--end-date` | `2025-09-05` | Bitis tarihi |
 | `--min-magnitude` | `7.0` | Minimum moment buyuklugu |

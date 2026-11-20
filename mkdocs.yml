@@ -56,6 +56,7 @@ nav:
       - Waveform Indirme: waveform-download.md
       - ESM Saglayicisi: esm.md
       - CESMD Saglayicisi: cesmd.md
+      - NGA-West3 Saglayicisi: ngaw3.md
       - FDSN Saglayicisi: fdsn.md
   - Gelistirme:
       - Mimari: architecture.md

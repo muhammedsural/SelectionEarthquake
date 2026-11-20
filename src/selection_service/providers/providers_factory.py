@@ -18,6 +18,7 @@ from ..providers.afad_provider import AFADDataProvider
 from ..providers.peer_provider import PeerWest2Provider
 from ..providers.fdsn_provider import FDSNProvider
 from ..providers.cesmd_provider import CESMDProvider
+from ..providers.ngaw3_provider import NGAW3Provider
 from ..providers.esm_provider import ESMProvider
 from ..providers.interfaces import IDataFetcher          # ← yeni
 from ..enums.enums import ProviderName
@@ -152,7 +153,11 @@ class ProviderFactory:
         Args:
             provider_type: ProviderName enum değeri (AFAD, PEER, …).
             use_cache:     True ise sonuçlar CachedProviderProxy ile önbelleklenir.
-            **kwargs:      Provider'a özgü ek parametreler.
+            **kwargs:      Provider'a özgü ek parametreler. ``credentials`` verilirse
+                           ``{ProviderName.NGAW3: {"username": ..., "password": ...},
+                           ProviderName.CESMD: {"email": ...}}`` biçiminde yalniz ilgili
+                           provider'in girdisi kendi parametrelerine eklenir; boylece her
+                           provider'in hesabi ayri tutulur.
 
         Returns:
             IDataFetcher örneği (gerekirse IWaveformDownloader da karşılar).
@@ -160,6 +165,9 @@ class ProviderFactory:
         Raises:
             ValueError: Bilinmeyen provider_type.
         """
+        credentials = kwargs.pop("credentials", None) or {}
+        own = {str(getattr(k, "value", k)).upper(): v for k, v in credentials.items()}
+        kwargs = {**kwargs, **(own.get(str(getattr(provider_type, "value", provider_type)).upper()) or {})}
         mapper = ColumnMapperFactory.create_mapper(provider_type, **kwargs)
 
         if provider_type == ProviderName.AFAD:
@@ -172,6 +180,8 @@ class ProviderFactory:
             provider = ESMProvider(column_mapper=mapper)
         elif provider_type == ProviderName.CESMD:
             provider = CESMDProvider(column_mapper=mapper, **kwargs)
+        elif provider_type == ProviderName.NGAW3:
+            provider = NGAW3Provider(column_mapper=mapper, **kwargs)
         else:
             raise ValueError(f"Unknown provider: {provider_type}")
 
