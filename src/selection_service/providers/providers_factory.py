@@ -153,7 +153,11 @@ class ProviderFactory:
         Args:
             provider_type: ProviderName enum değeri (AFAD, PEER, …).
             use_cache:     True ise sonuçlar CachedProviderProxy ile önbelleklenir.
-            **kwargs:      Provider'a özgü ek parametreler.
+            **kwargs:      Provider'a özgü ek parametreler. ``credentials`` verilirse
+                           ``{ProviderName.NGAW3: {"username": ..., "password": ...},
+                           ProviderName.CESMD: {"email": ...}}`` biçiminde yalniz ilgili
+                           provider'in girdisi kendi parametrelerine eklenir; boylece her
+                           provider'in hesabi ayri tutulur.
 
         Returns:
             IDataFetcher örneği (gerekirse IWaveformDownloader da karşılar).
@@ -161,6 +165,9 @@ class ProviderFactory:
         Raises:
             ValueError: Bilinmeyen provider_type.
         """
+        credentials = kwargs.pop("credentials", None) or {}
+        own = {str(getattr(k, "value", k)).upper(): v for k, v in credentials.items()}
+        kwargs = {**kwargs, **(own.get(str(getattr(provider_type, "value", provider_type)).upper()) or {})}
         mapper = ColumnMapperFactory.create_mapper(provider_type, **kwargs)
 
         if provider_type == ProviderName.AFAD:

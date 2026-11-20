@@ -54,7 +54,7 @@ def test_credentials_are_asked_when_missing_and_terminal_is_interactive():
         [ProviderName.NGAW3], _args(), need_download=False, environ={}, interactive=True,
         ask=ask, ask_secret=ask_secret,
     )
-    assert result == {"username": "kullanici", "password": "parola"}
+    assert result == {"credentials": {ProviderName.NGAW3: {"username": "kullanici", "password": "parola"}}}
     assert len(asked) == 1 and len(secret_prompts) == 1
 
 
@@ -70,7 +70,10 @@ def test_credentials_prefer_arguments_then_environment_and_skip_questions():
         [ProviderName.NGAW3, ProviderName.CESMD], _args(ngagm_username="arg"), need_download=True,
         environ=env, interactive=True, ask=boom, ask_secret=boom,
     )
-    assert result == {"email": "env@x.org", "username": "arg", "password": "envpw"}
+    assert result == {"credentials": {
+        ProviderName.CESMD: {"email": "env@x.org"},
+        ProviderName.NGAW3: {"username": "arg", "password": "envpw"},
+    }}
 
 
 def test_cesmd_email_is_only_needed_for_download_and_other_providers_need_nothing():
@@ -104,3 +107,21 @@ def test_cli_parser_accepts_credential_arguments():
         ["--providers", "ngaw3", "--ngagm-username", "u", "--cesmd-email", "a@b.org"]
     )
     assert args.ngagm_username == "u" and args.cesmd_email == "a@b.org" and args.ngagm_password is None
+
+
+def test_credentials_are_routed_to_their_own_provider_only():
+    from selection_service.enums.enums import ProviderName
+    from selection_service.providers.providers_factory import ProviderFactory
+
+    credentials = {
+        ProviderName.CESMD: {"email": "a@b.org"},
+        ProviderName.NGAW3: {"username": "u", "password": "p"},
+    }
+    cesmd = ProviderFactory.create_provider(ProviderName.CESMD, use_cache=False, credentials=credentials)
+    ngaw3 = ProviderFactory.create_provider(ProviderName.NGAW3, use_cache=False, credentials=credentials)
+    assert cesmd.email == "a@b.org"
+    assert ngaw3._username == "u" and ngaw3._password == "p"
+    # String anahtar da kabul edilir; credentials olmayan provider etkilenmez.
+    assert ProviderFactory.create_provider(ProviderName.NGAW3, use_cache=False,
+                                           credentials={"ngaw3": {"username": "x", "password": "y"}})._username == "x"
+    assert ProviderFactory.create_provider(ProviderName.PEER, use_cache=False, credentials=credentials)

@@ -22,8 +22,11 @@ from selection_service.core.earthquake_api import EarthquakeAPI
 from selection_service.enums.enums import ProviderName
 from selection_service.processing.criteria import SearchCriteria
 
-# Ortam degiskenleri: NGAGM_USERNAME, NGAGM_PASSWORD   (veya username=/password= argumani)
-api = EarthquakeAPI([ProviderName.NGAW3], [], username="kullanici", password="sifre")
+# Ortam degiskenleri: NGAGM_USERNAME, NGAGM_PASSWORD   (veya credentials= / username=,password=)
+# Birden fazla provider'da her birinin hesabi ayri verilir:
+#   credentials={ProviderName.CESMD: {"email": ...}, ProviderName.NGAW3: {"username": ..., "password": ...}}
+api = EarthquakeAPI([ProviderName.NGAW3], [],
+                    credentials={ProviderName.NGAW3: {"username": "kullanici", "password": "sifre"}})
 criteria = SearchCriteria(start_date="1990-01-01", end_date="2023-12-31",
                           min_magnitude=6.5, max_Rjb=30, min_vs30=200, max_vs30=800)
 ```

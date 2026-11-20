@@ -51,6 +51,7 @@ def collect_credentials(
     env = os.environ if environ is None else environ
     interactive = sys.stdin.isatty() if interactive is None else interactive
     kwargs: dict[str, Any] = {}
+    credentials: dict[ProviderName, dict[str, str]] = {}
 
     if ProviderName.CESMD in providers and need_download:
         # CESMD aramasi anahtarsiz calisir; kayitli e-posta yalniz indirme icin gerekir.
@@ -58,7 +59,7 @@ def collect_credentials(
         if not email and interactive:
             email = ask("CESMD kayitli e-posta (https://strongmotioncenter.org kaydi): ").strip()
         if email:
-            kwargs["email"] = email
+            credentials[ProviderName.CESMD] = {"email": email}
 
     if ProviderName.NGAW3 in providers:
         username = args.ngagm_username or env.get("NGAGM_USERNAME")
@@ -67,10 +68,12 @@ def collect_credentials(
             username = ask("NGA-West3 (nga-gm.org) kullanici adi: ").strip()
         if username and not password and interactive:
             password = ask_secret("NGA-West3 (nga-gm.org) parola: ")
-        if username:
-            kwargs["username"] = username
-        if password:
-            kwargs["password"] = password
+        if username or password:
+            credentials[ProviderName.NGAW3] = {
+                key: value for key, value in (("username", username), ("password", password)) if value
+            }
+    if credentials:
+        kwargs["credentials"] = credentials
     return kwargs
 
 
