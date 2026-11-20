@@ -239,12 +239,13 @@ class NGAW3Provider(IDataFetcher, IWaveformDownloader):
         mapped["REPI(km)"] = pd.to_numeric(raw.get("epicentral_distance"), errors="coerce")
         start, end = query.get("dates") or (None, None)
         if start or end:
-            when = pd.to_datetime(raw.get("datetime"), errors="coerce")
+            # Sunucu tarihi saat dilimli ("...Z") veya dilimsiz verebilir; ikisi de UTC'ye cevrilir.
+            when = pd.to_datetime(raw.get("datetime"), errors="coerce", utc=True, format="mixed")
             keep = pd.Series(True, index=raw.index)
             if start:
-                keep &= (when >= pd.Timestamp(start)) | when.isna()
+                keep &= (when >= pd.Timestamp(start, tz="UTC")) | when.isna()
             if end:
-                keep &= (when < pd.Timestamp(end) + pd.Timedelta(days=1)) | when.isna()
+                keep &= (when < pd.Timestamp(end, tz="UTC") + pd.Timedelta(days=1)) | when.isna()
             mapped = mapped[keep.to_numpy()]
         filtered = apply_client_filters(mapped, criteria.get("filters") or {})
         filtered = filtered.drop(columns=["REPI(km)"])

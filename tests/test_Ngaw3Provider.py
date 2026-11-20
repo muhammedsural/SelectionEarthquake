@@ -262,3 +262,17 @@ def test_factory_and_mapper_registration():
     created = ProviderFactory.create_provider(ProviderName.NGAW3, use_cache=False, username="u", password="p")
     assert isinstance(created, NGAW3Provider) and created.get_name() == "NGAW3"
     assert supports_download(created)
+
+
+@pytest.mark.parametrize("stamps", [
+    ["2019-07-06T03:19:53Z", "2019-07-06T03:19:53Z", "2023-02-06T01:17:36Z"],        # saat dilimli (canli yanit)
+    ["2019-07-06T03:19:53+00:00", "2019-07-06 03:19:53", "2023-02-06 01:17:36"],     # karisik dilimli/dilimsiz
+])
+def test_date_filter_handles_timezone_aware_timestamps(stamps):
+    payload = dict(FLATFILE, datetime=stamps)
+    p = provider(FakeSession(flatfile=FakeResponse(payload=payload)))
+    in_2019 = SearchCriteria(start_date="1990-01-01", end_date="2019-12-31")
+    result = p.fetch_data_sync(p.map_criteria(in_2019))
+    assert result.success, result.error
+    assert list(result.value["RSN"]) == ["11", "12"]
+    assert list(result.value["YEAR"]) == [2019, 2019]
